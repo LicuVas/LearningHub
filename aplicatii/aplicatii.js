@@ -232,6 +232,12 @@
   const TASTE = { Delete: 'tasta_delete', Backspace: 'tasta_backspace', Enter: 'tasta_enter', Escape: 'tasta_esc', Tab: 'tasta_tab',
     Home: 'tasta_home_end', End: 'tasta_home_end', PageUp: 'tasta_pagina', PageDown: 'tasta_pagina', Meta: 'tasta_windows',
     OS: 'tasta_windows' };
+  /* T4 (critic 13): tasta fizică în curs (keydown → e.key; keyup → null), citită de tastaFaraClic ca să spună dacă ieșirea din
+     modul tastelor de acces vine din Esc (api_biblioteca.md:172 „Esc în modul tastelor de acces: tasta_esc”) sau din Alt apăsat
+     a doua oară (tasta_acces). Pe window, în faza de captură: se vede înaintea ascultătorilor aplicațiilor de pe rădăcină. */
+  let tastaAcum = null;
+  W.addEventListener('keydown', e => { tastaAcum = e.key; }, true);
+  W.addEventListener('keyup', () => { tastaAcum = null; }, true);
   function litera(e) {
     const m = /^Key([A-Z])$/.exec(e.code || '');
     if (m) return m[1].toLowerCase();
@@ -455,7 +461,90 @@
       if (I.la && I.la.clic) act = I.la.clic(t, ev, 1, 'tasta_acces');
       return emite(I, 'tasta_acces', act || I.ultimaActiune || 'tasta_acces', t, ina);
     };
-    I.tastaFaraClic = (actiune, el) => emite(I, 'tasta_acces', actiune, tintaDin(I, el || document.activeElement), st());
+    /* T4 (critic 13): Esc în modul tastelor de acces = gestul `tasta_esc` (api_biblioteca.md:172), acțiunea rămâne
+       `iesire_taste_acces`; Alt apăsat a doua oară (keyup, tastaAcum = null) rămâne `tasta_acces`. O singură reparație pentru
+       PowerPoint, Word și Excel (toate trei ies prin I.tastaFaraClic('iesire_taste_acces')). */
+    I.tastaFaraClic = (actiune, el) => emite(I, actiune === 'iesire_taste_acces' && tastaAcum === 'Escape' ? 'tasta_esc' : 'tasta_acces',
+      actiune, tintaDin(I, el || document.activeElement), st());
+
+    /* ---- ferestrele (critic 13, GRAV T1), opt-in: doar aplicațiile care dau I.la.fereastra() -> elementul ferestrei deschise
+       (azi PowerPoint). Word și Excel au deja Alt + literă în ferestre, cu codul lor (word.js:1957, excel.js:3246), și NU primesc
+       cârligul: evenimentele lor rămân neschimbate.
+       - Alt + litera subliniată = `tasta_acces` din referință de pe nod (date/<app>.json › `ta` = uia_<app>.json › tasta_acces,
+         ex. dialog.FileOpen › File name „Alt+n”, Open „Alt+o”; Save your changes › Save „ALT+S”, Don't Save „ALT+n”): butonul se
+         apasă ca la clic, câmpul primește focusul. Un eveniment pe tastă, felul `tasta_acces` (cel existent, ca în Word / Excel;
+         api §4 nu are alt fel pentru Alt + literă în fereastră), ținta = comanda apăsată / câmpul; fără potrivire `fara_efect`.
+       - Tab / Shift+Tab (I.tabFereastra, chemat de aplicație din la.tasta) trec prin controalele ferestrei și nu ies din ea
+         (fereastra modală e capcană de focus: learn.microsoft.com/en-us/windows/win32/dlgbox/dlgbox-programming-considerations).
+         Ordinea Tab nu e capturată: ordinea nodurilor din referință ([presupus] R14-1). */
+    const APASA_F = new Set(['Button', 'SplitButton', 'CheckBox', 'RadioButton', 'MenuItem', 'TabItem']);
+    const CAMP_F = new Set(['Edit', 'ComboBox', 'Spinner']);
+    const tipF = x => x.getAttribute('data-lh-tip');
+    const evFereastra = x => ({ target: x, clientX: NaN, clientY: NaN, shiftKey: false, ctrlKey: false, metaKey: false, altKey: false,
+      button: 0, detail: 0, preventDefault() {} });
+    function controaleFereastra(fer) {
+      const toate = [...fer.querySelectorAll('[data-lh-tip]')].filter(x => {
+        const t = tipF(x);
+        if (!APASA_F.has(t) && !CAMP_F.has(t)) return false;
+        if (x.closest('[data-lh-tip="TitleBar"]') || x.getAttribute('aria-disabled') === 'true' || !vizibil(x)) return false;
+        if (!x.getAttribute('data-lh-eticheta')) return false;
+        if (t === 'RadioButton') {
+          const fr = [...x.parentElement.children].filter(y => tipF(y) === 'RadioButton');
+          const ales = fr.find(y => y.getAttribute('aria-checked') === 'true' || y.classList.contains('lh-ap-bifat'));
+          if (ales ? ales !== x : fr[0] !== x) return false;
+        }
+        return true;
+      });
+      /* o singură oprire pe control: copiii unui control (săgeata „Deschidere” a casetei, caseta Edit din ComboBox) nu se opresc */
+      return toate.filter(x => !toate.some(y => y !== x && y.contains(x)));
+    }
+    function focusControl(x) {
+      const i = x.querySelector('input');
+      const t = i || x;
+      if (t === x && !x.hasAttribute('tabindex')) x.setAttribute('tabindex', '-1');
+      try { t.focus({ preventScroll: true }); if (i && !i.readOnly && i.select) i.select(); } catch (z) { /* */ }
+    }
+    I.tabFereastra = (fer, inapoi) => {
+      const cs = fer ? controaleFereastra(fer) : [];
+      if (!cs.length) return 'fara_efect';
+      const a = document.activeElement;
+      let i = cs.findIndex(x => x === a || x.contains(a));
+      i = i < 0 ? (inapoi ? cs.length - 1 : 0) : (i + (inapoi ? -1 : 1) + cs.length) % cs.length;
+      focusControl(cs[i]);
+      return 'mutare_focus';
+    };
+    /* focusul la deschiderea unei ferestre fără caseta File name: primul câmp în ordinea de mai sus (Font: Latin text font) */
+    I.focusInitialFereastra = fer => {
+      const cs = fer ? controaleFereastra(fer) : [];
+      const x = cs.find(c => CAMP_F.has(tipF(c))) || cs[0];
+      if (x) focusControl(x);
+      return !!x;
+    };
+    r.addEventListener('keydown', e => {
+      const fer = I.la && I.la.fereastra ? I.la.fereastra() : null;
+      if (!fer || !fer.isConnected || !e.altKey || e.ctrlKey || e.metaKey || !/^Key[A-Z]$/.test(e.code || '')) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const ina = st();
+      const re = new RegExp('^alt\\+' + e.code.slice(3) + '$', 'i');
+      const cand = [...fer.querySelectorAll('[data-lh-tip]')].filter(x => x.__nod && re.test(String(x.__nod.ta || '').replace(/\s+/g, '')) &&
+        vizibil(x) && x.getAttribute('aria-disabled') !== 'true');
+      const x = cand.find(c => APASA_F.has(tipF(c))) || cand.find(c => CAMP_F.has(tipF(c)));
+      if (!x) { emite(I, 'tasta_acces', 'fara_efect', tintaDin(I, document.activeElement && r.contains(document.activeElement) ? document.activeElement : null), ina); return; }
+      I.ultimaActiune = null;
+      let act, t;
+      if (APASA_F.has(tipF(x))) {
+        const tx = x.hasAttribute('data-lh-tinta') ? x : (x.querySelector('[data-lh-tinta]') || x);
+        t = tintaDin(I, tx);
+        act = I.la && I.la.clic ? I.la.clic(t, evFereastra(tx), 1, 'tasta_acces') : null;
+        if (fer.isConnected && fer.contains(tx)) focusControl(tx);
+      } else {
+        focusControl(x);
+        t = tintaDin(I, x.querySelector('input') || x);
+        act = 'focus_camp';
+      }
+      emite(I, 'tasta_acces', act || I.ultimaActiune || 'tasta_acces', t, ina);
+    }, true);
   }
 
   /* ------------------------------------------------------------ asistarea (§6) */
@@ -535,7 +624,10 @@
       if (typeof p.asteapta === 'function') { try { bun = !!p.asteapta(ev); } catch (e) { bun = false; } }
       else bun = ev.tinta === p.tinta || (!!canonPas(p) && ev.tinta === canonPas(p)) || (!!ev.activat && ev.activat === p.tinta);
       if (bun) { L.ascunde(); k++; gres = 0; porneste(); return; }
-      if (NEGRESELI.has(ev.gest) || (ev.gest === 'tasta_acces' && NAVIGARE_TA.has(ev.actiune))) return;
+      /* T4 (critic 13): Esc care doar iese din modul tastelor de acces (tasta_esc / iesire_taste_acces) nu schimbă nimic,
+         ca navigarea: nu e greșeală */
+      if (NEGRESELI.has(ev.gest) || (ev.gest === 'tasta_acces' && NAVIGARE_TA.has(ev.actiune)) ||
+        (ev.gest === 'tasta_esc' && ev.actiune === 'iesire_taste_acces')) return;
       gres++;
       if (gres >= dupaGreseli) arata();
     });

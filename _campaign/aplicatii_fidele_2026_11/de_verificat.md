@@ -530,3 +530,31 @@ Până la răspuns, simulatorul face ce scrie în paranteză.
 - [ ] **R13-17** „Save your changes to this file?”: întrebarea în corpul ferestrei (20 px, la [486, 280]) — UIA nu o expune ca
   text; bara de titlu goală e din referință (TitleBar ''). Scenariu: Ctrl+W pe o prezentare modificată, captură de ecran.
 <!-- RUNDA13-POWERPOINT:END -->
+
+<!-- RUNDA14-POWERPOINT:START -->
+## Runda 14 (B-powerpoint, constructorul, unghiul stare_finala_erori) — [presupus] în aplicatii.js / powerpoint.js, de lămurit cu omul sau într-o rundă `acoperire`
+- [ ] **R14-1** Ordinea Tab / Shift+Tab în ferestre (Open, Save your changes, Insert Picture, Save As, Font, Paragraph) = ordinea
+  nodurilor din `uia_powerpoint.json › dialog.*` (aplicatii.js › `controaleFereastra`: Edit / ComboBox / Spinner / Button / SplitButton /
+  CheckBox / RadioButton / MenuItem / TabItem cu nume, fără bara de titlu, o oprire pe control, doar butonul radio ales). Ordinea Tab
+  reală NU e capturată; la fel focusul la deschiderea Font / Paragraph / Insert Table (primul câmp din ordinea de mai sus: Font →
+  Latin text font). Scenariu: în PowerPoint real, F12 / Ctrl+O › Browse / lansatorul Font; UIA `FocusedElement` după fiecare Tab, de
+  12 ori, și o dată la deschidere.
+- [ ] **R14-2** Enter cu focusul pe un control al ferestrei care nu e buton de apăsat (Files of type, Tools, o casetă de bifat) = butonul
+  implicit (Open / Save / OK), Space pe un buton = îl apasă (powerpoint.js › `implicitDialog`, `la.tasta`). Regula vine din
+  dlgbox-programming-considerations; ce buton e implicit în fiecare fereastră PowerPoint nu e capturat (b_ctrl_w: `implicit: false` la
+  toate). Scenariu: Tab până la Files of type, Enter; UIA pe fereastră și pe prezentare.
+- [ ] **R14-3** O listă deschisă din taste pe un drum fără litere în referință (Home: „Alt, H, S O”, „Alt, H, S F”) nu arată insigne și
+  nu primește litere (literele din referință există doar pe drumul „Alt, J D, S O, …” din Shape Format). Scenariu: în PowerPoint real,
+  Alt, H, S, O; captură de ecran (insignele din listă) și apoi W.
+- [ ] **R14-4** Cu o listă / un meniu deschis (Font ▾, culori, Shapes, meniul contextual), literele tastate nu fac nimic (nici salt la
+  nume în listă, nici text în diapozitiv). Scenariu: Font ▾ cu mouse-ul, tastezi „Ar”; UIA pe listă (rândul ales) și pe titlu.
+- [ ] **R14-5** Zona de note goală nu scrie nimic (îndemnul „Click to add notes” nu e în referință:
+  `acoperire_r12.NEVERIFICAT.zona_de_note_in_uia`). Lecția m1-l02:184 spune „Clic în zona de sub diapozitiv, unde scrie „Click to add
+  notes””. Scenariu: captură de ecran a zonei de note goale în PowerPoint real (textul îndemnului, culoarea, locul).
+- [ ] **R14-6** Adresa ferestrei Open după Ctrl+O › Browse („Toate locațiile” › „Documente”, din `acoperire_r12.fapte.b_ctrl_o_browse
+  .la_deschidere.campuri[10-11]`) e pusă de mână pe banda de adresă a suprafeței `dialog.FileOpen` (capturată în alt dosar, redactat);
+  lățimile 34 / 83 px sunt cele din `dialog.FileSaveAs › Adresă: Documente`, iar „›” din „Toate locațiile” e desen. Scenariu: UIA
+  dialog.FileOpen deschis din Ctrl+O › Browse pe un profil fără date personale (adresa întreagă, dreptunghiuri).
+- [ ] **R14-7** Grosimea conturului (Shape Outline › Weight) nu e în `stare()` (api §5 n-are cheie): evenimentul `contur_forma` are
+  `inainte` = `dupa`. Scenariu: `powerpoint-shape-outline-weight` (Line.Weight după Weight › 3 pt), ca să intre o cheie în api §5.
+<!-- RUNDA14-POWERPOINT:END -->
