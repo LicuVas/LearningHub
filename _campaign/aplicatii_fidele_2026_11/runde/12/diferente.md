@@ -1,4 +1,4 @@
-# Runda 12 · tabelul diferențelor (pasul 5) — constructorul 1 (PowerPoint)
+# Runda 12 · tabelul diferențelor (pasul 5) — constructorul 1 (P1-P5) și constructorul 2 (MINOR, rândurile M1-M4)
 
 Fiecare rând: suprafața · ce face aplicația reală (citat din referința înghețată) · ce face simulatorul acum (powerpoint.js:rând) ·
 gravitate · reparația. Liniile din `powerpoint.js` sunt cele de după reparație.
@@ -19,11 +19,17 @@ gravitate · reparația. Liniile din `powerpoint.js` sunt cele de după reparaț
 | P5 | Animation Pane | `panou.AnimationCustom#doua_animatii` (rânduri „On Click\nEntrance\nFade : Title 1: Vulcanii ”); `d_efecte.animation_pane.rand_1_ales`: Move Up gri, Move Down activ; Move Up pe rândul 2 → [2, 1] (powerpoint-animatii-move-up.json) | înainte: rânduri aria-hidden, butoane gri mereu; acum `randuriAnimatii` / `mutaAnimatie` / `clicPanou` (829-873) | GRAV | Fade = cod 10 (din același scenariu) |
 | P5 | Format Background | `panou.LaunchFormatBackground#Solid fill`, `lista.FormatBackground_Color` (are Automatic); Light Blue + Apply to All → #00B0F0 pe toate (powerpoint-fundal-aplica-la-toate.json) | înainte: „nu e simulată”; acum `variantaFundal`, lista `fundal`, `fundal_diapozitive` | GRAV | tipul fundalului neatins [presupus] R12-7 |
 | — | ținta `diapozitiv` | clicul real: „colț gol al diapozitivului (97%, 97%)” (scenarii_real/powerpoint-fundal-aplica-la-toate.json › cum) | înainte: `diapozitiv:1` pe tot fundalul (centrul acoperit de titlu pe Title Slide); acum colțul 6 %×6 % (powerpoint.js:384) + fundalul, ambele `diapozitiv` | geometria țintei, nu comportament | vezi contra.md (adevărul incomod) |
+| M1 | `modificat` după Ctrl+Z / Ctrl+Y post-salvare | nicio captură PowerPoint (`Presentation.Saved` după Undo necitit); regula din supliment §6 + modelul Word (`word.js › pune`: Undo/Redo → `modificat = true`) | înainte: `anuleaza`/`reface` nu atingeau `M.salvat` (critic 11 a2: Save As → Ctrl+Z → tot false); acum `M.salvat = false` după o anulare/refacere care a făcut ceva (powerpoint.js › `anuleaza`, `reface`) | MINOR | constructorul 2 |
+| M2 | `diapozitiv_activ` cu 0 diapozitive | — (cheie în afara §5; definiția: diapozitivul activ) | înainte: 1 cu `diapozitive: []` (critic 11 a1); acum `null` (powerpoint.js › `I.stare`); Ctrl+Z îl readuce la 1 | MINOR | constructorul 2 |
+| M3 | Font: Font style, Underline style; Paragraph: Alignment la OK | `uia_powerpoint.json › suprafete › dialog.FontDialogPowerPoint`: `ComboBox „Font style” valoare „Regular”` cu un singur copil `Button „Open”` (fără Edit, fără ListItem); `„Underline style” „(none)”` (Text + Open); `dialog.PowerPointParagraphDialog › ComboBox „Alignment” „Centered”` (doar Open) | neschimbat: arată valoarea, OK aplică doar Size / Before text / Before / After / At | MINOR, LĂSAT | celelalte valori nu sunt în referință (lista ▾ necapturată) → R12-9 |
+| M4 | telefon 360 px: zonele de atins ≥ 32 px (I1, api §7) | contractul I1 / api:301 („zonele de atins ≥ 32 px”); critic 11 a6: 9 zone sub 32 px (lansatorul 21×21, benzile `margine_forma` 6 px) | la predarea c1: 14 zone sub 32 px (+ benzile pe toate casetele, + colțul `diapozitiv` 15×9); acum doar cele 4 comune cu Word / Excel (More Options lângă Undo, 3 butoane ale barei de stare). Lansatoarele: `zoneAtingere()` (Font, Clipboard 32×32 efectiv; Paragraph, Drawing 32×28 — butonul de deasupra la 4 px); chenarul casetei alese 32 px (24 în afară + 8 înăuntru), benzile casetelor nealese neatingibile pe telefon; colțul ≥ 32×32 (aplicatii.css, @media ≤ 480 px). Capturile la 360 px identice cu 552ac0c5 | MINOR | R12-10 |
 
 ## Scenariile PowerPoint care încă nu trec (O4 doar PowerPoint, `runde/12/o4_ppt.py`)
 - `powerpoint-tragere-forma` — fără rezultat real (`referinte/scenarii_real/powerpoint-tragere-forma.json` lipsește, R11-5):
   nu se poate judeca; rămâne 1 la O4 până la o rundă `acoperire`.
 Toate celelalte 26 trec (19 → 1 pe PowerPoint).
+Confirmat de pasul 7 complet (constructorul 2, `iesiri/O4/oracol_comportament.json`): 26 „ok”, `powerpoint-tragere-forma` =
+`fara_real`; O4 total 48 → 30 (restul de 29 nu sunt PowerPoint: Excel / Explorer / Word și scenariile fără real).
 
 ## O3 (adevărul incomod din cadru.md)
 O3 randează paginile lecțiilor din `inventar.json`; lecțiile PowerPoint încă încarcă simulatoarele vechi, deci listele desenate

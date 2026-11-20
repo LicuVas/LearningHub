@@ -454,4 +454,15 @@ Până la răspuns, simulatorul face ce scrie în paranteză.
   dar tipul neatins nu e citit prin COM); „Automatic” din Color ▾ = alb; eticheta „Fill Color RGB(r, g, b)” după schimbare.
 - [ ] **R12-8** Animation Pane: numele formelor în rânduri în afară de „Title 1” / „Subtitle 2” (Content Placeholder 2, TextBox N…),
   categoria efectelor în afară de Entrance, clicul pe rând alege și caseta lui pe diapozitiv.
+- [ ] **R12-9** (constructorul 2, MINOR critic 11 §6) Fereastra Font: Font style și Underline style; fereastra Paragraph: Alignment —
+  NU se aplică la OK. Referința (`uia_powerpoint.json › suprafete › dialog.FontDialogPowerPoint` / `dialog.PowerPointParagraphDialog`)
+  are câmpurile doar ca ComboBox cu valoarea de acum („Regular”, „(none)”, „Centered”), FĂRĂ Edit (nu se scrie în ele) și fără lista ▾
+  (necapturată, R11-12 a) → numele celorlalte valori ar fi inventate. Scenarii: dump UIA cu lista ▾ deschisă la fiecare din cele trei;
+  `powerpoint-font-style-bold-italic` (Font style › Bold Italic › OK → `TextRange.Font.Bold/Italic`), `powerpoint-underline-ok`,
+  `powerpoint-paragraph-alignment-left` (`ParagraphFormat.Alignment`).
+- [ ] **R12-10** (constructorul 2) Telefonul (≤ 480 px), zonele de atins: (a) chenarul se atinge doar pe caseta ALEASĂ (32 px: 24 în
+  afară + 8 înăuntru); pe casetele nealese banda de 6 px nu se mai atinge — cum alege PowerPoint pe atingere o casetă după chenar
+  e necapturat; (b) lansatoarele Paragraph / Drawing (și cele din Animations, View, filele contextuale) au butonul de deasupra la
+  2-4 px: zona lor rămâne 32 × ~28 (mai mult ar acoperi „Convert to SmartArt” / „Shape Effects”); (c) „More Options” de lângă Undo
+  (17 × 39) și butoanele barei de stare (28 px înălțime) sunt la fel în Word și Excel (cod comun) — de hotărât în valul comun.
 <!-- RUNDA12-POWERPOINT:END -->

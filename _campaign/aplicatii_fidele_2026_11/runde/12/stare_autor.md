@@ -51,3 +51,28 @@
 - `runde/12/proba_grav.py` (`--inainte` = pe HEAD prin git archive în %TEMP%); `runde/12/o4_ppt.py [--doar subșir]`; `runde/12/h.py` (copia hamului criticului 11).
 - [presupus] de scris în de_verificat.md: R12-1 ordinea insignelor KeyTips; R12-2 închiderea fără întrebare pe prezentarea nemodificată,
   ✕ pe ultima prezentare (aplicația reală se închide de tot; simulatorul rămâne în fereastra goală), Enter în File name = Save.
+
+## Constructorul 2 (cel care termină) — 20.11
+- **Bucata 6 — MINOR (critic 11 §6)**, gata:
+  - `powerpoint.js` `anuleaza`/`reface`: `M.salvat = false` (ca Word `pune`) → `modificat` true după Ctrl+Z/Ctrl+Y post-salvare;
+  - `I.stare` › `diapozitiv_activ`: `null` cu 0 diapozitive;
+  - telefon (≤ 480 px): `zoneAtingere()` (lansatoarele, zona lărgită spre locul liber din grup) + `aplicatii.css` (benzile chenarului
+    casetei ALESE 32 px = 24 în afară + 8 înăuntru, benzile casetelor nealese neatingibile, colțul `diapozitiv` ≥ 32×32); insigna KeyTips
+    a lansatorului lărgit stă sub pictogramă;
+  - Font style / Underline style / Alignment: LĂSATE — referința are ComboBox-urile doar cu valoarea curentă (fără Edit, lista ▾ necapturată) → R12-9.
+- Proba: `proba_grav.py` + secțiunea `p6` (9 verificări); `--ref 552ac0c5 --doar p6` = 5 picate → worktree = **0 picate din 49**
+  (`proba_grav_552ac0c5_p6.json`, `proba_grav_dupa.json`). `--inainte` = acum 32fe7fb1 fix (pornirea rundei), nu HEAD.
+- `de_verificat.md`: R12-9 (Font style / Underline / Alignment), R12-10 (zonele de atins pe telefon). `diferente.md`: rândurile M1-M4.
+  `gata_pentru_critic.md` scris (fără numerele pasului 7).
+- Regresul (`regres_c2.sh` → `c2_regres_rezumat.txt`): 11/proba_powerpoint 0 · Word 5/4/4-telefon/3/2 = 0 · Excel 10/9/8/7-cont/6 = 0 ·
+  7/proba_grav 2 (X6, aceleași rânduri ca la predare) · 7/proba_grav_cont2 3 (X8, aceleași). Json-urile neurmărite din runde/7-10 mutate
+  în %TEMP%/lh_r12_c2_regres_iesiri/; nimic urmărit atins în runde/2-11.
+- Pasul 7 complet (09:08-10:19, singur, după ultima scriere sub aplicatii/ la 08:58:47, aplicatii.css): O1 61 · O2 13392 · O3 25076 · **O4 48 → 30** ·
+  O5 82 · O6 NECONCLUDENT (1801 s, timpul) · O7 341 · O8 102 · O9 27 · porți 41 (cum_fac 41, restul 0) · lacăt ok
+  (`masurare_pas7.json`, `pas7_masoara_complet.log`). Toate oracolele ~1,3-2× mai lente decât la pornire (porți 1799 → 3479 s).
+- Regula O6: `--doar O6` singur (10:20-10:50) → tot NECONCLUDENT la 1800 s (`masurare_o6.json`, `pas7_o6_1.log`); `masurare.json` =
+  `masurare_pas7.json` pus înapoi. A doua reluare singură cu `--timeout O6=3600` pornită la 10:5x (`pas7_o6_2.log`).
+- O4: 26/27 scenarii PowerPoint „ok”, `powerpoint-tragere-forma` = `fara_real`.
+- A doua reluare O6 singură, `--timeout O6=3600` (10:51-11:11): **0** în 1237 s → `masurare_o6.json`; prima reluare = `masurare_o6_1.json`;
+  `masurare.json` = `masurare_pas7.json` pus înapoi. `ingheata.py --verifica` = 0. Nicio creștere → nimic dat înapoi.
+- Scrise: raport_constructor.md, gata_pentru_critic.md, diferente.md (M1-M4 + confirmarea O4). GATA_PENTRU_CRITIC.

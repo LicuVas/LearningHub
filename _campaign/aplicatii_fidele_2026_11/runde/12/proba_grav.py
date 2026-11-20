@@ -4,12 +4,13 @@ abandonat) pe poligonul bibliotecii, pentru GRAV-urile criticului 11 (P1-P5) și
     python runde/12/proba_grav.py                 # pe worktree („după”) → runde/12/proba_grav_dupa.json
     python runde/12/proba_grav.py --inainte       # pe aplicatii/ din HEAD (git archive în %TEMP%) → proba_grav_inainte.json
 Ultima linie = numărul de verificări picate."""
-import json, shutil, subprocess, sys, tarfile, tempfile, io
+import json, shutil, subprocess, sys, tarfile, tempfile, io, functools, http.server, threading
+from urllib.parse import urlsplit
 from pathlib import Path
 
 AICI = Path(__file__).resolve().parent
 sys.path.insert(0, str(AICI))
-from h import Ham, WT, st, ev, el, centru  # noqa: E402
+from h import Ham, Tacut, WT, st, ev, el, centru  # noqa: E402
 
 R = []
 
@@ -383,21 +384,191 @@ def p5(H):
     pg.close()
 
 
-SECTIUNI = [p1, p3, p2, p4, p5]
+# ---------------------------------------------------------------- bucata 6: MINOR din runde/11/critic.md §6 (constructorul 2)
+REF_VIZUAL = '552ac0c5'   # predarea constructorului 1 = „înainte” de bucata 6, pentru comparația „ce se vede”
+UIA = Path('C:/00/Projects/LearningHub_fidel/_campaign/aplicatii_fidele_2026_11/referinte/uia_powerpoint.json')
+MAS = """(()=>{const rad=document.querySelector('[data-lh-aplicatie=powerpoint]');const W=innerWidth,Hh=innerHeight;
+ return [...rad.querySelectorAll('[data-lh-tip=Button],[data-lh-tip=SplitButton],[data-lh-tip=MenuItem],[data-lh-tip=TabItem],[data-lh-tinta]')].filter(e=>{
+  if(!e.offsetParent)return false;const r=e.getBoundingClientRect();return r.width>0&&r.right>0&&r.left<W&&r.bottom>0&&r.top<Hh&&(r.width<32||r.height<32)})
+  .map(e=>{const r=e.getBoundingClientRect();return (e.getAttribute('data-lh-tinta')||'')+' | '+(e.getAttribute('data-lh-eticheta')||'')+' '+Math.round(r.width)+'x'+Math.round(r.height)})})()"""
+# zona EFECTIVĂ a unui element: câți pixeli la rând, pe orizontala și pe verticala prin centrul (văzut), îl ating (elementFromPoint)
+EFECTIV = """([sel, cx, cy])=>{const e=document.querySelector(sel);if(!e)return null;const al=(x,y)=>{const t=document.elementFromPoint(x,y);return !!t&&(t===e||e.contains(t))};
+ if(cx==null){const g=(e.querySelector('svg')||e).getBoundingClientRect();cx=g.x+g.width/2;cy=g.y+g.height/2}
+ let a=0,b=0,c=0,d=0;while(a<60&&al(cx-a-1,cy))a++;while(b<60&&al(cx+b+1,cy))b++;while(c<60&&al(cx,cy-c-1))c++;while(d<60&&al(cx,cy+d+1))d++;
+ return al(cx,cy)?[a+b+1,c+d+1]:[0,0]}"""
+
+
+def arhiva(ref):
+    tmp = Path(tempfile.mkdtemp(prefix='lh_r12_' + ref + '_'))
+    arh = subprocess.run(['git', '-C', str(WT), 'archive', ref, 'aplicatii'], capture_output=True, check=True).stdout
+    tarfile.open(fileobj=io.BytesIO(arh)).extractall(tmp)
+    return tmp
+
+
+C_TEL = {"diapozitive": [{"aspect": "Title Slide", "texte": ["Vulcanii", "Muntii de foc"]}, {"aspect": "Title and Content", "texte": ["Ce sunt"]}]}
+
+
+class Tel:
+    """telefonul (360 × 740, atingeri, scale 2) în ACELAȘI Chromium headless al hamului (un al doilea sync_playwright nu merge),
+    cu serverul lui static pe 127.0.0.1 (port liber) pentru rădăcina dată și aceeași rută: tot ce nu e 127.0.0.1/localhost abandonat"""
+    def __init__(self, H, radacina):
+        self.H, self.radacina = H, radacina
+
+    def __enter__(self):
+        self.srv = http.server.ThreadingHTTPServer(('127.0.0.1', 0), functools.partial(Tacut, directory=str(self.radacina)))
+        threading.Thread(target=self.srv.serve_forever, daemon=True).start()
+        self.baza = 'http://127.0.0.1:%d' % self.srv.server_address[1]
+        self.ctx = self.H.br.new_context(viewport={'width': 360, 'height': 740}, device_scale_factor=2, is_mobile=True, has_touch=True)
+
+        def ruta(r):
+            if urlsplit(r.request.url).hostname not in ('127.0.0.1', 'localhost'):
+                self.H.plecate.append(r.request.url)
+                return r.abort()
+            return r.continue_()
+        self.ctx.route('**/*', ruta)
+        return self
+
+    def __exit__(self, *a):
+        try:
+            self.ctx.close()
+        finally:
+            self.srv.shutdown()
+
+    def app(self, continut):
+        pg = self.ctx.new_page()
+        pg.on('pageerror', lambda e: self.H.erori.append(str(e)[:300]))
+        pg.goto(self.baza + '/aplicatii/poligon.html', wait_until='load')
+        pg.wait_for_function('window.LH && LH.aplicatii && LH.aplicatii.gata')
+        pg.evaluate("([a,c])=>LH.aplicatii.deschide(a,{continut:c,focus:true}).then(()=>{window.__m=(window.__lhAplicatieEv||[]).length})",
+                    ['powerpoint', continut])
+        pg.wait_for_timeout(300)
+        return pg
+
+
+def tap(pg, x, y):
+    pg.touchscreen.tap(x, y)
+    pg.wait_for_timeout(150)
+
+
+def poze_telefon(H, rad):
+    """capturile „ce se vede” la 360 px: pornirea, titlul atins (chenarul punctat), lansatorul Font adus în vedere, insignele Alt, H"""
+    out = []
+    with Tel(H, rad) as T:
+        pg = T.app(C_TEL)
+        snap = lambda: out.append(pg.screenshot(animations='disabled', caret='hide'))
+        snap()
+        c = centru(pg, 'forma:1/1'); tap(pg, c[0], c[1]); snap()
+        pg.evaluate("()=>{const e=LH.aplicatii.element('powerpoint','lansator:Home/Font');e.querySelector('svg').scrollIntoView({inline:'center',block:'nearest'})}"); pg.wait_for_timeout(100); snap()
+        taste(pg, 'Escape'); taste(pg, 'Alt', 'h'); snap()
+    return out
+
+
+def p6(H):
+    # M1 · modificat după Ctrl+Z / Ctrl+Y făcute după salvare (critic 11 §6: a2 „z_dupa_save”)
+    pg = deschide(H, {"diapozitive": [{"aspect": "Title Slide", "texte": ["Vulcanii"]}], "nume_fisier": "vulcani.pptx", "selectie_text": [1, 1]})
+    m = lambda: st(pg)['modificat']
+    pg.keyboard.type('X'); pg.wait_for_timeout(80)
+    m0 = m(); taste(pg, 'Control+s'); m1 = m()
+    taste(pg, 'Control+z'); m2 = m(); t2 = st(pg)['diapozitive'][0]['texte']
+    taste(pg, 'Control+s'); m3 = m()
+    taste(pg, 'Control+y'); m4 = m(); t4 = st(pg)['diapozitive'][0]['texte']
+    verif("MINOR modificat: scris → true · Ctrl+S → false · Ctrl+Z → true · Ctrl+S → false · Ctrl+Y → true",
+          [m0, m1, m2, m3, m4] == [True, False, True, False, True] and t2 == ['Vulcanii'] and t4 == ['X'], sir=[m0, m1, m2, m3, m4], texte=[t2, t4])
+    pg.close()
+    # M2 · diapozitiv_activ null cu 0 diapozitive (critic 11 §6: a1 „del_ultim_stare”)
+    pg = deschide(H, {"diapozitive": [{"aspect": "Title Slide", "texte": ["A"]}], "panou": "miniaturi"})
+    clic(pg, 'miniatura:1'); taste(pg, 'Delete')
+    s = st(pg)
+    verif("MINOR diapozitiv_activ: Delete pe ultimul diapozitiv → diapozitive [] și diapozitiv_activ null",
+          s['diapozitive'] == [] and s['diapozitiv_activ'] is None, diapozitive=s['diapozitive'], diapozitiv_activ=s['diapozitiv_activ'])
+    taste(pg, 'Control+z')
+    s = st(pg)
+    verif("MINOR diapozitiv_activ: Ctrl+Z readuce diapozitivul → diapozitiv_activ 1", len(s['diapozitive']) == 1 and s['diapozitiv_activ'] == 1,
+          diapozitiv_activ=s['diapozitiv_activ'])
+    pg.close()
+    # M3 · Font style / Underline style / Alignment: premisa lui „lăsate” = referința n-are valorile lor (prin Python, pe chei)
+    S = json.loads(UIA.read_text(encoding='utf-8'))['suprafete']
+
+    def combo(cheie, et):
+        st_ = [S[cheie]]
+        while st_:
+            n = st_.pop()
+            if n.get('tip') == 'ComboBox' and n.get('eticheta') == et:
+                return n
+            st_.extend(n.get('copii') or [])
+    cb = {et: combo(k, et) for k, et in [('dialog.FontDialogPowerPoint', 'Font style'), ('dialog.FontDialogPowerPoint', 'Underline style'),
+                                         ('dialog.PowerPointParagraphDialog', 'Alignment')]}
+    fara = {et: (n or {}).get('valoare') for et, n in cb.items()
+            if n and not any(c.get('tip') in ('Edit', 'ListItem', 'List') for c in n.get('copii') or [])}
+    verif("MINOR Font style / Underline style / Alignment: referința are câmpurile DOAR cu valoarea de acum (fără Edit, fără listă ▾) → lăsate, R12-9",
+          len(fara) == 3, valori=fara)
+    # M4 · telefon 360 px: zonele de atins ≥ 32 px, cu ATINGERI reale (touchscreen.tap)
+    with Tel(H, H.radacina) as T:
+        pg = T.app(C_TEL)
+        c1 = centru(pg, 'forma:1/1'); tap(pg, c1[0], c1[1])
+        s1 = st(pg)['selectie_text']
+        mici = pg.evaluate(MAS)
+        ppt = [x for x in mici if x.startswith(('margine_forma', 'diapozitiv', 'lansator'))]
+        verif("MINOR telefon 360: nicio zonă de atins PowerPoint sub 32 px (lansatoare, chenarul casetei alese, colțul gol); rămân doar cele comune cu Word/Excel",
+              not ppt and s1 and s1['forma'] == 1, mici=mici)
+        sus = pg.evaluate("()=>{const r=LH.aplicatii.element('powerpoint','forma:1/1').getBoundingClientRect();return [r.x+r.width/2,r.y]}")
+        ef_sus = pg.evaluate(EFECTIV, ['[data-lh-selectat] > .lh-ap-p-m-sus', sus[0], sus[1] - 8])
+        ef_st = pg.evaluate(EFECTIV, ['[data-lh-selectat] > .lh-ap-p-m-st', None, None])
+        tap(pg, sus[0], sus[1] - 14)
+        s2 = st(pg)['selectie_forma']
+        verif("MINOR telefon 360: chenarul titlului ales se atinge pe 32 px (efectiv, elementFromPoint); atingerea la 14 px DEASUPRA titlului îl alege ca obiect",
+              ef_sus and ef_sus[1] >= 32 and ef_st and ef_st[0] >= 32 and s2 == [1, 1], efectiv_sus=ef_sus, efectiv_stanga=ef_st, selectie_forma=s2)
+        tap(pg, c1[0], c1[1])
+        c2 = centru(pg, 'forma:1/2'); tap(pg, c2[0], c2[1])
+        s3 = st(pg)['selectie_text']
+        tap(pg, c1[0], c1[1])
+        s4 = st(pg)['selectie_text']
+        verif("MINOR telefon 360: chenarul lărgit nu fură textul vecinului — titlul ales → atingerea subtitlului îl editează; subtitlul ales → atingerea titlului",
+              s3 and s3['forma'] == 2 and s4 and s4['forma'] == 1, subtitlu=s3, titlu=s4)
+        ef = {}
+        for t in ['lansator:Home/Clipboard', 'lansator:Home/Paragraph', 'lansator:Home/Drawing', 'lansator:Home/Font']:   # Font ultimul: rămâne în vedere
+            pg.evaluate("t=>LH.aplicatii.element('powerpoint',t).querySelector('svg').scrollIntoView({inline:'center',block:'nearest'})", t)
+            pg.wait_for_timeout(100)
+            ef[t] = pg.evaluate(EFECTIV, ['[data-lh-tinta="' + t + '"]', None, None])
+        g = pg.evaluate("()=>{const r=LH.aplicatii.element('powerpoint','lansator:Home/Font').querySelector('svg').getBoundingClientRect();return [r.x,r.y,r.width]}")
+        k = g[2] / 12   # zoom-ul telefonului: pictograma de 12 px
+        tap(pg, g[0] - 2 * k - 3, g[1] - 2 * k - 3)   # 3 px în afara vechiului 21 × 21 (sus-stânga)
+        dlg = st(pg)['dialog']
+        verif("MINOR telefon 360: lansatoarele Font și Clipboard = zonă efectivă ≥ 32 × 32 (Paragraph / Drawing: cât încape sub butonul de deasupra); atingerea la 3 px în afara vechiului 21 × 21 deschide fereastra Font",
+              all(ef[t] and min(ef[t]) >= 32 for t in ('lansator:Home/Font', 'lansator:Home/Clipboard')) and isinstance(dlg, dict) and dlg.get('titlu') == 'Font',
+              efectiv=ef, dialog=dlg)
+        pg.close()
+    # M5 · „fără să schimbi ce se vede”: capturile la 360 px, predarea constructorului 1 (REF_VIZUAL) față de rădăcina probei
+    if H.radacina == WT:
+        tmp = arhiva(REF_VIZUAL)
+        try:
+            a, b = poze_telefon(H, tmp), poze_telefon(H, WT)
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+        same = [x == y for x, y in zip(a, b)]
+        verif("MINOR telefon 360: ce se vede e la fel ca la " + REF_VIZUAL + " (pornirea, titlul ales, lansatorul Font în vedere, insignele Alt, H)",
+              len(same) == 4 and all(same), identice=same)
+
+
+SECTIUNI = [p1, p3, p2, p4, p5, p6]
 
 
 def main():
-    inainte = '--inainte' in sys.argv
+    # --inainte = pornirea rundei (32fe7fb1, înaintea constructorului 1; până la predare era HEAD); --ref <sha> = altă rădăcină
+    # (ex. 552ac0c5, predarea constructorului 1 = „înainte” de bucata 6) → proba_grav_<sha>.json; --doar p6 = doar unele secțiuni
+    ref = sys.argv[sys.argv.index('--ref') + 1] if '--ref' in sys.argv else ('32fe7fb1' if '--inainte' in sys.argv else None)
+    inainte = ref is not None
+    doar = sys.argv[sys.argv.index('--doar') + 1].split(',') if '--doar' in sys.argv else None
     rad = WT
     tmp = None
     if inainte:
-        tmp = Path(tempfile.mkdtemp(prefix='lh_r12_inainte_'))
-        arh = subprocess.run(['git', '-C', str(WT), 'archive', 'HEAD', 'aplicatii'], capture_output=True, check=True).stdout
-        tarfile.open(fileobj=io.BytesIO(arh)).extractall(tmp)
+        tmp = arhiva(ref)
         rad = tmp
     try:
         with Ham(radacina=rad) as H:
             for f in SECTIUNI:
+                if doar and f.__name__ not in doar:
+                    continue
                 try:
                     f(H)
                 except Exception as e:
@@ -407,8 +578,9 @@ def main():
         if tmp:
             shutil.rmtree(tmp, ignore_errors=True)
     picate = [x['nume'] for x in R if not x['ok']]
-    out = AICI / ('proba_grav_inainte.json' if inainte else 'proba_grav_dupa.json')
-    out.write_text(json.dumps({"radacina": "HEAD (git archive în %TEMP%)" if inainte else "worktree", "verificari": R, "picate": picate,
+    nume = ('proba_grav_inainte' if ref == '32fe7fb1' else 'proba_grav_' + ref) if inainte else 'proba_grav_dupa'
+    out = AICI / ((nume + '_' + '_'.join(doar) if doar else nume) + '.json')
+    out.write_text(json.dumps({"radacina": (ref + " (git archive în %TEMP%)") if inainte else "worktree", "verificari": R, "picate": picate,
                                "erori_pagina": erori[:20], "cereri_plecate": plecate[:20]}, ensure_ascii=False, indent=1), encoding='utf-8')
     for x in R:
         print(('OK  ' if x['ok'] else 'PICĂ') + ' ' + x['nume'])

@@ -180,7 +180,8 @@
         tranzitie_galerie: D() && D().tranzitie ? D().tranzitie : 'None',
         animatie_galerie: fs ? (anim ? anim.efect : 'None') : null,
         nume_fisier: M.nume,
-        diapozitiv_activ: M.activ + 1,
+        /* MINOR critic 11 §6: fără niciun diapozitiv nu există unul activ → null (nu 1) */
+        diapozitiv_activ: M.dia.length ? M.activ + 1 : null,
         panou: M.panou,
         selectie_text: sel && sel.edit && formaSel() ? { diapozitiv: sel.d + 1, forma: sel.s + 1, de_la: Math.min(sel.a, sel.b), pana_la: Math.max(sel.a, sel.b),
           text: formaSel().text.slice(Math.min(sel.a, sel.b), Math.max(sel.a, sel.b)) } : null,
@@ -472,6 +473,30 @@
       if (panouLat && panouLat.cheie === 'panou.AnimationCustom') randuriAnimatii();
       I.zonaTinta = sel ? 'forma:' + (sel.d + 1) + '/' + (sel.s + 1) : M.panou === 'miniaturi' ? 'miniatura:' + (M.activ + 1) : 'diapozitiv';
     }
+    /* MINOR critic 11 §6 (I1, api §7: „zonele de atins ≥ 32 px” la 360-390 px): lansatorul grupului (16×16 → 21×21 la zoom-ul 1,34
+       al telefonului) primește o zonă de atingere de până la 24×24 (= 32×32 pe ecran), lărgită DOAR spre locul liber din grupul lui
+       (fără să acopere alt buton al grupului, fără să iasă din grup). Ce se vede rămâne la fel: lărgirea e umplutură, iar pictograma
+       și fundalul la apăsare stau în cele 16×16 de dinainte (aplicatii.css, @media telefon, `.lh-ap-p-zona-at`). Pe desktop regula
+       CSS nu se aplică. Unde butonul de deasupra e prea aproape (Paragraph, Drawing…), zona rămâne cât încape. */
+    function zoneAtingere(p) {
+      const T = 24, dr = e => ['left', 'top', 'width', 'height'].map(k => parseFloat(e.style[k]) || 0);
+      p.querySelectorAll('[data-lh-tinta^="lansator:"]').forEach(x => {
+        const g = x.parentElement, [x0, y0, w, h] = dr(x), G = dr(g);
+        const gw = G[2] || 1e4, gh = G[3] || 1e4;
+        const alti = [...g.children].filter(e => e !== x && e.getAttribute('role')).map(dr);
+        const liber = (l, u, r, d) => x0 - l >= 0 && y0 - u >= 0 && x0 + w + r <= gw && y0 + h + d <= gh &&
+          alti.every(([a, b, c, e]) => !(x0 - l < a + c && a < x0 + w + r && y0 - u < b + e && b < y0 + h + d));
+        let best = null;
+        for (let l = 0; l <= T - w; l++) for (let r = 0; l + r <= T - w; r++) for (let u = 0; u <= T - h; u++) for (let d = 0; u + d <= T - h; d++) {
+          const s = [Math.min(w + l + r, h + u + d), (w + l + r) * (h + u + d), -Math.abs(l - r) - Math.abs(u - d)];
+          if (best && (s[0] < best.s[0] || (s[0] === best.s[0] && (s[1] < best.s[1] || (s[1] === best.s[1] && s[2] <= best.s[2]))))) continue;
+          if (liber(l, u, r, d)) best = { s, l, u, r, d };
+        }
+        if (!best || best.s[1] <= w * h) return;
+        x.classList.add('lh-ap-p-zona-at');
+        [['--zl', best.l], ['--zu', best.u], ['--zr', best.r], ['--zd', best.d], ['--zw', w], ['--zh', h]].forEach(([k, v]) => x.style.setProperty(k, v + 'px'));
+      });
+    }
     function activeazaFila(id) {
       const cheie = (/^Ctx_/.test(id) ? 'panglica_context.' : 'panglica.') + id;
       if (!SUP[cheie]) return false;
@@ -480,6 +505,7 @@
       const p = desen(cheie, { fila });
       pozitie(p, SUP[cheie].r);
       loculPanglicii.appendChild(p);
+      zoneAtingere(p);
       filaActiva = id;
       filePl.querySelectorAll('[data-lh-tip="TabItem"]').forEach(t => {
         const a = t.getAttribute('data-lh-id-mso') === id;
@@ -1045,8 +1071,10 @@
       deschideBackstage('Save As');
       return 'pagina_backstage';
     }
-    function anuleaza() { const x = H.anuleaza(inst()); if (!x) return 'fara_efect'; puneInst(x); deseneaza(); return 'anulare'; }
-    function reface() { const x = H.reface(inst()); if (!x) return 'fara_efect'; puneInst(x); deseneaza(); return 'refacere'; }
+    /* MINOR critic 11 §6: Ctrl+Z / Ctrl+Y făcute DUPĂ salvare schimbă prezentarea față de fișier → `modificat` true (ca Word,
+       word.js › `pune` după Undo/Redo: M.modificat = true); doar o anulare/refacere care chiar a avut ce face */
+    function anuleaza() { const x = H.anuleaza(inst()); if (!x) return 'fara_efect'; puneInst(x); M.salvat = false; deseneaza(); return 'anulare'; }
+    function reface() { const x = H.reface(inst()); if (!x) return 'fara_efect'; puneInst(x); M.salvat = false; deseneaza(); return 'refacere'; }
     /* expunerea (F5 / From Beginning): diapozitivele pe tot ecranul aplicației; clic / → / Spațiu = următorul, Esc = ieșire */
     function expunere(de) {
       if (!M.dia.length) return 'fara_efect';
@@ -1590,7 +1618,10 @@
       const { R, out } = ktTinte();
       out.forEach(o => {
         if (kt.prefix && o.cheie.indexOf(kt.prefix) !== 0) return;
-        const r = o.x.getBoundingClientRect(), b = el('span', 'lh-ap-keytip', { 'aria-hidden': 'true' });
+        /* lansatorul cu zona de atingere lărgită (zoneAtingere, telefon): insigna stă sub pictograma lui (12 px în 16 × 16), nu sub zonă */
+        const gl = o.x.classList.contains('lh-ap-p-zona-at') && o.x.querySelector('svg'), q = gl && gl.getBoundingClientRect();
+        const r = q ? { left: q.left - q.width / 6, width: q.width * 4 / 3, bottom: q.bottom + q.height / 6 } : o.x.getBoundingClientRect();
+        const b = el('span', 'lh-ap-keytip', { 'aria-hidden': 'true' });
         b.textContent = o.cheie;
         b.style.left = (r.left - R.left + r.width / 2) + 'px';
         b.style.top = (r.bottom - R.top - 6) + 'px';
