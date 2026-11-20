@@ -621,6 +621,11 @@
     /* „modificat”: conținutul pus la pornire într-un document nesalvat contează ca modificare (Word real, conținut pus prin
        COM: acoperire_r3.fapte.b_ctrl_w_modificat.document_saved_inainte = false); lecția îl poate spune explicit */
     M.modificat = typeof c.modificat === 'boolean' ? c.modificat : (!M.salvat && (M.P.some(p => p.t !== '') || M.tab.length > 0));
+    /* documentele noi se numerotează pe sesiune: Document1, Document2, … și după ce s-au închis toate, numărul continuă (Word
+       real prin COM, runde/5/critic_probe/com_r5.json › nou1_nume „Document1”, nou2_nume „Document2”,
+       nou3_dupa_inchiderea_tuturor_nume „Document3”). Lecția care pornește cu un fișier salvat n-a făcut încă niciun document
+       nou. Critic 5, GRAV S6 */
+    let nrNou = (() => { const m = !M.salvat && /^Document(\d+)$/.exec(M.nume); return m ? +m[1] : 0; })();
     const pozitie = (e, r, baza) => { e.style.position = 'absolute'; e.style.left = (r[0] - (baza ? baza[0] : 0)) + 'px'; e.style.top = (r[1] - (baza ? baza[1] : 0)) + 'px'; };
     const OPT = {
       tinta(n, ctx) {
@@ -941,6 +946,32 @@
         const sp = BTN_TITLU.querySelector('.lh-ap-text');
         if (sp) sp.textContent = nume;
       }
+      griFaraDocument();
+    }
+    /* Word fără document: comenzile panglicii sunt gri și fără efect; filele și File rămân active (Word real prin COM,
+       runde/5/critic_probe/com_r5.json › activ_fara_document: Bold, Italic, FontSize, Paste, FileSave, FileSaveAs, FilePrint,
+       FileClose = false; doar FileNewDefault și FileOpen = true, iar ele nu sunt pe panglică, ci Ctrl+N / Ctrl+O / Ctrl+F12).
+       Restul comenzilor panglicii, gri ca la PowerPoint fără prezentare (powerpoint.js › actualizeazaPanglica) — de_verificat
+       R16-4. Cu document, nimic nu se atinge (doar ce a fost făcut gri aici revine). Critic 5, GRAV T5 */
+    const TIP_COMANDA = /^(Button|SplitButton|ComboBox|CheckBox|RadioButton|MenuItem|ListItem|Edit|Spinner|Hyperlink)$/;
+    function griFaraDocument() {
+      const fara = !M.deschis;
+      loculPanglicii.querySelectorAll('[data-lh-tip]').forEach(x => {
+        if (!x.__nod || !TIP_COMANDA.test(x.getAttribute('data-lh-tip') || '')) return;
+        if (fara && !x.__griFara && x.getAttribute('aria-disabled') !== 'true') {
+          x.__griFara = true;
+          x.classList.add('lh-ap-gri');
+          x.setAttribute('aria-disabled', 'true');
+        } else if (!fara && x.__griFara) {
+          x.__griFara = false;
+          x.classList.remove('lh-ap-gri');
+          x.removeAttribute('aria-disabled');
+        }
+      });
+      loculPanglicii.querySelectorAll('input').forEach(i => {
+        if (fara && !i.disabled) { i.disabled = true; i.__griFara = true; }
+        else if (!fara && i.__griFara) { i.disabled = false; i.__griFara = false; }
+      });
     }
     function actualizeaza() {
       deseneazaDoc();
@@ -1021,13 +1052,20 @@
       inchideMeniu();
       if (dialog) inchideDialog();
       const strat2 = stratNou('lh-ap-strat-dialog');
-      dialog = { baza, strat: strat2, fila: null, desen: baza, folder: folderAdresa(baza === 'dialog.open' ? 'dialog.open' : 'dialog.FileSaveAs') };
+      /* Save As pe un document salvat pornește din folderul DOCUMENTULUI (Word real prin COM, runde/5/critic_probe/com_r5.json ›
+         deschis_din_descarcari_propus_F12 = calea din Descărcări, la fel după o modificare; runde/4/critic_probe/com_f12.json ›
+         salvat_propus_F12); documentul nou, din folderul ferestrei din referință („Adresă: Documente”). Critic 5, GRAV S2 */
+      const folderDoc = baza === 'dialog.FileSaveAs' && M.deschis && M.salvat && M.folder ? M.folder : null;
+      dialog = { baza, strat: strat2, fila: null, desen: baza, folder: folderDoc || folderAdresa(baza === 'dialog.open' ? 'dialog.open' : 'dialog.FileSaveAs') };
       if (baza === 'dialog.FileSaveAs' || baza === SALVARE_NOUA || baza === INTREBARE_INCHIDERE) {
         const prim = (M.P.find(p => p.t.trim()) || { t: '' }).t.trim();
         /* document deja salvat: numele fișierului (Word real, COM — runde/4/critic.md:104: după SaveAs2 dă „numele
            fișierului. După o modificare dă tot numele fișierului”); document nou: primul rând (word-salvare-ca-f12.json).
            Critic runda 4, GRAV T1 */
-        let propus = M.salvat ? faraExt(M.nume) : prim ? prim.replace(/[\\/:*?"<>|]/g, '').slice(0, 60) : faraExt(M.nume);
+        /* documentul nou și GOL: Save As propune „Doc<n>” pentru „Document<n>” (Word real prin COM, runde/5/critic_probe/
+           com_r5.json › nou1_gol_propus_F12 „Doc1.docx”, nou2_gol_propus_F12 „Doc2.docx”) — critic 5, GRAV S6 */
+        const gol = baza === 'dialog.FileSaveAs' && !M.salvat && !prim && /^Document(\d+)$/.exec(M.nume);
+        let propus = M.salvat ? faraExt(M.nume) : prim ? prim.replace(/[\\/:*?"<>|]/g, '').slice(0, 60) : gol ? 'Doc' + gol[1] : faraExt(M.nume);
         /* „Save your changes…” pe un document deja salvat: numele lui (fără referință — AC-5) */
         if (baza === INTREBARE_INCHIDERE && M.salvat) propus = faraExt(M.nume);
         /* fereastra Save As propune numele CU extensia („Tema mea de azi.docx”), ferestrele Office FĂRĂ („Poezia mea”):
@@ -1145,9 +1183,25 @@
         M.recente.unshift({ nume, folder });
       }
     }
+    /* un nume cu semnele pe care Windows nu le primește (lecția m1-l03:156: „Windows nu primește în nume semnele \ / : * ? " < > |”)
+       nu se salvează: Word real refuză (runde/5/critic_probe/com_r5.json › nume_interzise: SaveAs2 „This is not a valid file
+       name.” / „Command failed”; os.open „OSError 22 Invalid argument”). Fereastra de eroare NU e în referință → elementul
+       mesajului central (ca excel.js › mesajFormula), fără textul unei ferestre inventate; fereastra de salvare rămâne deschisă,
+       nimic nu se scrie (de_verificat R16-1). Critic 5, GRAV S3 */
+    const SEMNE_INTERZISE = /[\\/:*?"<>|]/;
+    function numeInterzis() {
+      root.querySelectorAll('[data-lh-nesimulat]:not([data-lh-tip])').forEach(x => x.remove());
+      const m = el('div', 'lh-ap-mesaj', { 'data-lh-nesimulat': 'nume_interzis', role: 'status' });
+      m.textContent = 'Windows nu primește în numele fișierului semnele \\ / : * ? " < > |. În aplicația reală apare o fereastră de eroare (aici nu e simulată). Schimbă numele.';
+      root.appendChild(m);
+      clearTimeout(I._tMesaj);
+      I._tMesaj = setTimeout(() => m.remove(), scenariu ? 60000 : 6000);
+      return 'nume_interzis';
+    }
     function salveaza() {
       let v = valoareCamp('camp:nume_fisier').trim();
       if (!v) return 'fara_efect';
+      if (SEMNE_INTERZISE.test(v)) return numeInterzis();
       /* „Save your changes…” pe un document deja salvat: în folderul lui (AC-5); altfel folderul ferestrei (referința) */
       const folder = dialog && dialog.baza === INTREBARE_INCHIDERE && M.salvat && M.folder ? M.folder : (dialog && dialog.folder) || folderSalvare();
       const tip = (dialog && dialog.tip) || TIPURI_SALVARE[0] || 'Word Document (*.docx)';
@@ -1209,6 +1263,7 @@
       const inp = cb.querySelector('input');
       if (inp) inp.value = tip;
       cb.querySelectorAll('[data-lh-tip="Text"]').forEach(x => { const sp = x.querySelector('.lh-ap-text') || x; sp.textContent = tip; });
+      umpleFolder(dialog.el);   // lista arată fișierele tipului ales (GRAV S5)
       return 'tip_fisier';
     }
     /* valoarea casetei Save as type a unei ferestre, din referință (dialog.FileSaveAs / dialog.save_this_file: „Word
@@ -1406,9 +1461,23 @@
     }
     /* un rând din Recent deschide fișierul (din `fisiere` sau salvat de elev); un document în lucru rămâne deschis în
        fereastra lui (documente_deschise crește) — NEVERIFICAT: AC-7 */
+    /* același fișier, deja deschis (în față sau în altă fereastră): Word nu face al doilea document, ci aduce în față
+       documentul existent, cu tot ce e scris în el (Word real prin COM, runde/5/critic_probe/com_r5.json › deschis_iar:
+       documente_inainte 1, documente_dupa 1, acelasi_document true). Documentul modificat: fără referință pentru o întrebare
+       („revert to saved?”) → rămâne munca elevului (de_verificat R16-3). Critic 5, GRAV S4 */
+    const acelasiFisier = (d, f) => d && d.salvat && d.folder === f.folder && String(d.nume).toLowerCase() === f.nume.toLowerCase();
     function deschideFisier(ref) {
       const f = gasesteFisier(ref.nume, ref.folder);
       if (!f) return I.nesimulat(faraExt(ref.nume));
+      if (M.deschis && acelasiFisier(M, f)) { inchideBackstage(); actualizeaza(); return 'deschidere'; }
+      const k = M.altele.findIndex(d => acelasiFisier(d, f));
+      if (k >= 0) {
+        const d = M.altele.splice(k, 1)[0];
+        if (M.deschis) M.altele.push(instantaneuDoc());
+        inchideBackstage();
+        incarcaDoc(d);
+        return 'deschidere';
+      }
       if (M.deschis && (M.salvat || M.modificat)) M.altele.push(instantaneuDoc());
       inchideBackstage();
       incarcaDoc({ P: f.text.map(t => parIn(t)), nume: f.nume, folder: f.folder, salvat: true, modificat: false });
@@ -1441,8 +1510,12 @@
     function umpleFolder(s) {
       if (!dialog || !(dialog.baza === 'dialog.FileSaveAs' || dialog.baza === 'dialog.open')) return;
       const f0 = folderAdresa(dialog.baza === 'dialog.open' ? 'dialog.open' : 'dialog.FileSaveAs');
-      const adr = [...s.querySelectorAll('[data-lh-tip="SplitButton"]')].find(x => x.getAttribute('data-lh-eticheta') === f0 && x.closest('[data-lh-eticheta^="Adres"]'));
-      if (adr && dialog.folder !== f0) {
+      /* butonul folderului din bara de adrese e găsit O DATĂ pe desen (după eticheta din referință) și ținut minte: după prima
+         navigare eticheta lui devine noul folder, iar căutarea după „Documente” nu-l mai găsea — bara rămânea pe primul folder
+         ales (critic 5, GRAV S1; referința: uia_word.json › dialog.FileSaveAs / dialog.open › ToolBar „Adresă: Documente” =
+         folderul ferestrei) */
+      const adr = s.__adresa || (s.__adresa = [...s.querySelectorAll('[data-lh-tip="SplitButton"]')].find(x => x.getAttribute('data-lh-eticheta') === f0 && x.closest('[data-lh-eticheta^="Adres"]')) || null);
+      if (adr && adr.getAttribute('data-lh-eticheta') !== dialog.folder) {
         adr.closest('[data-lh-eticheta^="Adres"]').setAttribute('data-lh-eticheta', 'Adresă: ' + dialog.folder);
         adr.setAttribute('data-lh-eticheta', dialog.folder);
         if (adr.hasAttribute('data-lh-tinta')) adr.setAttribute('data-lh-tinta', 'fereastra:' + dialog.folder);
@@ -1450,8 +1523,12 @@
         if (t) t.textContent = dialog.folder;
       }
       s.querySelectorAll('.lh-ap-nav-rand').forEach(x => x.toggleAttribute('data-lh-selectat', x.getAttribute('data-lh-eticheta') === dialog.folder));
-      if (dialog.baza !== 'dialog.open') return;
-      const fis = M.fs.filter(f => f.folder === dialog.folder).sort((a, b) => a.nume.localeCompare(b.nume));
+      /* Save As: lista arată fișierele folderului, ca fereastra Open (uia_word.json › dialog.FileSaveAs › List „Vizualizare
+         elemente”: 8 ListItem; lecția m1-l03:171-172 „nu da clic pe fișierul colegei”), doar cele de tipul din „Save as
+         type” (*.docx / *.pdf, valoarea casetei din referință; filtrul = de_verificat R16-2). Critic 5, GRAV S5 */
+      const ext = dialog.baza === 'dialog.open' ? [] : (String(dialog.tip || '').match(/\*\.[a-z0-9]+/gi) || []).map(x => x.slice(1).toLowerCase());
+      const fis = M.fs.filter(f => f.folder === dialog.folder && (!ext.length || ext.some(x => f.nume.toLowerCase().endsWith(x))))
+        .sort((a, b) => a.nume.localeCompare(b.nume));
       const randuri = s.__randuriOpen || (s.__randuriOpen = [...s.querySelectorAll('[data-lh-tip="List"][data-lh-eticheta="Vizualizare elemente"] [data-lh-tip="ListItem"]')]);
       randuri.forEach((x, k) => {
         const f = fis[k];
@@ -1466,12 +1543,13 @@
     }
     /* Ctrl+N / File › Blank document: un document nou, gol; cel deschis rămâne în fereastra lui (documente_deschise crește).
        support.microsoft.com/en-us/office/keyboard-shortcuts-in-word-95ef89dd-7142-4b50-afb2-f762f663ceb2: „Create a new
-       document. | Ctrl+N”; lecția m1-l03:116. Numele „Document1”: numerotarea nu e în referință (de_verificat R5-2).
-       Critic runda 4, GRAV T5 */
+       document. | Ctrl+N”; lecția m1-l03:116. Numele: Document2, Document3, … (com_r5.json, vezi `nrNou`; critic 5,
+       GRAV S6). Critic runda 4, GRAV T5 */
     function documentNou() {
       if (M.inchisApp) return 'fara_efect';
       if (M.deschis) M.altele.push(instantaneuDoc());
-      incarcaDoc({ P: [parIn('')], nume: 'Document1', salvat: false, modificat: false });
+      nrNou++;
+      incarcaDoc({ P: [parIn('')], nume: 'Document' + nrNou, salvat: false, modificat: false });
       return 'document_nou';
     }
     /* zona PDF (uia_word.json › dialog.FileSaveAs_pdf): bifa „Open file after publishing” (fapte.e_dupa_pdf.bife = 0) și
@@ -1486,7 +1564,6 @@
       (x.closest('[data-lh-tip="Group"]') || dialog.el).querySelectorAll('[data-lh-tip="RadioButton"]').forEach(y => pune(y, y === x));
       return 'alegere_optiune';
     }
-    const numeTasta = e => (e.ctrlKey ? 'Ctrl+' : '') + (e.altKey ? 'Alt+' : '') + (e.shiftKey ? 'Shift+' : '') + (String(e.key || '').length === 1 ? String(e.key).toUpperCase() : e.key);
     /* File › Open › Recent: rândurile = lista Recent din conținut (+ documentele salvate); forma rândului din
        uia_word.json › backstage.Open_rand_recent (ListItem 753×61, Alt, F, O, Y 3…). Fără `recente`, rândurile rămân ale
        referinței (goale: textele lor sunt personale). Pe rând: numele fără extensie, ca în bara de titlu (AC-7). */
@@ -1729,6 +1806,9 @@
       if (fel === 'fila_dialog' && dialog) { dialog.cheiePlasa = null; arataFilaDialog(v === (date.dialoguri[dialog.baza].file[0].fila || null) ? null : (date.dialoguri[dialog.baza].file.some(f => f.fila === v) ? v : null)); return 'fila_dialog'; }
       if (fel === 'dialog_salvare' && dialog) return v === 'Save' ? salveaza() : (inchideDialog(), 'anulare');
       if (dialog && dialog.baza === 'dialog.FileSaveAs' && fel === 'arbore' && elx.__folder) return navigheaza(elx.__folder);
+      /* clic pe un fișier din lista Save As = numele lui în File name (greșeala tipică din m1-l03:171-172: Save pe numele
+         colegei → „already exists”, fișierul ei neatins — GRAV T2). Critic 5, GRAV S5 */
+      if (dialog && dialog.baza === 'dialog.FileSaveAs' && fel === 'lista' && elx.__fisier) { alegeRandOpen(elx); return 'selectare'; }
       if (dialog && dialog.desen === 'dialog.FileSaveAs_pdf' && fel === 'fereastra') {
         const tn = (elx.__nod || {}).t;
         if (tn === 'CheckBox' || tn === 'RadioButton') return comutaCaseta(elx, tn);
@@ -1748,8 +1828,9 @@
       if (dialog && dialog.strat.contains(elx)) return I.nesimulat(v);
       if (fel === 'zoom') return zoomClic(elx, e, v);
       if (fel === 'bara_derulare') { zona.scrollBy({ top: v === 'Line up' ? -40 : v === 'Line down' ? 40 : zona.clientHeight * 0.9 }); return 'derulare'; }
-      /* fără document, comenzile panglicii n-au pe ce lucra: mesajul central, nu tăcere (R12; critic runda 4, GRAV T5) */
-      if (fel === 'panglica' || fel === 'meniu_derulant' || fel === 'lansator' || fel === 'meniu') return M.deschis ? apasa(elx, tinta) : I.nesimulat(String((elx.__nod || {}).e || v).replace(/^.*\//, '') || tinta);
+      /* fără document, comenzile panglicii sunt gri în Word real (com_r5.json › activ_fara_document) → fără efect, fără
+         mesajul „funcționează” (critic 5, GRAV T5; înainte: mesajul central, critic runda 4) */
+      if (fel === 'panglica' || fel === 'meniu_derulant' || fel === 'lansator' || fel === 'meniu') return M.deschis ? apasa(elx, tinta) : 'indisponibil';
       /* ✕ al ferestrei Word = Ctrl+W pe document (acoperire_r3.fapte.b_x_la_fel_ca_ctrl_w: true) — critic runda 3, GRAV N4 */
       if (fel === 'bara_titlu' && v === 'Close') return cerereInchidere('x');
       return I.nesimulat(v || tinta);
@@ -1757,6 +1838,11 @@
     I.la.dublu = tinta => {
       /* dublu clic pe un fișier din fereastra Open = Open (rândul ales + butonul implicit) */
       if (dialog && dialog.baza === 'dialog.open' && /^lista:/.test(tinta || '')) return deschideDinOpen(tinta.slice(6));
+      /* dublu clic pe un fișier din Save As = rândul ales + Save (butonul implicit) — GRAV S5 */
+      if (dialog && dialog.baza === 'dialog.FileSaveAs' && /^lista:/.test(tinta || '')) {
+        const x = [...dialog.el.querySelectorAll('[data-lh-tinta^="lista:"]')].find(r => r.getAttribute('data-lh-tinta') === tinta && r.__fisier);
+        if (x) { alegeRandOpen(x); return salveaza(); }
+      }
       return /^text:|^document/.test(tinta || '') ? 'selectare_cuvant' : null;
     };
     I.la.dreapta = (tinta, e) => {
@@ -1840,8 +1926,22 @@
            afb2-f762f663ceb2: „Open the menu for the selected button. | Alt+Down arrow key”); rândurile ei: uia_word.json ›
            lista.FontSize. În Save As, caseta Save as type are același gest (referința: Button „Deschidere”, tasta_acces
            „Alt+Săgeată în jos”) — critic runda 3, GRAV 3 / A1 */
-        if (e.key === 'ArrowDown' && e.altKey && e.target.closest && e.target.closest('[data-lh-id-mso="FontSize"]')) { e.preventDefault(); return listaMarimi(e.target.closest('[data-lh-id-mso="FontSize"]')) || 'lista_marimi'; }
-        if (e.key === 'ArrowDown' && e.altKey && dialog && dialog.baza === 'dialog.FileSaveAs' && e.target.closest && e.target.closest('[data-lh-tinta="camp:tip_fisier"]')) { e.preventDefault(); return listaTip(e.target.closest('[data-lh-tinta="camp:tip_fisier"]')) || 'meniu_tip_fisier'; }
+        /* Alt+↓ APASĂ săgeata ▾ a casetei (Button „Open” / „Deschidere” în referință): același efect ca clicul pe ea, iar
+           evenimentul poartă `activat` = ținta săgeții, ca asistentul și verificarea să vadă același pas ca la mouse
+           (api_biblioteca.md §4 „activat”: butonul pe care TASTA l-a apăsat fără să fie ținta focusului). Pe orice casetă cu
+           ▾ a lui Word: Font Size, Font, Save as type, File name, Files of type, Choose a Location; o casetă fără săgeată
+           proprie (Save as type din „Save this file”) = clicul pe casetă. Critic 5, GRAV T6 (unghiul gest_tastatura) */
+        if (e.key === 'ArrowDown' && e.altKey && e.target.closest) {
+          const cb = e.target.closest('[data-lh-tip="ComboBox"]');
+          const sag = cb && root.contains(cb) ? ([...cb.querySelectorAll('[data-lh-tip="Button"][data-lh-tinta]')][0] || (cb.hasAttribute('data-lh-tinta') ? cb : null)) : null;
+          if (sag) {
+            e.preventDefault();
+            const t = L._canon(sag);
+            I.activat = sag === cb ? null : t || null;
+            return I.la.clic(t, { target: sag, clientX: NaN, clientY: NaN, shiftKey: false, ctrlKey: false, metaKey: false, altKey: false,
+              button: 0, detail: 0, preventDefault() {} }, 1) || 'alt_sageti';
+          }
+        }
         /* Enter într-un câmp al ferestrei = butonul ei implicit (Save: uia_word.json › dialog.FileSaveAs, Button „Save”
            id_win32 1 = IDOK); evenimentul spune ce s-a apăsat (activat), ținta rămâne focusul (§4) — critic runda 2, N2 */
         if (dialog && e.key === 'Enter' && dialog.strat.contains(e.target)) {
@@ -1861,11 +1961,13 @@
       if (backstage) { if (e.key === 'Escape') { inchideBackstage(); return 'inapoi'; } return 'fara_efect'; }
       /* fără document (Ctrl+W → Don't Save) tastele nu au unde scrie; Ctrl+O deschide pagina Open */
       /* fără document (Ctrl+W → Don't Save): tastarea și navigarea n-au unde ajunge; Ctrl+O, Ctrl+N, Ctrl+F12 merg ca de
-         obicei; celelalte comenzi dau mesajul central, nu tac (R12; critic runda 4, GRAV T5) */
+         obicei (com_r5.json › activ_fara_document: FileNewDefault, FileOpen = true); comenzile de document (Ctrl+B, F12,
+         Ctrl+S, Shift+F12, Ctrl+W, Ctrl+P…) sunt dezactivate în Word real (Bold … FileClose = false) → fără efect, fără
+         mesajul „funcționează” (critic 5, GRAV T5) */
       if (!M.deschis && g !== 'ctrl_o' && g !== 'ctrl_n' && !(g === 'tasta_f12' && e.ctrlKey)) {
         actualizeaza();
         if (M.inchisApp || /^(tastare|sageti|alt_sageti|tasta_(enter|backspace|delete|tab|home_end|pagina|esc|windows))$/.test(g)) return 'fara_efect';
-        return I.nesimulat(numeTasta(e));
+        return 'indisponibil';
       }
       let r = null;
       const sh = e.shiftKey;
@@ -2028,6 +2130,8 @@
         ktCurata();
         /* o casetă (Font Size „Alt, H, F S”): tasta pune cursorul în ea, cu valoarea selectată (NEVERIFICAT: R2-5) */
         const camp = exact.x.matches('input:not([readonly])') ? exact.x : exact.x.querySelector('input:not([readonly])');
+        /* caseta gri (Word fără document, GRAV T5): tasta n-are efect */
+        if (camp && camp.disabled) { ktIesi(); I.tastaFaraClic('indisponibil', exact.x); return true; }
         if (camp) {
           ktIesi();
           try { camp.focus({ preventScroll: true }); camp.select(); } catch (x) { /* */ }
