@@ -487,3 +487,29 @@ Până la răspuns, simulatorul face ce scrie în paranteză.
   --id=powerpoint-note,powerpoint-stea-ctrl-c-v`, al doilea cere clipboard-ul omului liber). Tot așa chenarul / mânerele
   formei alese (Selection.Type 2 e dovedit, desenul nu).
 <!-- RUNDA12-POWERPOINT:END -->
+
+<!-- RUNDA13-POWERPOINT:START -->
+## Runda 13 (B-powerpoint, constructorul 1, unghiul gest_tastatura) — [presupus] în powerpoint.js, de lămurit cu omul sau într-o rundă `acoperire`
+- [ ] **R13-1** Clicul în substituenții aspectului (titlu / subtitlu / conținut) pune cursorul în text, deși `a_forma_clic` arată că la
+  forme și casete de text clicul în mijloc alege OBIECTUL; substituenții nu sunt în captură (lecțiile scriu acolo). Tot aici: al doilea
+  clic fără tragere pe o casetă / formă deja aleasă = cursor în text. Scenariul care lămurește: Title Slide, clic în mijlocul titlului
+  „Vulcanii” → `Selection.Type`; apoi încă un clic → `Selection.Type`.
+- [ ] **R13-2** Fontul implicit al casetelor fără font ales: titlul „Calibri Light (Headings)”, restul „Calibri (Body)” (din
+  `lista.Font › Theme Fonts`); `Font.Name` al titlului unei prezentări noi nu e capturat.
+- [ ] **R13-3** Desenul formelor în galeria Shapes și pe diapozitiv (`desenForma`): SVG geometric din nume; desenul real nu e în UIA.
+- [ ] **R13-4** Clicul în caseta Font deschide lista și alege textul casetei; în aplicația reală clicul în text (probabil) doar alege
+  textul, iar lista o deschide ▾ / Alt+↓. Scenariul `powerpoint-font-titlu` apasă centrul casetei (UIA Expand pe real). De probat:
+  clic de mouse în textul casetei Font → se deschide lista?
+- [ ] **R13-5** Background Styles: Style 1-4 = solid #FFFFFF / #E7E6E6 / #44546A / #000000, restul `gradient` fără culoare; dovedit
+  doar Style 6 = #E9E7E7 (`c_background_styles`). Scenariul: fiecare Style N → `Background.Fill.Type` / `ForeColor`.
+- [ ] **R13-6** Tastatura într-o listă deschisă (săgeți = rândul următor / anterior în ordinea din listă, Enter = clic, Esc = închide;
+  la deschidere e marcat rândul valorii curente — Font, Start). Nimic din PowerPoint capturat cu tastele în liste.
+- [ ] **R13-7** Fereastra Open: un nume care nu e în dosar + Enter → fereastra rămâne, fără mesaj (în Windows apare un mesaj „nu se
+  găsește”); dublu clic pe rând = deschidere; fereastra centrată în aplicație (captura are coordonatele relative la fereastră).
+- [ ] **R13-8** Imaginea în caseta goală Two Content: raportul 304 / 408 e al imaginii din captură; pentru alte imagini PowerPoint
+  păstrează raportul imaginii.
+- [ ] **R13-9** Zona de note: înălțimea 55 px, chenarul, îndemnul „Click to add notes” și tastarea în ea (UIA nu o expune;
+  `powerpoint-note` fără rezultat probat).
+- [ ] **R13-10** Slide Sorter: grila (220 px pe miniatură, 24 px între ele, numărul sub miniatură); clicul pe o miniatură o alege,
+  tragerea NU reordonează aici (în real reordonează). Reading View = fereastra aplicației albă, cu diapozitivul (nu e capturată).
+<!-- RUNDA13-POWERPOINT:END -->

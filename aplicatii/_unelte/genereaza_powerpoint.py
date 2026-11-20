@@ -131,6 +131,9 @@ def genereaza():
         "icoane": icoane,
         "lipsa": lipsa,
         "fara_icoana": fara_icoana,
+        # Font ▾ › All Fonts: în suprafața lista.Font sunt doar cele 17 rânduri vizibile la deschidere; toate numele, în ordine,
+        # sunt în acoperire_r12.fapte › c_font › all_fonts (fonturile PC-ului capturat) — runda 13, A4
+        "fonturi_toate": (((ref.get("acoperire_r12") or {}).get("fapte") or {}).get("c_font") or {}).get("all_fonts") or [],
     }
 
 

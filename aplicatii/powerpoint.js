@@ -42,7 +42,7 @@
     const root = I.root, date = I.date, pang = L._module.panglica, esc = pang.esc, clona = L._clona;
     const SUP = date.suprafete, ZR = ((date.zona || {}).desktop || {}).r || [1, 181, 1364, 564];
     const scenariu = !!I.opt.scenariu;
-    const INTREB = 'dialog.save_your_changes_to_this_file', POZA = 'dialog.PictureInsertFromFilePowerPoint';
+    const INTREB = 'dialog.save_your_changes_to_this_file', POZA = 'dialog.PictureInsertFromFilePowerPoint', DESCHIDE = 'dialog.FileOpen';
     let unealta = null, inserat = false;   // Shapes: forma aleasă, care așteaptă clicul pe diapozitiv
     const istoricNou = () => L._module.stare.istoric((a, b) => a === b && a === 'tastare');
     let H = istoricNou();   // istoricul (Ctrl+Z) e al prezentării active; fiecare prezentare deschisă își are istoricul ei
@@ -50,7 +50,7 @@
     const pozitie = (e, r) => { e.style.position = 'absolute'; e.style.left = r[0] + 'px'; e.style.top = r[1] + 'px'; };
 
     /* ============================================================ modelul */
-    const M = { dia: [], activ: 0, tema: 'Office Theme', nume: null, panou: 'diapozitiv', clip: null, citita: null, expunere: null };
+    const M = { dia: [], activ: 0, tema: 'Office Theme', nume: null, panou: 'diapozitiv', clip: null, citita: null, expunere: null, vedere: 'normala', note: true, fisiere: [] };
     let sel = null;   // {d, s, edit, a, b, ins}: forma s a diapozitivului d — edit = cursorul în text (a..b = selecția), altfel forma aleasă ca obiect; ins = formatul de scriere ales cu cursorul strâns
     /* textul unei casete = un șir + formatul FIECĂRUI caracter (fm[k] = {b, i, u, m}; m = null: mărimea casetei, deci schimbarea
        aspectului o schimbă) + proprietățile FIECĂRUI paragraf (par[p] = {al, ina, dupa, linie, ind}; paragrafele = bucățile
@@ -63,7 +63,7 @@
       return { tip: p.tip, text: t, fm: Array.from({ length: t.length }, () => ({ b: false, i: false, u: false, m: null })), par: t.split('\n').map(() => parNou(p.centru)),
         bold: false, italic: false, underline: false, marime: p.marime, x: p.x, y: p.y, w: p.w, h: p.h, centru: !!p.centru };
     }
-    const fmDef = f => ({ b: !!f.bold, i: !!f.italic, u: !!f.underline, m: null, c: f.culoare || null });
+    const fmDef = f => ({ b: !!f.bold, i: !!f.italic, u: !!f.underline, m: null, c: f.culoare || null, f: f.font || null });
     const fmLa = (f, k) => (f.fm && f.fm[k]) || fmDef(f);
     const marimeLa = (f, x) => (x.m == null ? f.marime : x.m);
     const parLa = (f, p) => (f.par && f.par[p]) || parNou(f.centru);
@@ -90,7 +90,27 @@
     function diaNou(aspect, texte) {
       const P = ASPECTE[aspect] != null ? ASPECTE[aspect] : ASPECTE['Title and Content'];
       /* durata tranziției: 2 s pe un diapozitiv nou (uia_powerpoint.json › panglica.TabTransitions › Duration „02,00”) */
-      return { aspect, forme: P.map((p, i) => formaNoua(p, (texte || [])[i])), tranzitie: null, animatii: [], durata: 2 };
+      return { aspect, forme: P.map((p, i) => formaNoua(p, (texte || [])[i])), tranzitie: null, animatii: [], durata: 2, note: '' };
+    }
+    /* un diapozitiv din `start` (api §7.1, runda `acoperire` după runda 12): casetele aspectului cu `texte`, fontul literelor lor
+       (`fonturi`, în aceeași ordine), apoi `forme` [{fel: forma|caseta_text|imagine, forma?, text?, pozitie, umplere?, fisier?}]
+       DUPĂ casetele aspectului — desenate ca formele puse din Shapes (Shapes.AddShape / AddTextbox / AddPicture,
+       referinte/acoperire_powerpoint_r12.py) */
+    function diaPornire(d) {
+      const x = diaNou(d.aspect || 'Title and Content', d.texte);
+      const fo = Array.isArray(d.fonturi) ? d.fonturi : [];
+      x.forme.forEach((f, i) => { if (fo[i]) { f.font = String(fo[i]); (f.fm || []).forEach(k => { k.f = f.font; }); } });
+      (Array.isArray(d.forme) ? d.forme : []).forEach(o => {
+        const [px, py, pw, ph] = Array.isArray(o.pozitie) && o.pozitie.length === 4 ? o.pozitie.map(Number) : [300, 135, 144, 144];
+        if (o.fel === 'imagine') { x.forme.push({ tip: 'imagine', nume: String(o.fisier || ''), text: '', x: px, y: py, w: pw, h: ph }); return; }
+        const cas = o.fel === 'caseta_text';
+        const f = formaNoua({ tip: cas ? 'caseta' : 'forma', x: px, y: py, w: pw, h: ph, marime: 18, centru: !cas }, o.text ? String(o.text) : '');
+        if (!cas) f.forma = String(o.forma || 'Rectangle');
+        if (o.umplere) f.umplere = { tip: 'solid', culoare: String(o.umplere).toUpperCase() };
+        x.forme.push(f);
+      });
+      if (d.note != null) x.note = String(d.note);
+      return x;
     }
     const D = () => M.dia[M.activ];
     const forma = (d, s) => (M.dia[d] || { forme: [] }).forme[s] || null;
@@ -106,7 +126,9 @@
 
     (function incarca(c) {
       const ds = Array.isArray(c.diapozitive) && c.diapozitive.length ? c.diapozitive : [{ aspect: 'Title Slide' }];
-      M.dia = ds.map(d => diaNou(d.aspect || 'Title and Content', d.texte));
+      M.dia = ds.map(d => diaPornire(d));
+      /* fișierele din dosarul de lucru (api §7.1 › start.fisiere): ce arată fereastra Open și ce deschide ea */
+      M.fisiere = Array.isArray(c.fisiere) ? c.fisiere.filter(x => x && x.nume).map(x => ({ nume: String(x.nume), diapozitive: Array.isArray(x.diapozitive) ? x.diapozitive : [] })) : [];
       const lim = n => Math.max(0, Math.min(M.dia.length - 1, n));
       M.activ = lim((+c.diapozitiv_activ || 1) - 1);
       M.panou = c.panou === 'miniaturi' ? 'miniaturi' : 'diapozitiv';
@@ -129,7 +151,7 @@
        b_ctrl_n_din_fereastra_goala: după închiderea lui Presentation1, Ctrl+N → Presentation2), iar Ctrl+W / File › Close /
        ✕ o închid. Fără nicio prezentare (b_dont_save): fereastra „PowerPoint”, filele și File active, comenzile gri. Câmpurile
        din CAMPURI_PREZ sunt ale prezentării; M le ține pe ale celei active, PREZ pe toate. */
-    const CAMPURI_PREZ = ['dia', 'activ', 'tema', 'nume', 'salvat', 'panou', 'nr', 'citita'];
+    const CAMPURI_PREZ = ['dia', 'activ', 'tema', 'nume', 'salvat', 'panou', 'nr', 'citita', 'vedere'];
     M.nr = 1;
     let nrUrmator = 2, prezActiva = 0;
     const PREZ = [{}];
@@ -163,6 +185,16 @@
       }
       return r;
     }
+    /* fontul: numele din lista Font ▾ (Theme Fonts: „Calibri Light (Headings)”, „Calibri (Body)”); fără font ales, titlul are fontul
+       titlurilor temei, restul fontul corpului ([presupus] R13-2: tema Office din referința lista.Font › Theme Fonts) */
+    const fontImplicit = f => (f.tip === 'titlu' ? 'Calibri Light (Headings)' : 'Calibri (Body)');
+    function fontText(f) {
+      for (let p = 0; p < f.text.length; p++) if (f.text[p] !== '\n') return fmLa(f, p).f || f.font || fontImplicit(f);
+      return f.font || fontImplicit(f);
+    }
+    const numeFontCom = n => String(n || '').replace(/ \((Headings|Body)\)$/, '');
+    /* umplerea: forma din Shapes = Accent 1 (#4472C4, c_shape_fill_outline › stea_la_inceput), casetele = fără umplere */
+    const umplereForma = f => f.umplere || (f.tip === 'forma' ? { tip: 'solid', culoare: '#4472C4' } : { tip: 'fara' });
     I.stare = () => {
       const fc = M.citita ? forma(M.citita[0], M.citita[1]) : (formaSel() || (D() && D().forme[0]));
       const fs = formaSel();
@@ -199,7 +231,16 @@
         /* pe fiecare diapozitiv, formele în ordinea din Shapes (api §5): fel + numele din galeria Shapes + textul; pozițiile în pt */
         forme_diapozitiv: M.dia.map(d => d.forme.map(f => { const o = { fel: felForma(f) }; if (o.fel === 'forma') o.forma = f.forma; o.text = textual(f) ? f.text : ''; return o; })),
         pozitii_forme: M.dia.map(d => d.forme.map(f => [f.x, f.y, f.w, f.h].map(v => Math.round(v)))),
-        expunere: M.expunere ? M.expunere.i + 1 : null
+        expunere: M.expunere ? M.expunere.i + 1 : null,
+        /* runda `acoperire` după runda 12 (api §5): fontul literelor casetei citite (TextRange.Font.Name — „Calibri Light” după
+           Calibri Light (Headings): acoperire_r12.fapte › c_font › dupa_calibri_light), cum pornește fiecare animație
+           (Timing.TriggerType 1/2/3 = la_clic/cu_precedenta/dupa_precedenta: c_start), umplerea fiecărei forme (c_shape_fill_outline:
+           steaua pusă = solid #4472C4; casetele aspectului = fara), notele și vederea (c_note, c_vederi) */
+        font_text: textual(fc) ? numeFontCom(fontText(fc)) : null,
+        pornire_animatii: M.dia.map(d => d.animatii.map(a => a.pornire || 'la_clic')),
+        umplere_forme: M.dia.map(d => d.forme.map(f => clona(umplereForma(f)))),
+        note_diapozitive: M.dia.map(d => d.note || ''),
+        vedere: M.expunere ? (M.expunere.citire ? 'citire' : 'expunere') : (M.vedere || 'normala')
       };
     };
 
@@ -225,7 +266,13 @@
         if (ctx.cheie === INTREB && n.t === 'Edit' && /^File name:?$/.test(n.e)) return 'camp:nume_fisier';
         /* Format Background: caseta „Color” (Text 'Color', tasta C) e MenuItem-ul „Fill Color RGB(…)” de lângă ea */
         if (/^panou\.LaunchFormatBackground/.test(ctx.cheie || '') && n.t === 'MenuItem' && /^Fill Color/.test(n.e || '')) return 'fereastra:Color';
-        if (ctx.cheie === POZA && /^File name:?$/.test(n.e || '')) return n.t === 'Edit' ? 'camp:nume_fisier' : null;
+        if ((ctx.cheie === POZA || ctx.cheie === DESCHIDE) && /^File name:?$/.test(n.e || '')) return n.t === 'Edit' ? 'camp:nume_fisier' : null;
+        /* bara de stare din Slide Sorter (bara_stare#Slide Sorter): aceleași ținte ca bara_stare (api §3 › `bara_stare:<nume>`) */
+        if (ctx.cheie === 'bara_stare#Slide Sorter') {
+          if (n.t === 'Slider') return 'zoom';
+          if (/^Zoom/.test(n.e || '')) return 'zoom:' + n.e.replace(/\s+\d+\s*%$/, '').trim();
+          return n.t === 'Button' && n.e ? 'bara_stare:' + n.e.trim() : null;
+        }
         if (ctx.cheie === 'dialog.FileSaveAs') {
           if (n.t === 'Edit' && /^File name:?$/.test(n.e)) return 'camp:nume_fisier';
           if (n.t === 'ComboBox' && /^File name:?$/.test(n.e)) return null;
@@ -242,9 +289,11 @@
         if (ctx.inGalerie && n.ascuns) e.style.display = '';
         if (ctx.inGalerie && n.t === 'ListItem') { e.innerHTML = '<span class="lh-ap-p-gal" aria-hidden="true"></span>'; e.classList.add('lh-ap-p-galerie-el'); }
         if (/^panglica/.test(ctx.cheie || '') && n.t === 'Pane' && ctx.inGalerie) e.classList.add('lh-ap-p-galerie-caseta');
-        if (ctx.cheie === 'bara_stare' && n.t === 'Text' && /^View Indicator/.test(n.e || '')) { e.innerHTML = '<span class="lh-ap-text"></span>'; elIndicator = e; }
+        if (/^bara_stare/.test(ctx.cheie || '') && n.t === 'Text' && /^View Indicator/.test(n.e || '')) { e.innerHTML = '<span class="lh-ap-text"></span>'; elIndicator = e; }
         if (ctx.cheie === 'bara_stare' && n.t === 'Button' && /^Zoom \d/.test(n.e || '')) elZoom = e;
-        if (ctx.cheie === 'bara_stare' && n.t === 'Button' && n.e === 'Normal') e.classList.add('lh-ap-apasat');
+        /* butonul vederii curente apăsat: Normal în bara_stare, Slide Sorter în bara_stare#Slide Sorter (fapte.c_vederi) */
+        if (/^bara_stare/.test(ctx.cheie || '') && n.t === 'Button' && n.e === (ctx.cheie === 'bara_stare' ? 'Normal' : 'Slide Sorter')) e.classList.add('lh-ap-apasat');
+        if (ctx.cheie === 'bara_stare' && n.t === 'Button' && /^Notes\s*$/.test(n.e || '')) e.setAttribute('data-lh-buton-note', '');
         /* rândurile listelor din referință care pe ecran sunt doar o mostră / pictogramă (culorile, formele, grila tabelului):
            numele rămâne în data-lh-eticheta (§3, „butonul doar cu pictogramă”), desenul e aria-hidden */
         if (/^lista\.(FontColorPicker|FormatBackground_Color)/.test(ctx.cheie || '') && n.t === 'ListItem') {
@@ -267,8 +316,8 @@
       editabil(n, ctx) {
         if (n.t === 'Spinner' && ctx.cheie === 'panglica.TabTransitions' && n.id === 'TransitionDuration') return true;
         if (n.t !== 'Edit') return false;
-        if (ctx.cheie === 'dialog.FileSaveAs' || ctx.cheie === INTREB || ctx.cheie === POZA) return /^File name/.test(n.e);
-        if (ctx.cheie === 'panglica.TabHome') return n.e === 'Font Size';
+        if (ctx.cheie === 'dialog.FileSaveAs' || ctx.cheie === INTREB || ctx.cheie === POZA || ctx.cheie === DESCHIDE) return /^File name/.test(n.e);
+        if (ctx.cheie === 'panglica.TabHome') return n.e === 'Font Size' || n.e === 'Font';
         if (ctx.cheie === 'dialog.FontDialogPowerPoint') return n.e === 'Size';
         if (ctx.cheie === 'dialog.TableInsertDialog') return /^Number of (columns|rows)$/.test(n.e);
         if (ctx.cheie === 'dialog.PowerPointParagraphDialog') return /^(Before text|Before|After|At)$/.test(n.e);
@@ -291,11 +340,21 @@
     const slide = el('div', 'lh-ap-p-slide');
     const intrare = el('textarea', 'lh-ap-intrare', { 'data-lh-intrare-document': '', 'aria-label': 'Slide', autocomplete: 'off', autocorrect: 'off',
       autocapitalize: 'off', spellcheck: 'false', rows: '1' });
-    pane.append(slide);
-    zonaSup.append(mini, pane, intrare);
+    /* A4 (critic 12): zona de note sub diapozitiv (fapte.c_note: deschisă la pornire; View › Notes și „Notes” din bara de stare o
+       comută). Aspectul ei NU e în UI Automation (acoperire_r12.NEVERIFICAT › zona_de_note_in_uia) → înălțimea, chenarul și
+       îndemnul „Click to add notes” sunt [presupus] R13-9. Ținta `zona_note` (api §3). */
+    const NOTE_H = 56;
+    const notaEl = el('div', 'lh-ap-p-note', { 'data-lh-tinta': 'zona_note', 'data-lh-tip': 'Pane', 'data-lh-eticheta': 'Notes', 'aria-label': 'Notes' });
+    /* Slide Sorter (fapte.c_vederi › Slide Sorter: ViewType 7, bara de stare fără Notes / Comments, Slide Sorter apăsat, Zoom 100 %):
+       diapozitivele pe rânduri, în locul miniaturilor și al diapozitivului; aspectul grilei [presupus] R13-10 */
+    const sorter = el('div', 'lh-ap-p-sortare', { role: 'listbox', 'aria-label': 'Slide Sorter' });
+    let notaActiva = false;
+    pane.append(slide, notaEl);
+    zonaSup.append(mini, pane, sorter, intrare);
     I.intrare = intrare;
     const jos = el('div', 'lh-ap-jos'), josIn = el('div', 'lh-ap-jos-in');
-    const stareEl = desen('bara_stare');
+    let stareEl = desen('bara_stare');
+    stareEl.__cheie = 'bara_stare';
     pozitie(stareEl, [SUP.bara_stare.r[0], 0]);
     josIn.appendChild(stareEl);
     jos.appendChild(josIn);
@@ -307,7 +366,9 @@
     let Z = 0.7 * 96 / 72;
     I.pxPePunct = () => Z;
     function geometrie() {
-      const w = pane.clientWidth || (ZR[2] - 186), h = pane.clientHeight || ZR[3];
+      const cuNote = M.note && M.vedere !== 'sortare' && !faraPrez();
+      notaEl.style.display = cuNote ? '' : 'none';
+      const w = pane.clientWidth || (ZR[2] - 186), h = (pane.clientHeight || ZR[3]) - (cuNote ? NOTE_H : 0);
       Z = Math.max(0.15, Math.min(0.7 * 96 / 72, (w - 24) / SL.w, (h - 24) / SL.h));
       slide.style.width = SL.w * Z + 'px';
       slide.style.height = SL.h * Z + 'px';
@@ -318,7 +379,7 @@
     /* ============================================================ desenul */
     /* fiecare paragraf = un bloc .lh-ap-p-par (aliniere, spațiere, interlinie, indent); în el, bucățile cu același format = <span>.
        Cursorul și umplutura paragrafului gol sunt aria-hidden (nu sunt text al documentului, §3). */
-    const stilFmt = (f, x, z) => 'font-size:' + marimeLa(f, x) * z + 'px;' + (x.b ? 'font-weight:700;' : 'font-weight:400;') + (x.c ? 'color:' + x.c + ';' : '') +
+    const stilFmt = (f, x, z) => 'font-size:' + marimeLa(f, x) * z + 'px;' + ((x.f || f.font) ? "font-family:'" + numeFontCom(x.f || f.font).replace(/'/g, '') + "','Segoe UI',sans-serif;" : '') + (x.b ? 'font-weight:700;' : 'font-weight:400;') + (x.c ? 'color:' + x.c + ';' : '') +
       (x.i ? 'font-style:italic;' : '') + (x.u ? 'text-decoration:underline;' : '');
     const AL_CSS = { Left: 'left', Centered: 'center', Right: 'right', Justified: 'justify', Distributed: 'justify' };
     function htmlText(f, cuSel, z) {
@@ -345,6 +406,33 @@
       });
       return h;
     }
+    /* desenul unei forme din numele ei din galeria Shapes (viewBox 100×100), dintr-o singură funcție: pe diapozitiv și în
+       galeria Shapes ▾ (A1). Numele = referința; desenul NU e în UIA → [presupus] R13-3 (forma lui geometrică, nu Office) */
+    function desenForma(nume) {
+      const n = String(nume || '');
+      const P = pts => '<polygon points="' + pts + '"';
+      if (/^Line( Arrow)?$|^Connector|^Freeform: Scribble|^Curve|^Arc$/.test(n)) return '<polyline points="5,95 95,5" fill="none"';
+      if (/^Text Box$/.test(n)) return '<rect x="10" y="20" width="80" height="60" stroke-dasharray="4 3"';
+      if (/^Oval$|^Circle|^Ellipse/.test(n)) return '<ellipse cx="50" cy="50" rx="49" ry="49"';
+      if (/^Star: 5 Points$/.test(n)) return P('50,2 61,38 98,38 68,60 79,96 50,74 21,96 32,60 2,38 39,38');
+      if (/^Star:/.test(n)) return P('50,2 60,30 90,20 72,48 98,60 66,66 70,98 50,76 30,98 34,66 2,60 28,48 10,20 40,30');
+      if (/^Arrow: Right$/.test(n)) return P('0,25 60,25 60,0 100,50 60,100 60,75 0,75');
+      if (/^Arrow: Left$/.test(n)) return P('100,25 40,25 40,0 0,50 40,100 40,75 100,75');
+      if (/^Arrow: Up$/.test(n)) return P('25,100 25,40 0,40 50,0 100,40 75,40 75,100');
+      if (/^Arrow: Down$/.test(n)) return P('25,0 25,60 0,60 50,100 100,60 75,60 75,0');
+      if (/^Arrow:/.test(n)) return P('0,35 70,35 70,10 100,50 70,90 70,65 0,65');
+      if (/Triangle$/.test(n)) return P(/^Right/.test(n) ? '2,2 2,98 98,98' : '50,2 98,98 2,98');
+      if (/^Diamond|^Flowchart: Decision/.test(n)) return P('50,2 98,50 50,98 2,50');
+      if (/^Hexagon|^Flowchart: Preparation/.test(n)) return P('25,5 75,5 98,50 75,95 25,95 2,50');
+      if (/^Pentagon|^Regular Pentagon/.test(n)) return P('50,2 98,38 80,98 20,98 2,38');
+      if (/^Parallelogram|^Flowchart: Data/.test(n)) return P('25,5 98,5 75,95 2,95');
+      if (/^Trapezoid/.test(n)) return P('20,5 80,5 98,95 2,95');
+      if (/^Heart$/.test(n)) return '<path d="M50,95 C20,70 2,50 2,30 C2,10 25,2 50,25 C75,2 98,10 98,30 C98,50 80,70 50,95 Z"';
+      if (/^Rectangle: Rounded|^Flowchart: Alternate|^Flowchart: Terminator|^Callout|^Speech/.test(n)) return '<rect x="2" y="2" width="96" height="96" rx="16"';
+      if (/^Action Button/.test(n)) return '<rect x="4" y="4" width="92" height="92" rx="4"';
+      if (/^(Left|Right|Double) (Brace|Bracket)|^Brace|^Bracket/.test(n)) return '<path d="M70,2 C40,2 50,50 30,50 C50,50 40,98 70,98" fill="none"';
+      return '<rect x="1" y="1" width="98" height="98"';
+    }
     function stilForma(f, z) { return 'left:' + f.x * z + 'px;top:' + f.y * z + 'px;width:' + f.w * z + 'px;height:' + f.h * z + 'px'; }
     function continutForma(f, z, cuSel) {
       if (f.tip === 'tabel') {
@@ -353,10 +441,12 @@
         return h + '</table>';
       }
       if (f.tip === 'imagine') return '<span class="lh-ap-p-imagine-ins" aria-hidden="true"></span>';
+      /* forma desenată: umplerea (Shape Fill: solid #4472C4 la pornire, c_shape_fill_outline › stea_la_inceput) și conturul
+         (Shape Outline: #172C51, 1 pt — Line.ForeColor / Line.Weight) din model; conturul ales cu Weight ▸ în puncte × zoom */
+      const um = f.tip === 'forma' ? umplereForma(f) : null, co = f.contur || {};
       const fig = f.tip === 'forma' ? '<svg class="lh-ap-p-sageata" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">' +
-        (/^Arrow: Right$/.test(f.forma) ? '<polygon points="0,25 60,25 60,0 100,50 60,100 60,75 0,75"' : /^Oval$/.test(f.forma) ? '<ellipse cx="50" cy="50" rx="49" ry="49"' :
-          /^Star: 5 Points$/.test(f.forma) ? '<polygon points="50,2 61,38 98,38 68,60 79,96 50,74 21,96 32,60 2,38 39,38"' : '<rect x="1" y="1" width="98" height="98"') +
-        ' fill="#4472C4" stroke="#2F528F" stroke-width="1" vector-effect="non-scaling-stroke"/></svg>' : '';
+        desenForma(f.forma) + ' fill="' + (um.tip === 'solid' ? um.culoare : 'none') + '" pointer-events="' + (um.tip === 'solid' ? 'visiblePainted' : 'visible') +
+        '" stroke="' + (co.fara ? 'none' : co.culoare || '#172C51') + '" stroke-width="' + Math.max(0.5, (co.grosime || 1) * z * 4 / 3) + '" vector-effect="non-scaling-stroke"/></svg>' : '';
       const st = 'font-size:' + f.marime * z + 'px;' + (f.centru ? 'justify-content:center;' : '');
       return fig + '<div class="lh-ap-p-text' + (f.tip === 'titlu' ? ' lh-ap-p-titlu' : '') + '" style="' + st + '">' + htmlText(f, cuSel, z) + '</div>';
     }
@@ -368,7 +458,10 @@
       if (!d) return;
       d.forme.forEach((f, s) => {
         const ales = sel && sel.d === M.activ && sel.s === s;
-        const e = el('div', 'lh-ap-p-forma' + (f.text || !textual(f) ? '' : ' lh-ap-p-goala') + (ales ? (sel.edit ? ' lh-ap-p-editare' : ' lh-ap-p-obiect') : ''),
+        /* forma din Shapes (`lh-ap-p-fig`): o lovește doar DESENUL ei — clicul pe dreptunghiul care o încadrează, în afara
+           desenului, cade pe diapozitiv (acoperire_r12.fapte › a_forma_clic › stea_pe_chenar_dreptunghiului_care_o_incadreaza =
+           nimic ales); aplicatii.css › `.lh-ap-p-fig` */
+        const e = el('div', 'lh-ap-p-forma' + (f.tip === 'forma' ? ' lh-ap-p-fig' : f.text || !textual(f) ? '' : ' lh-ap-p-goala') + (ales ? (sel.edit ? ' lh-ap-p-editare' : ' lh-ap-p-obiect') : ''),
           { 'data-lh-tinta': 'forma', 'data-lh-id': (M.activ + 1) + '/' + (s + 1), style: stilForma(f, Z) });
         if (ales) e.setAttribute('data-lh-selectat', '');
         e.innerHTML = continutForma(f, Z, ales && sel.edit);
@@ -386,6 +479,62 @@
       const fu = el('div', 'lh-ap-p-fundal', { 'data-lh-tinta': 'diapozitiv' });
       if (d.fundal && d.fundal.culoare) fu.style.background = d.fundal.culoare;
       slide.appendChild(fu);
+    }
+    function deseneazaNote() {
+      const d = D(), t = d ? d.note || '' : '';
+      notaEl.classList.toggle('lh-ap-p-note-activ', notaActiva);
+      notaEl.innerHTML = t ? '<div class="lh-ap-p-note-text">' + esc(t) + (notaActiva ? '<span class="lh-ap-p-caret" aria-hidden="true"></span>' : '') + '</div>' :
+        notaActiva ? '<div class="lh-ap-p-note-text"><span class="lh-ap-p-caret" aria-hidden="true"></span></div>' : '<div class="lh-ap-p-note-gol" aria-hidden="true">Click to add notes</div>';
+    }
+    function deseneazaSortare() {
+      zonaSup.classList.toggle('lh-ap-p-in-sortare', M.vedere === 'sortare');
+      sorter.innerHTML = '';
+      if (M.vedere !== 'sortare') return;
+      const lat = 220, z = lat / SL.w;
+      M.dia.forEach((d, i) => {
+        const r = el('div', 'lh-ap-p-sort-el');
+        const m = el('div', 'lh-ap-p-mini' + (i === M.activ ? ' lh-ap-p-mini-activ' : ''), { 'data-lh-tinta': 'miniatura', 'data-lh-id': String(i + 1), role: 'option',
+          'aria-selected': i === M.activ ? 'true' : 'false', 'aria-label': 'Slide ' + (i + 1), 'data-lh-tema': M.tema, style: 'width:' + lat + 'px;height:' + SL.h * z + 'px' });
+        if (i === M.activ) m.setAttribute('data-lh-selectat', '');
+        const in2 = el('div', 'lh-ap-p-mini-in', { 'aria-hidden': 'true' });
+        if (d.fundal && d.fundal.culoare) in2.style.background = d.fundal.culoare;
+        d.forme.forEach(f => { const x = el('div', 'lh-ap-p-forma', { style: stilForma(f, z) }); x.innerHTML = continutForma(f, z, false); in2.appendChild(x); });
+        m.appendChild(in2);
+        r.appendChild(m);
+        r.appendChild(el('span', 'lh-ap-p-sort-nr', { 'aria-hidden': 'true' })).textContent = String(i + 1);
+        sorter.appendChild(r);
+      });
+    }
+    /* bara de stare a vederii: bara_stare (Normal) sau bara_stare#Slide Sorter */
+    function baraStare() {
+      const k = M.vedere === 'sortare' && SUP['bara_stare#Slide Sorter'] ? 'bara_stare#Slide Sorter' : 'bara_stare';
+      if (stareEl.__cheie !== k) {
+        const nou = desen(k);
+        pozitie(nou, [SUP[k].r[0], 0]);
+        nou.__cheie = k;
+        stareEl.replaceWith(nou);
+        stareEl = nou;
+      }
+      const bn = stareEl.querySelector('[data-lh-buton-note]');
+      if (bn) { bn.classList.toggle('lh-ap-apasat', !!M.note); bn.setAttribute('aria-pressed', M.note ? 'true' : 'false'); }
+    }
+    function seteazaVedere(v) {
+      if (faraPrez()) return 'indisponibil';
+      if (v === 'expunere') return expunere(M.activ);
+      if (v === 'citire') { const r = expunere(M.activ); if (M.expunere) { M.expunere.citire = true; M.expunere.el.classList.add('lh-ap-p-citire'); } return r === 'expunere' ? 'vedere' : r; }
+      if (M.vedere === v) return 'fara_efect';
+      M.vedere = v;
+      sel = null;
+      notaActiva = false;
+      deseneaza();
+      return 'vedere';
+    }
+    function comutaNote() {
+      if (faraPrez()) return 'indisponibil';
+      M.note = !M.note;
+      if (!M.note) notaActiva = false;
+      deseneaza();
+      return 'note';
     }
     function deseneazaMiniaturi() {
       mini.innerHTML = '';
@@ -433,6 +582,16 @@
         e.classList.toggle('lh-ap-apasat', !!(fx && fx[k]));
         e.setAttribute('aria-pressed', fx && fx[k] ? 'true' : 'false');
       }));
+      /* caseta Font = fontul textului ales (c_font › caseta „Calibri Light (Headings)”); caseta Start = cum pornește animația
+         casetei alese (c_start › caseta „On Click” / „After Previous”) */
+      const cf = loculPanglicii.querySelector('[data-lh-id-mso="Font"] input');
+      if (cf && document.activeElement !== cf) cf.value = fontAfisat();
+      if (filaActiva === 'TabAnimations') {
+        const cs = [...loculPanglicii.querySelectorAll('[data-lh-tip="ComboBox"]')].find(x => x.__nod && x.__nod.e === 'Start');
+        const ai = cs && cs.querySelector('input'), an = animSel();
+        if (ai) ai.value = an ? Object.keys(PORNIRI).find(k => PORNIRI[k] === (an.pornire || 'la_clic')) : '';
+        if (cs) { cs.classList.toggle('lh-ap-gri', !an); if (an) cs.removeAttribute('aria-disabled'); else cs.setAttribute('aria-disabled', 'true'); }
+      }
       const du = loculPanglicii.querySelector('[data-lh-id-mso="TransitionDuration"] input');
       if (du && document.activeElement !== du) { const v = D() && D().durata != null ? D().durata : 2; du.value = String(Math.floor(v)).padStart(2, '0') + ',' + String(Math.round((v % 1) * 100)).padStart(2, '0'); }
       const mf = loculPanglicii.querySelector('[data-lh-id-mso="FontSize"] [data-lh-tip="Edit"] input');
@@ -465,6 +624,9 @@
     }
     function deseneaza() {
       zonaSup.classList.toggle('lh-ap-p-fara', faraPrez());
+      baraStare();
+      deseneazaSortare();
+      deseneazaNote();
       deseneazaMiniaturi();
       deseneazaDiapozitiv();
       actualizeazaBare();
@@ -550,7 +712,10 @@
       const R = root.getBoundingClientRect(), b = rAnc || ancEl.getBoundingClientRect();
       const w = SUP[cheie].r[2], h = Math.min(SUP[cheie].r[3], R.height - 4), nr = (ancEl.__nod || {}).r;
       /* colțul listei față de colțul butonului, ca în captură (Font Color: +0, +24; Layout: [173,107] față de butonul lui) */
-      const dx = nr ? SUP[cheie].r[0] - nr[0] : 0, dy = nr ? SUP[cheie].r[1] - nr[1] : b.height;
+      let dx = nr ? SUP[cheie].r[0] - nr[0] : 0, dy = nr ? SUP[cheie].r[1] - nr[1] : b.height;
+      /* aceeași listă sub alt buton decât cel din captură (Shape Fill ▾ din Home › Drawing, capturată sub Shape Format):
+         lipită sub butonul apăsat (acoperire_r12.fapte › randuri.lista.ShapeFillColorPicker#Home = aceleași rânduri) */
+      if (Math.abs(dx) > 60 || dy < 0 || dy > 60) { dx = 0; dy = b.height; }
       m.setAttribute('data-lh-suprafata', cheie);
       m.setAttribute('data-lh-lista', scop);
       m.setAttribute('role', 'menu');
@@ -564,6 +729,115 @@
       root.appendChild(m);
       meniu = m;
       return 'meniu_derulant';
+    }
+    /* ---- A4 (critic 12): listele de pe drumul lecțiilor, din referința rundei `acoperire` după runda 12 */
+    /* Font ▾ (lista.Font, fapte.c_font): Theme Fonts „Calibri Light (Headings)”, „Calibri (Body)”, apoi All Fonts. În suprafață sunt
+       doar cele 17 rânduri vizibile la deschidere; restul (în ordine) vin din date › fonturi_toate (= c_font.all_fonts, fonturile
+       PC-ului capturat), la pasul de 26,4 px al rândurilor capturate. Lista se derulează în caseta ei. */
+    function listaFont(anc) {
+      const r = listaRef('lista.Font', anc, 'font');
+      if (!meniu || r !== 'meniu_derulant') return r;
+      const rs = [...meniu.querySelectorAll('[data-lh-tip="ListItem"]')], ult = rs[rs.length - 1];
+      const are = new Set(rs.map(x => x.getAttribute('data-lh-eticheta')));
+      if (ult) {
+        const y0 = parseFloat(ult.style.top) || 0, pas = rs.length > 1 ? (y0 - (parseFloat(rs[rs.length - 2].style.top) || 0)) || 26.4 : 26.4;
+        let k = 0;
+        (date.fonturi_toate || []).forEach(n => {
+          if (are.has(n)) return;
+          const x = ult.cloneNode(true);
+          k++;
+          x.style.top = (y0 + k * pas) + 'px';
+          x.setAttribute('data-lh-eticheta', n);
+          x.setAttribute('aria-label', n);
+          x.setAttribute('data-lh-tinta', 'meniu:' + n);
+          x.removeAttribute('data-lh-ascuns');
+          const t = x.querySelector('.lh-ap-text');
+          if (t) t.textContent = n; else x.textContent = n;
+          x.__nod = { t: 'ListItem', e: n };
+          ult.parentElement.appendChild(x);
+        });
+      }
+      meniu.style.overflowY = 'auto';
+      const cur = fontAfisat();
+      const a = cur && meniu.querySelector('[data-lh-eticheta="' + CSS.escape(cur) + '"]');
+      if (a) { a.classList.add('lh-ap-p-tasta'); a.setAttribute('data-lh-selectat', ''); }
+      return r;
+    }
+    /* fontul arătat de caseta Font: al textului ales / al casetei alese (c_font › dupa_calibri_light › caseta „Calibri Light (Headings)”) */
+    function fontAfisat() {
+      const f = formaSel();
+      if (!f || !textual(f)) return '';
+      if (sel.edit) { const a = Math.min(sel.a, sel.b); return (sel.ins && sel.ins.f) || fmLa(f, Math.max(0, Math.min(f.text.length - 1, a))).f || f.font || fontImplicit(f); }
+      return fontText(f);
+    }
+    function puneFont(n) {
+      const f = formaSel();
+      if (!f || !textual(f) || !n) return 'fara_efect';
+      const r = aplicaFormat(x => { x.f = n; });
+      if (!sel.edit) f.font = n;
+      return r === 'format_la_scriere' ? r : 'font_text';
+    }
+    /* Animations › Start ▾ (lista.AnimationStartDropdown, fapte.c_start): On Click / With Previous / After Previous →
+       Timing.TriggerType 1 / 2 / 3; caseta arată numele rândului ales */
+    const PORNIRI = { 'On Click': 'la_clic', 'With Previous': 'cu_precedenta', 'After Previous': 'dupa_precedenta' };
+    const animSel = () => (formaSel() && sel ? M.dia[sel.d].animatii.find(a => a.s === sel.s) || null : null);
+    /* Shape Fill / Shape Outline: rândurile = culorile paletei Font Color (aceleași nume), No Fill / No Outline; Weight ▸ = grosimea */
+    /* butonul Shape Fill / Shape Outline pune ultima culoare aleasă din listă; la pornire „Blue, Accent 1” (primul rând al
+       capturii: „Shape Fill Blue, Accent 1”, „Shape Outline Blue, Accent 1”; după Yellow: „Shape Fill Yellow” — #Home) */
+    const ultima = { umplere: 'Blue, Accent 1', contur: 'Blue, Accent 1' };
+    function aplicaUmplere(v) {
+      const f = formaSel();
+      if (!f || f.tip === 'tabel') return 'indisponibil';
+      const c = v === 'No Fill' ? null : culoareDin(v);
+      if (v !== 'No Fill' && !c) return I.nesimulat(v);
+      schimba('umplere_forma', () => { f.umplere = c ? { tip: 'solid', culoare: c } : { tip: 'fara' }; });
+      if (c) ultima.umplere = v;
+      return 'umplere_forma';
+    }
+    function aplicaContur(v) {
+      const f = formaSel();
+      if (!f || f.tip === 'tabel') return 'indisponibil';
+      const gr = /^([¼½¾\d]+)\s*pt$/.exec(v);
+      if (gr) {
+        const n = gr[1].replace('¼', '.25').replace('½', '.5').replace('¾', '.75').replace(/^\./, '0.');
+        schimba('contur_forma', () => { f.contur = Object.assign({}, f.contur, { grosime: parseFloat(n), fara: false }); });
+        return 'contur_forma';
+      }
+      const c = v === 'No Outline' ? null : culoareDin(v);
+      if (v !== 'No Outline' && !c) return I.nesimulat(v);
+      schimba('contur_forma', () => { f.contur = Object.assign({}, f.contur, c ? { culoare: c, fara: false } : { fara: true }); });
+      if (c) ultima.contur = v;
+      return 'contur_forma';
+    }
+    /* Design › Background Styles ▾ (lista.SlideBackgroundStylesGallery, fapte.c_background_styles): stilul se pune pe TOATE
+       diapozitivele (masterul); Style 6 → solid #E9E7E7 (dovedit); celelalte stiluri [presupus] R13-5 */
+    const STILURI_FUNDAL = { 'Style 1': { tip: 'solid', culoare: '#FFFFFF' }, 'Style 2': { tip: 'solid', culoare: '#E7E6E6' },
+      'Style 3': { tip: 'solid', culoare: '#44546A' }, 'Style 4': { tip: 'solid', culoare: '#000000' }, 'Style 6': { tip: 'solid', culoare: '#E9E7E7' } };
+    function stilFundal(v) {
+      const m = /^Style (\d+)$/.exec(v);
+      if (!m) return I.nesimulat(v);
+      const u = STILURI_FUNDAL[v] || { tip: 'gradient' };
+      schimba('stil_fundal', () => M.dia.forEach(d => { d.fundal = clona(u); }));
+      return 'stil_fundal';
+    }
+    /* tastatura într-o listă deschisă ([presupus] R13-6: în referința PowerPoint nu e capturată; ca listele Windows): săgețile
+       mută alegerea pe rândurile listei (ListItem / MenuItem active, în ordinea din listă), Enter alege rândul, Esc închide */
+    function navigaLista(k) {
+      if (!meniu) return 'fara_efect';
+      const rs = [...meniu.querySelectorAll('[data-lh-tip="ListItem"][data-lh-tinta^="meniu:"],[data-lh-tip="MenuItem"][data-lh-tinta^="meniu:"]')].filter(x => x.offsetWidth > 0 && x.getAttribute('aria-disabled') !== 'true');
+      if (!rs.length) return 'fara_efect';
+      const i = rs.findIndex(x => x.classList.contains('lh-ap-p-tasta'));
+      if (k === 'Enter') {
+        if (i < 0) return 'fara_efect';
+        const x = rs[i], v = x.getAttribute('data-lh-tinta').slice(6);
+        I.activat = 'meniu:' + v;
+        return apasaMeniu(x, v);
+      }
+      const j = i < 0 ? (/Up|Left/.test(k) ? rs.length - 1 : 0) : Math.max(0, Math.min(rs.length - 1, i + (/Down|Right/.test(k) ? 1 : -1)));
+      rs.forEach(x => x.classList.remove('lh-ap-p-tasta'));
+      rs[j].classList.add('lh-ap-p-tasta');
+      try { rs[j].scrollIntoView({ block: 'nearest' }); } catch (e) { /* */ }
+      return 'navigare_lista';
     }
     /* ---- culorile (Font Color, Format Background › Color): numele rândului → #RRGGBB.
        DOVEDITE: Red #FF0000 (scenarii_real/powerpoint-font-color-titlu.json), Light Blue #00B0F0
@@ -626,7 +900,7 @@
       /* focusul în File name imediat după gest (microtask: evenimentul gestului își ia ținta din focusul de la tastă, §4), ca tastele
          apăsate imediat după F12 să ajungă în casetă, ca în Windows; și încă o dată după gest */
       const fo = () => { if (!dialog || !dialog.el.contains(camp) || document.activeElement === camp) return; try { camp.focus(); camp.select(); } catch (e) { /* */ } };
-      if (camp) { camp.removeAttribute('readonly'); camp.value = baza === INTREB ? numePropus() : baza === POZA ? '' : numePrez(); Promise.resolve().then(fo); setTimeout(fo, 0); }
+      if (camp) { camp.removeAttribute('readonly'); camp.value = baza === INTREB ? numePropus() : baza === POZA || baza === DESCHIDE ? '' : numePrez(); Promise.resolve().then(fo); setTimeout(fo, 0); }
       return true;
     }
     /* ferestrele Font / Paragraph / Insert Table arată starea textului ales; OK aplică doar ce s-a schimbat față de ce arătau,
@@ -790,6 +1064,53 @@
       incarcaPrez(PREZ.length - 1);
       deseneaza();
       return 'prezentare_noua';
+    }
+    /* P3 (critic 12): Ctrl+O › Browse = fereastra Open (dialog.FileOpen, fapte.b_ctrl_o_browse): File name:, Files of type „All
+       PowerPoint Presentations (…)”, Open ▾, Cancel, Tools ▾, restul în româna Windows. Lista arată DOAR fișierele din
+       start.fisiere (api §7.1), pe locul rândului capturat; numele + Enter (sau Open, sau dublu clic pe rând) deschide fișierul:
+       devine prezentarea activă, cu toate cele deschise înainte (scenarii_real/powerpoint-ctrl-o-browse.json: „Plante_6A_Pop.pptx”,
+       2 deschise). Esc / Cancel / ✕ o închid fără nimic altceva. Un nume care nu e în dosar: fereastra rămâne ([presupus] R13-7) */
+    function deschideOpen() {
+      if (!deschideDialog(DESCHIDE)) return I.nesimulat('Browse');
+      const d = dialog.el, w = SUP[DESCHIDE].r[2], h = SUP[DESCHIDE].r[3];
+      d.style.left = Math.max(0, (root.clientWidth - w) / 2) + 'px';
+      d.style.top = Math.max(0, (root.clientHeight - h) / 2) + 'px';
+      const ph = [...d.querySelectorAll('[data-lh-tip="ListItem"]')].filter(x => /nesalvat/.test(x.getAttribute('data-lh-eticheta') || ''));
+      const model = ph[0];
+      if (model) {
+        const y0 = parseFloat(model.style.top) || 0, par = model.parentElement;
+        ph.forEach(x => x.remove());
+        M.fisiere.forEach((fi, i) => {
+          const x = model.cloneNode(true);
+          x.style.top = (y0 + i * 24.8) + 'px';
+          x.setAttribute('data-lh-eticheta', fi.nume);
+          x.setAttribute('aria-label', fi.nume);
+          x.setAttribute('data-lh-tinta', 'lista:' + fi.nume);
+          x.innerHTML = '<span class="lh-ap-text">' + esc(fi.nume) + '</span>';
+          x.__nod = { t: 'ListItem', e: fi.nume };
+          par.appendChild(x);
+        });
+      }
+      return 'fereastra';
+    }
+    function deschideFisier(numeAles) {
+      const camp = dialog && dialog.el.querySelector('[data-lh-tinta="camp:nume_fisier"] input');
+      const n = String(numeAles || (camp ? camp.value : '')).trim().toLowerCase();
+      if (!n) return 'fara_efect';
+      const fi = M.fisiere.find(x => x.nume.toLowerCase() === n || x.nume.toLowerCase() === n + '.pptx');
+      if (!fi) return 'fara_efect';
+      inchideDialog();
+      pastreazaPrez();
+      const deja = PREZ.findIndex(x => x.nume === fi.nume);
+      if (deja >= 0) incarcaPrez(deja);
+      else {
+        const ds = fi.diapozitive.length ? fi.diapozitive : [{ aspect: 'Title Slide' }];
+        PREZ.push({ dia: ds.map(diaPornire), activ: 0, tema: 'Office Theme', nume: fi.nume, salvat: true, panou: 'diapozitiv', nr: 0, citita: null, vedere: 'normala', H: istoricNou() });
+        incarcaPrez(PREZ.length - 1);
+      }
+      if (backstage) inchideBackstage();
+      deseneaza();
+      return 'deschidere_fisier';
     }
     function inchideBackstage() { if (!backstage) return; backstage.strat.remove(); backstage = null; I.focus(); }
     function deschideBackstage(pagina) {
@@ -1019,11 +1340,14 @@
       return { b: v.every(x => x.b), i: v.every(x => x.i), u: v.every(x => x.u), m: m.every(x => x === m[0]) ? m[0] : null,
         amestec: v.some(x => x.b) !== v.every(x => x.b) || v.some(x => x.i) !== v.every(x => x.i), amestecU: v.some(x => x.u) !== v.every(x => x.u) };
     }
+    /* durata pusă de clicul în galeria Transitions (acoperire_r12.fapte › d_durate: Fade 0,7, Push 1, Wipe 1 — fiecare efect pune
+       durata lui; fără tranziție 2). Celelalte efecte: durata rămâne ([presupus] R12-6) */
+    const DURATE_EFECT = { Fade: 0.7, Push: 1, Wipe: 1 };
     function aplicaGalerie(fel, v) {
       if (fel === 'tema') { schimba('tema', () => { M.tema = v; }); return 'tema'; }
       /* Fade din galerie pune 0,7 s (scenarii_real/powerpoint-durata-aplica-la-toate.json); durata celorlalte efecte NU e în
          referință: rămâne cea de dinainte ([presupus] R12-6) */
-      if (fel === 'tranzitie') { schimba('tranzitie', () => { D().tranzitie = v === 'None' ? null : v; if (v === 'Fade') D().durata = 0.7; }); return 'tranzitie'; }
+      if (fel === 'tranzitie') { schimba('tranzitie', () => { D().tranzitie = v === 'None' ? null : v; const dz = DURATE_EFECT[v]; if (dz != null) D().durata = dz; }); return 'tranzitie'; }
       if (fel === 'animatie') {
         if (!formaSel()) return 'fara_efect';
         /* galeria Animations ÎNLOCUIEȘTE efectul casetei (Add Animation adaugă) — R11-7 */
@@ -1047,7 +1371,17 @@
       const n = camp ? camp.value.trim() : '';
       if (!n || !D()) return 'fara_efect';
       inchideDialog();
+      /* o casetă de conținut GOALĂ pe diapozitiv (Two Content, dreapta) primește imaginea ÎN ea, tot 3 forme
+         (fapte.e_imagine_two_content: substituent cu imagine [486, 163, 408, 304] în [486, 144, 408, 343]; raportul 304/408 e al
+         imaginii capturate — [presupus] R13-8 pentru alte imagini) */
+      const k = D().forme.findIndex(f => f.tip === 'continut' && !f.text);
       schimba('imagine', () => {
+        if (k >= 0) {
+          const ph = D().forme[k], h = ph.w * 304 / 408;
+          D().forme[k] = { tip: 'imagine', nume: n, text: '', x: ph.x, y: ph.y + Math.floor((ph.h - h) / 2), w: ph.w, h, substituent: true };
+          sel = { d: M.activ, s: k, edit: false };
+          return;
+        }
         D().forme.push({ tip: 'imagine', nume: n, text: '', x: 300, y: 135, w: 360, h: 270 });
         sel = { d: M.activ, s: D().forme.length - 1, edit: false };
       });
@@ -1114,7 +1448,27 @@
         if (n.t === 'Button') { const c = elx.closest('[data-lh-id-mso]').querySelector('.lh-ap-p-galerie-caseta'); if (c) c.classList.toggle('lh-ap-p-galerie-deschisa'); return 'galerie'; }
         return 'fara_efect';
       }
+      /* Animations › Start ▾ (caseta fără idMso în UIA: idMso AnimationStartDropdown din powerpointcontrols.xlsx — c_start) */
+      const cbS = elx.closest('[data-lh-tip="ComboBox"]');
+      if (cbS && cbS.__nod && cbS.__nod.e === 'Start' && filaActiva === 'TabAnimations') {
+        if (!animSel()) return 'indisponibil';
+        const r = listaRef('lista.AnimationStartDropdown', cbS, 'pornire');
+        /* rândul valorii de acum, ales la deschidere (ca în caseta: c_start › caseta_inainte „On Click”) */
+        const cur = meniu && meniu.querySelector('[data-lh-eticheta="' + Object.keys(PORNIRI).find(k => PORNIRI[k] === (animSel().pornire || 'la_clic')) + '"]');
+        if (cur) cur.classList.add('lh-ap-p-tasta');
+        return r;
+      }
       switch (idm) {
+        case 'Font': return listaFont(elx.closest('[data-lh-id-mso="Font"]') || elx);
+        case 'ShapeFillColorPicker_Dropdown': return formaSel() ? listaRef('lista.ShapeFillColorPicker', elx, 'umplere') : 'indisponibil';
+        case 'ShapeFillColorPicker': return aplicaUmplere(ultima.umplere);
+        case 'OutlineColorPicker_Dropdown': return formaSel() ? listaRef('lista.OutlineColorPicker', elx, 'contur') : 'indisponibil';
+        case 'OutlineColorPicker': return aplicaContur(ultima.contur);
+        case 'SlideBackgroundStylesGallery': return listaRef('lista.SlideBackgroundStylesGallery', elx, 'stil_fundal');
+        case 'ShowNotes': return comutaNote();
+        case 'ViewSlideSorterView': return seteazaVedere('sortare');
+        case 'ViewThumbnailViewPowerPoint': return seteazaVedere('normala');
+        case 'ViewSlideShowReadingView': return seteazaVedere('citire');
         case 'FileSave': return salveaza();
         case 'Undo': return anuleaza();
         case 'Undo_Dropdown': return I.nesimulat('Undo ▾');
@@ -1172,7 +1526,23 @@
         inchideMeniu();
         return aplicaCuloare(CULOARE_SESIUNE);
       }
+      /* Shape Outline ▾ › Weight ▸: lista grosimilor (lista.OutlineColorPicker#Weight), lipită lângă rândul Weight */
+      if (lista === 'contur' && v === 'Weight') return listaRef('lista.OutlineColorPicker#Weight', elx, 'contur', elx.getBoundingClientRect());
       inchideMeniu();
+      if (lista === 'font') return elx.__nod && elx.__nod.t === 'ListItem' ? puneFont(v) : I.nesimulat(v);
+      if (lista === 'pornire') {
+        const a = animSel();
+        if (!PORNIRI[v] || !a) return I.nesimulat(v);
+        schimba('pornire_animatie', () => { const b = M.dia[sel.d].animatii.find(x => x.s === sel.s); if (b) b.pornire = PORNIRI[v]; });
+        return 'pornire_animatie';
+      }
+      if (lista === 'umplere') return elx.__nod && elx.__nod.t === 'ListItem' ? aplicaUmplere(v) : I.nesimulat(v);
+      if (lista === 'contur') return elx.__nod && elx.__nod.t === 'ListItem' ? aplicaContur(v) : I.nesimulat(v);
+      if (lista === 'stil_fundal') {
+        if (v === 'Format Background...') return panouLateral('panou.LaunchFormatBackground');
+        if (elx.getAttribute('aria-disabled') === 'true') return 'indisponibil';
+        return elx.__nod && elx.__nod.t === 'ListItem' ? stilFundal(v) : I.nesimulat(v);
+      }
       if (lista === 'fundal') {
         const c = v === 'Automatic' ? '#FFFFFF' : culoareDin(v);   // Automatic = albul temei ([presupus] R12-7)
         if (!(elx.__nod && elx.__nod.t === 'ListItem') || !c || !D()) return I.nesimulat(v);
@@ -1244,6 +1614,7 @@
       return Math.max(0, Math.min(f.text.length, inceput(i) + Math.min(k, lung(i))));
     }
     function scrie(t, fms) {
+      if (notaActiva && D()) { schimba('note', () => { D().note = (D().note || '') + t; }); return 'scriere_note'; }
       const f = formaSel();
       if (!sel || !textual(f)) return 'fara_efect';
       if (!sel.edit) { sel.edit = true; sel.a = sel.b = f.text.length; sel.ins = null; }
@@ -1258,6 +1629,7 @@
       return 'scriere';
     }
     function sterge(inapoi) {
+      if (notaActiva && D()) { if (!D().note) return 'fara_efect'; schimba('note', () => { D().note = D().note.slice(0, -1); }); return 'stergere_note'; }
       const f = formaSel();
       if (!sel) return M.panou === 'miniaturi' ? stergeDiapozitiv() : 'fara_efect';
       if (!sel.edit) {   // caseta aleasă ca obiect: Delete o șterge (o casetă de aspect goală rămâne — R11-8, [NEVERIFICAT])
@@ -1297,6 +1669,11 @@
       deTinut();
       const [fel, v] = [(tinta || '').split(':')[0], (tinta || '').slice((tinta || '').indexOf(':') + 1)];
       H.rupe();
+      const eraNota = notaActiva;
+      notaActiva = fel === 'zona_note' && M.vedere !== 'sortare';
+      if (notaActiva) { sel = null; M.panou = 'diapozitiv'; deseneaza(); return null; }
+      if (eraNota) deseneazaNote();
+      if (fel === 'miniatura' && M.vedere === 'sortare') { M.activ = +v - 1; M.panou = 'miniaturi'; sel = null; deseneaza(); return null; }
       if (fel === 'miniatura') {
         M.activ = +v - 1; M.panou = 'miniaturi'; sel = null; deseneaza();
         ancora = { mini: M.activ, y0: e.clientY };
@@ -1307,9 +1684,15 @@
         const [d, s] = v.split('/').map(x => +x - 1);
         const f = forma(d, s);
         if (!f) return null;
-        if (fel === 'margine_forma' || (sel && sel.d === d && sel.s === s && !sel.edit) || !textual(f)) {
+        /* P4 (critic 12): clicul în MIJLOCUL unei forme din Shapes (stea, săgeată, dreptunghi) sau al unei casete de text NEalese o
+           alege ca OBIECT — Selection.Type 2, fără cursor în text (acoperire_r12.fapte › a_forma_clic › clic_mijloc: stea,
+           sageata, dreptunghi, caseta_text); de aici Ctrl+C / Ctrl+X / Delete lucrează pe formă. Substituenții aspectului
+           (titlu, subtitlu, conținut — necapturați) păstrează cursorul în text, unde scriu lecțiile (R13-1). */
+        const obiect = (f.tip === 'forma' || f.tip === 'caseta') && !(sel && sel.d === d && sel.s === s && sel.edit);
+        if (fel === 'margine_forma' || (sel && sel.d === d && sel.s === s && !sel.edit) || !textual(f) || obiect) {
+          const era = !!(sel && sel.d === d && sel.s === s && !sel.edit);
           sel = { d, s, edit: false };
-          ancora = { muta: true, x0: e.clientX, y0: e.clientY, fx: f.x, fy: f.y, ina: inst() };
+          ancora = { muta: true, x0: e.clientX, y0: e.clientY, fx: f.x, fy: f.y, ina: inst(), era, interior: fel === 'forma', px: e.clientX, py: e.clientY };
           deseneaza();
           return 'tragere';
         }
@@ -1349,6 +1732,17 @@
       ancora = null;
       if (!g || !an) return null;
       if (an.muta) {
+        /* al doilea clic, fără tragere, în interiorul unei casete de text / forme DEJA alese ca obiect = cursorul în textul ei, la
+           punctul apăsat ([presupus] R13-1: PowerPoint real nu e capturat aici; substituenții nu trec pe aici) */
+        const fa = formaSel();
+        if (!an.mutat && an.era && an.interior && fa && (fa.tip === 'caseta' || fa.tip === 'forma')) {
+          sel = { d: sel.d, s: sel.s, edit: true, a: 0, b: 0 };
+          deseneaza();
+          const fe = slide.querySelector('[data-lh-tinta="forma"][data-lh-id="' + (sel.d + 1) + '/' + (sel.s + 1) + '"]');
+          sel.a = sel.b = fe ? offsetDin(fe, an.px, an.py) : fa.text.length;
+          deseneaza();
+          return 'cursor_text';
+        }
         if (!an.mutat) return 'fara_efect';
         H.inainte('mutare_forma', an.ina);
         M.salvat = false;
@@ -1389,6 +1783,9 @@
       if (fel === 'backstage') {
         const nb = elx.__nod || {};
         if (nb.id === 'FileTabButton' || v === 'Back') { inchideBackstage(); return 'inapoi'; }
+        /* File › New › Blank Presentation (fapte.b_blank_presentation): „Presentation2”, 2 deschise, Backstage închis, un Title Slide */
+        if (v === 'Blank Presentation') return prezentareNoua();
+        if (v === 'Browse' && backstage && backstage.pagina === 'Open') return deschideOpen();
         if (v === 'Browse' && backstage && backstage.pagina === 'Save As') return deschideDialog('dialog.FileSaveAs') ? 'salvare_ca' : I.nesimulat(v);
         if (elx.closest('[data-lh-suprafata="backstage.nav"]') && nb.t === 'ListItem') {
           if (nb.a === 0) return 'indisponibil';
@@ -1400,8 +1797,24 @@
       }
       if (dialog && dialog.baza === INTREB) return fel === 'camp' ? 'camp' : fel === 'fereastra' ? raspunsInchidere(v) : I.nesimulat(v);
       if (dialog && dialog.baza === POZA && fel === 'fereastra' && v === 'Open') return insereazaImagine();
+      if (dialog && dialog.baza === DESCHIDE) {
+        if (fel === 'lista') { const c = dialog.el.querySelector('[data-lh-tinta="camp:nume_fisier"] input'); if (c) c.value = v; return 'alegere_fisier'; }
+        if (fel === 'fereastra' && v === 'Open') return deschideFisier();
+      }
       if (fel === 'dialog_salvare' && dialog) return v === 'Save' ? salveazaDinDialog() : (inchideDialog(), 'anulare');
-      if (fel === 'camp') return 'camp';
+      if (fel === 'camp') {
+        /* clic în caseta Font = lista fonturilor + textul casetei ales, gata de scris ([presupus] R13-4: în aplicația reală clicul
+           în text doar alege textul; lista o deschide ▾ / Alt+↓); caseta Start (fără Edit) = lista ei, ca o listă derulantă */
+        if (elx.closest('[data-lh-id-mso="Font"]') && !faraPrez()) {
+          const r = formaSel() && textual(formaSel()) ? listaFont(elx.closest('[data-lh-id-mso="Font"]')) : 'indisponibil';
+          const inp = elx.querySelector('input') || (tgClic && tgClic.closest && tgClic.closest('input'));
+          if (inp && !inp.readOnly) { try { inp.focus(); inp.select(); } catch (x) { /* */ } }
+          return r;
+        }
+        const cb = elx.closest('[data-lh-tip="ComboBox"]');
+        if (cb && cb.__nod && cb.__nod.e === 'Start' && filaActiva === 'TabAnimations') return apasaComanda(cb, tinta, v);
+        return 'camp';
+      }
       if (fel === 'fereastra' && dialog) {
         if (v === 'OK') return okDialog();
         if (v === 'More' || v === 'Less') return spinDialog(elx, v === 'More' ? 1 : -1);
@@ -1414,11 +1827,21 @@
       if (fel === 'meniu' && meniu && meniu.contains(elx)) return apasaMeniu(elx, v);
       if (fel === 'acces_rapid' || fel === 'panglica' || fel === 'meniu_derulant' || fel === 'lansator' || fel === 'meniu') return apasaComanda(elx, tinta, v);
       if (fel === 'bara_titlu' && v === 'Close') return cerereInchidere('x');
+      if (fel === 'bara_stare') {
+        const vb = String(v || '').trim();
+        if (vb === 'Notes') return comutaNote();
+        if (vb === 'Normal') return seteazaVedere('normala');
+        if (vb === 'Slide Sorter') return seteazaVedere('sortare');
+        if (vb === 'Reading View') return seteazaVedere('citire');
+        if (vb === 'Slide Show') return seteazaVedere('expunere');
+      }
+      if (fel === 'zona_note') return 'cursor_note';
       if (fel === 'zoom' || fel === 'bara_stare' || fel === 'bara_titlu' || fel === 'cautare' || fel === 'buton') return I.nesimulat((elx.__nod || {}).e || v || tinta);
       return I.nesimulat(v || tinta);
     };
     /* dublu clic în text = cuvântul ales */
     I.la.dublu = (tinta) => {
+      if (dialog && dialog.baza === DESCHIDE && /^lista:/.test(tinta || '')) return deschideFisier(tinta.slice(6));
       const f = formaSel();
       if (!/^forma:/.test(tinta || '') || !sel || !sel.edit || !textual(f)) return null;
       const t = f.text, k = sel.b;
@@ -1457,6 +1880,7 @@
         if (dialog && dialog.baza === INTREB && k === 'Enter') { e.preventDefault(); I.activat = 'fereastra:Save'; return raspunsInchidere('Save'); }
         /* Insert Picture: Enter în File name = butonul implicit (api §4 › activat; scenarii_real/powerpoint-imagine.json: nume + Enter) */
         if (dialog && dialog.baza === POZA && k === 'Enter') { e.preventDefault(); I.activat = 'fereastra:Open'; return insereazaImagine(); }
+        if (dialog && dialog.baza === DESCHIDE && k === 'Enter') { e.preventDefault(); I.activat = 'fereastra:Open'; return deschideFisier(); }
         if (dialog && k === 'Escape') { inchideDialog(); return 'anulare'; }
         if (dialog && k === 'Enter' && dialog.baza === 'dialog.FileSaveAs') { e.preventDefault(); I.activat = 'dialog_salvare:Save'; return salveazaDinDialog(); }
         /* Enter într-un câmp al ferestrei = butonul implicit OK (api §4 › activat) */
@@ -1474,12 +1898,34 @@
           return 'durata_tranzitie';
         }
         if (cdu && k === 'Escape') { e.preventDefault(); I.focus(); actualizeazaPanglica(); return 'anulare'; }
+        /* caseta Font: săgețile / Enter umblă în lista deschisă; un nume scris + Enter = fontul (ca în aplicația reală: All Fonts
+           are numele instalate — date › fonturi_toate); Alt+↓ deschide lista; Esc renunță */
+        /* o listă deschisă dintr-o casetă fără scriere (Start ▾): tastele umblă în listă, ca din document */
+        if (meniu && e.target && e.target.readOnly && /^(ArrowUp|ArrowDown|ArrowLeft|ArrowRight|Enter)$/.test(k)) { e.preventDefault(); const r = navigaLista(k); if (k === 'Enter') I.focus(); return r; }
+        if (meniu && e.target && e.target.readOnly && k === 'Escape') { e.preventDefault(); inchideMeniu(); I.focus(); return 'inchidere_meniu'; }
+        const cfo = e.target && e.target.closest && e.target.closest('[data-lh-id-mso="Font"]');
+        if (cfo && e.altKey && k === 'ArrowDown') { e.preventDefault(); return listaFont(cfo); }
+        if (cfo && meniu && /^(ArrowUp|ArrowDown)$/.test(k)) { e.preventDefault(); return navigaLista(k); }
+        if (cfo && k === 'Enter') {
+          e.preventDefault();
+          if (meniu && meniu.querySelector('.lh-ap-p-tasta') && meniu.querySelector('.lh-ap-p-tasta').getAttribute('data-lh-eticheta') !== fontAfisat()) { const r = navigaLista('Enter'); I.focus(); return r; }
+          const tx = String(e.target.value || '').trim().toLowerCase();
+          const toate = ['Calibri Light (Headings)', 'Calibri (Body)'].concat(date.fonturi_toate || []);
+          const n = toate.find(x => x.toLowerCase() === tx) || toate.find(x => numeFontCom(x).toLowerCase() === tx);
+          inchideMeniu();
+          I.focus();
+          const r = n ? puneFont(n) : 'fara_efect';
+          actualizeazaPanglica();
+          return r;
+        }
+        if (cfo && k === 'Escape') { e.preventDefault(); inchideMeniu(); I.focus(); actualizeazaPanglica(); return 'anulare'; }
         const cfs = e.target && e.target.closest && e.target.closest('[data-lh-id-mso="FontSize"]');
         if (cfs && k === 'Enter') { e.preventDefault(); const r = puneMarime(citesteNumar(e.target.value)); I.focus(); actualizeazaPanglica(); return r; }
         if (cfs && k === 'Escape') { e.preventDefault(); I.focus(); actualizeazaPanglica(); return 'anulare'; }
         return null;
       }
       if (meniu && k === 'Escape') { inchideMeniu(); return 'inchidere_meniu'; }
+      if (meniu && /^(ArrowUp|ArrowDown|ArrowLeft|ArrowRight|Enter)$/.test(k)) { e.preventDefault(); return navigaLista(k); }
       if (unealta && k === 'Escape') { unealta = null; slide.classList.remove('lh-ap-p-cruce'); return 'anulare'; }
       if (dialog) {
         if (k === 'Escape' && dialog.baza === INTREB) return raspunsInchidere('Cancel');
@@ -1545,6 +1991,7 @@
           default: return g && /^ctrl_/.test(g) ? I.nesimulat('Ctrl+' + g.slice(-1).toUpperCase()) : null;
         }
       }
+      if (g === 'tasta_esc' && notaActiva) { notaActiva = false; deseneazaNote(); return 'iesire_note'; }
       if (g === 'tasta_esc') {
         if (sel && sel.edit) { sel.edit = false; deseneaza(); return 'alegere_forma'; }
         if (sel) { sel = null; deseneaza(); return 'deselectare'; }
@@ -1553,7 +2000,7 @@
       if (g === 'tasta_delete' || g === 'tasta_backspace') { e.preventDefault(); return sterge(g === 'tasta_backspace'); }
       if (g === 'tasta_enter') {
         e.preventDefault();
-        if (sel && sel.edit) return scrie('\n');
+        if (notaActiva || (sel && sel.edit)) return scrie('\n');
         if (M.panou === 'miniaturi') return diapozitivNou();
         if (sel && textual(formaSel())) { sel.edit = true; sel.a = 0; sel.b = formaSel().text.length; deseneaza(); return 'editare_text'; }
         return 'fara_efect';
@@ -1574,7 +2021,7 @@
       if (g === 'tasta_home_end' && sel && sel.edit && formaSel()) { e.preventDefault(); const p = k === 'Home' ? 0 : formaSel().text.length; sel.b = p; if (!e.shiftKey) sel.a = p; sel.ins = null; deseneaza(); return 'cursor'; }
       if (g === 'tastare') {
         e.preventDefault();
-        if (sel && textual(formaSel())) return scrie(k);
+        if (notaActiva || (sel && textual(formaSel()))) return scrie(k);
         return 'fara_efect';
       }
       return null;
