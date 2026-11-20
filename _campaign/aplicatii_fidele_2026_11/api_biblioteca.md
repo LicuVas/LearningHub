@@ -207,6 +207,13 @@ Ce spune `stare()` la `text` / `celule` trebuie să fie ȘI pe ecran (regula „
   (true/false), `dialog` `{titlu, intrebare, butoane, apasat}` (fereastra care întreabă, ca la Word), `registru_activ`
   (numele registrului activ, `null` fără registru), `latimi_coloane` `{litera: px}` și `inaltimi_randuri` `{rând: px}`
   (doar cele diferite de standard; px la 100% = puncte × 4/3), iar în `format_celule` câmpul `incadrare: true` (Wrap Text);
+  din runda `acoperire` Excel redeschisă după runda 14 (20.11.2026; sensul exact în `descriere` a scenariilor
+  `excel-grafic-line-galerie`, `excel-grafic-line-data-labels-right`, `excel-varsare-zona-ocupata`): `tip_grafic` (tipul
+  primului grafic de pe foaie, cu numele din galeria Excel: „Line”, „Clustered Column”…; `null` fără grafic), `serii_grafic`
+  (numele seriilor, în ordinea din grafic), `categorii_grafic` (etichetele axei categoriilor, în ordine, ca text) și
+  `etichete_date` `{serie: poziție | null}` (poziția etichetelor de date cu numele din Add Chart Element › Data Labels:
+  „Right”, „Outside End”…; `null` = seria n-are etichete); în `celule`, la o celulă cu eroare, `valoare` = numele erorii, ca
+  în celulă („#SPILL!”);
 - **powerpoint**: `diapozitive`, `formatare_text`, `tema`, `tranzitie_galerie`, `animatie_galerie`, `nume_fisier`;
   din runda `acoperire` după runda 11 (20.11.2026; sensul exact în `descriere` a scenariilor `powerpoint-ctrl-n`,
   `powerpoint-ctrl-w-modificat`, `powerpoint-font-color-titlu`, `powerpoint-ctrl-c-v-caseta`, `powerpoint-sageata-dreapta`,

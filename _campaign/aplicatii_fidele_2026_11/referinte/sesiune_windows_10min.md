@@ -29,3 +29,20 @@ Comanda mea, la fiecare pas: `python C:/00/Projects/LearningHub_fidel/_campaign/
 - b) După pasul 13: clic pe tema.docx, F2: ce e colorat — „tema” sau „tema.docx”? Apoi Esc.
 
 Ce iese: `referinte/uia_windows.json` (pașii 1-5) și `referinte/uia_explorer.json` (pașii 6-13). Fereastra Proprietăți e deja citită o dată pe desktopul ascuns (`proprietati_fisier`); pasul 13 e martorul ei. Durata: ~10 minute (13 pași × ~40 s).
+
+## Rularea din 20.11.2026, 19:48-20:07 (toți cei 13 pași capturați)
+- **Cine a făcut gesturile:** omul a cerut la 19:56 („fă tu click-urile necesare”), deci gesturile le-a făcut Claude: tasta Windows, Win+D, clic dreapta, Shift + clic dreapta, rotița, F2, Esc. Butoanele panglicii Explorer s-au apăsat prin UI Automation (Expand / Invoke), fără mouse. Omul n-a mai avut nimic de făcut.
+- **Start și Start › „Toate”:** nu apar în EnumWindows pe acest Windows (build 26200), deci `captura start` aștepta degeaba. Fereastra s-a găsit prin UI Automation („Meniul Start”, `Windows.UI.Core.CoreWindow`, startmenuexperiencehost.exe) și s-a citit cu ACELAȘI `Cititor` și aceeași `inregistrare` / `adauga_suprafata` (adaptor în scratchpad, necomis: conține calea contului).
+  - În noul meniu Start, „Fixate” și „Toate” (vizualizarea pe categorii) sunt o singură suprafață care se derulează; `start_toate` = aceeași suprafață, derulată în jos.
+- **Meniurile Explorer** (Nou, Sortați, Vizualizați › Afișați, clic dreapta pe fișier și pe locul gol) sunt ferestre `Microsoft.UI.Content.PopupWindowSiteBridge` COPII ai ferestrei Explorer, nu ferestre de sus. S-au citit pe hwnd-ul lor.
+  - Butoanele se numesc „Sortați” / „Vizualizați” / „Afișați”, nu „Sortare” / „Vizualizare” / „Afișare”, ca în tabelul de mai sus.
+- **Meniurile clasice** (#32768) s-au deschis cu Shift + clic dreapta, adică același meniu ca „Afișați mai multe opțiuni”.
+- **Proprietăți:** s-a deschis din meniul de clic dreapta › „Proprietăți” (Alt+Enter trimis prin SendInput n-a ajuns la listă).
+- **Cele două lucruri „cu vorbe”:** le-a citit Claude pe o captură de ecran, ștearsă după citire. Sunt scrise în `uia_explorer.json › explorer_fereastra › observat_vizual`:
+  - săgeata de sortare e pe „Nume”, în sus;
+  - la F2 se colorează doar „tema”.
+- **Date personale:** `verifica` = 0. În plus, de mână, s-au ascuns:
+  - folderele fixate ale omului din panoul de navigare și numele telefonului (câmpurile `valoare` / `id` pe care unealta le lăsase);
+  - dala fixată „PhoneToPC” din Start;
+  - numele rețelei Wi-Fi din bara de activități.
+- **Incident:** o captură a prins din greșeală fereastra Word a omului (OpusApp, adusă la vedere de Win+D). A fost scoasă din `uia_explorer.json` imediat, înainte de orice commit. Adaptorul acceptă de atunci doar procesele suprafeței.

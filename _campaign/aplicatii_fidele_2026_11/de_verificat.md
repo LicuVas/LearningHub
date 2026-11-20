@@ -333,17 +333,31 @@ Până la răspuns, simulatorul face ce scrie în paranteză.
   (e) `=B2:B100*2` (zonă mare, multe goluri): se varsă cu 0? (Simulatorul: (a) #VALUE! în D2, fără chenar; (b) bara goală,
   Delete fără efect; (c) nu se varsă, ca înainte; (d) #N/A în afara zonei mici; (e) se varsă cu 0, până la 5000 de celule.
   `com_r8.json` dă doar cazul simplu: D2:D6 = 432…288, HasSpill, D3 fără formulă.)
+  **Lămurit PARȚIAL (a, c) în runda `acoperire` Excel după runda 14 (20.11.2026, Excel real pe desktopul ascuns, gesturi
+  tastate):** (a) D2 = `#SPILL!` (formula rămâne `=SUM(B2:B7)*B2:B6`, D4 = „x”, celula activă D3) —
+  `referinte/scenarii_real/excel-varsare-zona-ocupata.json`; (c) `=B2:B6`, `=B2:B6&"x"`, `=B2:B6>8` se varsă toate în
+  D2:D6 / E2:E6 / F2:F6, formula doar în prima celulă, după Tab, Tab, Enter celula activă e D3 —
+  `referinte/scenarii_real/excel-varsare-simpla.json`; prin COM (Formula = Formula2 = textul tastat, HasSpill, SpillParent,
+  SpillingToRange D2:D6): `referinte/uia_excel.json › acoperire_r14.fapte.v_varsare_com`. Rămân (b) chenarul / bara de
+  formule / Delete pe D3, (d), (e).
 - [ ] **R10-4** Excel, axa valorilor la un grafic Clustered Column cu valorile 0…10 (maxim exact 10), 0…100, 0…0,5 și cu o
   valoare negativă (−3): ce minim / maxim / pas pune Excel? (Simulatorul: 5 % deasupra maximului, apoi pasul 1 / 2 / 5 × 10^k
   cu cel mult 10 diviziuni; regula e potrivită pe cele 3 cazuri COM din `com_r9.json` (0–10/1, 0–25/5, 0–30/5).)
-- [ ] **R10-5** Excel, după vărsarea D2:D6 (`=SUM(B2:B7)*B2:B6`): Ctrl+↓ și Ctrl+Shift+↓ din D2, Ctrl+↑ din D7, Ctrl+A în D3.
+- [x] **R10-5** Excel, după vărsarea D2:D6 (`=SUM(B2:B7)*B2:B6`): Ctrl+↓ și Ctrl+Shift+↓ din D2, Ctrl+↑ din D7, Ctrl+A în D3.
   (COM invizibil, criticul 10, `runde/10/critic_probe/com_r10k3.json`: `End(xlDown)` din D2 = $D$6, `End(xlUp)` din D7 = $D$6,
   `CurrentRegion` al lui D3 = $D$2:$D$6. Simulatorul: D40, D2, D2:D51, toată foaia. Gestul real de tastatură nu e jucat; de
   înghețat într-o rundă `acoperire` împreună cu R10-3 a, c, unde criticul 10 a dovedit prin COM `#SPILL!` la zona ocupată și
   vărsarea lui `=B2:B6`, `=B2:B6>8`, `=B2:B6&"a"`, `com_r10k.json`.)
-- [ ] **R10-6** Excel, Ctrl+↓ din ultima celulă plină a unei coloane și Ctrl+→ din ultima plină a unui rând: ajunge la rândul
+  **Lămurit în runda `acoperire` Excel după runda 14 (20.11.2026, Excel real pe desktopul ascuns, formula tastată, apoi
+  tastele):** Ctrl+↓ din D2 → D6 (`excel-varsare-ctrl-jos`), Ctrl+Shift+↓ din D2 → D2:D6 cu D2 activă
+  (`excel-varsare-ctrl-shift-jos`), Ctrl+↑ din D7 → D6 (`excel-varsare-ctrl-sus-din-d7`), Ctrl+A în D3 → D2:D6 cu D3 activă
+  (`excel-varsare-ctrl-a`), toate în `referinte/scenarii_real/`.
+- [x] **R10-6** Excel, Ctrl+↓ din ultima celulă plină a unei coloane și Ctrl+→ din ultima plină a unui rând: ajunge la rândul
   1.048.576 / coloana XFD? (COM, `com_r10k2.json`: `End(xlDown)` = $A$1048576, `End(xlToRight)` = $XFD$7. Simulatorul: se
   oprește la marginea grilei desenate, A40 / Z4.)
+  **Lămurit în runda `acoperire` Excel după runda 14 (20.11.2026, Excel real pe desktopul ascuns, tastele):** Ctrl+↓ din A7
+  (A1:A7 pline) → A1048576 (`excel-ctrl-jos-ultimul-rand`), Ctrl+→ din C7 (A7:C7 pline) → XFD7
+  (`excel-ctrl-dreapta-ultima-coloana`), în `referinte/scenarii_real/`.
 - [ ] **R10-7** Excel, un grafic ales: Ctrl+C, Ctrl+X, Backspace, apoi Delete + Ctrl+Z (graficul revine ales sau neales?).
   (Simulatorul: Ctrl+C / Ctrl+X lucrează pe celule, Backspace fără efect, graficul revine neales; criticul 10, [FARA_REFERINTA] 8.)
 - [ ] **R10-8** Excel, Change Chart Type deschis din taste (Alt, J, C, C): ordinea Tab (Recommended Charts, All Charts, lista
