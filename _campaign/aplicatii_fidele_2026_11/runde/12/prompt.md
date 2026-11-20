@@ -1,4 +1,4 @@
-<!-- Runda 12 · etapa B · aplicația powerpoint · unghiul aspect · generat de pregateste_runda.py la 2026-11-20 06:08 din prompt_runda.md (sha256 09a338ac5aaa) -->
+<!-- Runda 12 · etapa B · aplicația powerpoint · unghiul aspect · generat de pregateste_runda.py la 2026-11-20 07:45 din prompt_runda.md (sha256 09a338ac5aaa) -->
 
 <rol>
 Ești runda 12 (etapa B) a lucrării „Aplicațiile fidele” din LearningHub. Nu ești autorul rundelor anterioare și nu le
@@ -57,10 +57,10 @@ Fă pașii în ordine. Fiecare pas lasă un ARTEFACT în D/runde/12/; un pas fă
        - ## 5. [FARA_REFERINTA] (nu se numără GRAV; de dus la proba omului / în `de_verificat`)
        - GRAV_VECHI_DESCHISE: 0
        - GRAV: 5
-     Oracolele după runda precedentă: O1=61, O2=13392, O3=21586, O4=33 (era 50), O5=82 (era 113), O6=0, O7=343, O8=102, O9=27 (era 34)
-     Cele mai mari rămase: O3=21586, O2=13392, O7=343 (la etapa B ținta = suprafața cu (O3+O4+O8) × lecții cea mai mare, din inventar.json)
+     Oracolele după runda precedentă: O1=61, O2=13392, O3=25076 (era 21586), O4=48 (era 33), O5=82, O6=0, O7=341 (era 343), O8=102, O9=27
+     Cele mai mari rămase: O3=25076, O2=13392, O7=341 (la etapa B ținta = suprafața cu (O3+O4+O8) × lecții cea mai mare, din inventar.json)
      Porțile după runda precedentă (n = probleme): test_joc=0, controale_taiate=0, cum_fac=41, fereastra_mica=0, date_personale=0, word2007_j2=0
-     Ținta rundei precedente: runda 1 B-powerpoint (prima din val): aplicatia PowerPoint in biblioteca, generata din uia_powerpoint.json (supliment_B_powerpoint_runda11.md); 2 constructori · reparat: ['constructorul 1 (PREDARE, commit 1b68edcc): genereaza_powerpoint.py + date/powerpoint.json (11 file, fara grupul Claude), powerpoint.js cu fereastra, panglica, miniaturi, casete cu tastare, New Slide / Layout / Duplicate / Delete / mutare / Ctrl+Z, Design, Transitions, Animations + Animation Pane, Save As, F5; 13/17 scenarii', 'constructorul 2 (commit a6ba180a): formatarea pe bucati de text (Bold/Italic/Underline/marime pe caracter, Ctrl+B/I/U), caseta Font Size, ferestrele Font / Paragraph / Insert Table (OK aplica, Cancel/Esc nimic), starea modificat, literele pierdute dupa F12 reparate; proba 35 de verificari 0 picate', "criticul 11 (reluat dupa un critic blocat 6 ore): GRAV P1 KeyTips lipsesc si Alt,H,1 scrie 'h1' in titlu; P2 Font Color doar mesaj (m1-l06, m2-l08, m2-l09); P3 inchiderea si fisierele (X, File>Close, Ctrl+W/N/O) doar mesaj; P4 Pictures, Shapes, Two Content lipsesc, Ctrl+C pe caseta tace; P5 Duration readOnly, Move Up/Down mereu gri, Solid fill / Apply to All doar mesaj; scenariile diapozitiv-nou-buton si salvare-ca: simulatorul are dreptate; margine_forma canonica (MINOR: lipseste din api 3); regresul Word si Excel curat (0 pixeli diferiti)"]
+     Ținta rundei precedente: referintele reale lipsa pentru GRAV-urile criticului 11 (P2-P5; P1 avea deja tasta_acces) + cele 3 scenarii scrise gresit: capturi UIA PowerPoint real (POWERPNT /B pe desktop ascuns) + 10 scenarii noi + 3 rescrise + api §3 margine_forma si §5 · reparat: ['runde/11/acoperire_powerpoint.md: ACOPERIRE_PARTIALA; O3 21586->25076 (exact cele 11 suprafete noi), O4 33->48 (10 scenarii noi; diapozitiv-nou-buton si salvare-ca trec acum, imagine inca neexecutabil), O7 343->341; oracolele neatinse; repere.lock reinghetat (372 fisiere), --verifica 0; de_verificat: R11-1, R11-9, R11-10, R11-13 bifate, R11-14 nou; [NEVERIFICAT]: Duration 0,5 tastat, tragere-forma, Alt,H,1']
       (GRAV-urile criticului din runda trecută au întâietate).
    Scrii numerele care au ales ținta și LISTA fișierelor pe care le deține runda (doar acelea se modifică).
 

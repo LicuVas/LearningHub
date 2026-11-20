@@ -443,6 +443,16 @@ Citite din `scenarii_real/<id>.json`; fiecare are `mod_probat: true`. Comparați
     ],
     "control": "așteptarea „xz” pică"
    }
+  },
+  "mouse": {
+   "pozitiv": true,
+   "control": true,
+   "trecut": true,
+   "detalii": {
+    "clic pe titlu: Selection.Type (3 = text)": 3,
+    "clic în colțul gol (control)": 0
+   },
+   "sursa": "referinte/acoperire_powerpoint_r11.py › proba_mouse, aceleași rulări cu scenariile care folosesc mouse-ul (20.11.2026; runde/11/acoperire/scenarii_powerpoint_jurnal.json)"
   }
  },
  "scenarii": 16,

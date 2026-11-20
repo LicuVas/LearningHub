@@ -126,6 +126,9 @@ clic dreapta, ▾, galerie — `meniu:Duplicate Slide`, `meniu:Narrow`, `meniu:3
 `fereastra:Da`), `camp` (`camp:nume_fisier` în Save As / Insert Picture), `dialog_salvare` (`dialog_salvare:Save`),
 `backstage`, `text` (paragraful N din Word: `text:1`), `celula` (`celula:B2`), `maner_umplere`, `fila_foii`, `antet_coloana`,
 `antet_rand`, `miniatura` (diapozitivul N în panoul din stânga), `diapozitiv`, `forma` (`forma:<diapozitiv>/<forma>`),
+`margine_forma` (`margine_forma:<diapozitiv>/<forma>` = MARGINEA casetei: clicul pe ea alege caseta ca obiect, iar clicul
+înăuntru pune cursorul în text, ca în PowerPoint; scrisă `data-lh-tinta="margine_forma"` + `data-lh-id="1/1"`, ca `forma`;
+runda `acoperire` după runda 11, 20.11.2026 — critic.md › `margine_forma:D/S`),
 `tabel`, `imagine`, `grafic`, `lista` (un element din folderul curent: `lista:tema.docx`), `arbore` (panoul de navigare:
 `arbore:Ana`), `bara_comenzi` (`bara_comenzi:Nou`), `nav` (`nav:sus`, `nav:inapoi`, `nav:inainte`), `adresa`, `cautare`,
 `cos` (`cos:notite.txt`), `desktop` (`desktop:Coș de reciclare`), `bara_activitati` (`bara_activitati:Start`), `start`,
@@ -200,6 +203,18 @@ Ce spune `stare()` la `text` / `celule` trebuie să fie ȘI pe ecran (regula „
   (numele registrului activ, `null` fără registru), `latimi_coloane` `{litera: px}` și `inaltimi_randuri` `{rând: px}`
   (doar cele diferite de standard; px la 100% = puncte × 4/3), iar în `format_celule` câmpul `incadrare: true` (Wrap Text);
 - **powerpoint**: `diapozitive`, `formatare_text`, `tema`, `tranzitie_galerie`, `animatie_galerie`, `nume_fisier`;
+  din runda `acoperire` după runda 11 (20.11.2026; sensul exact în `descriere` a scenariilor `powerpoint-ctrl-n`,
+  `powerpoint-ctrl-w-modificat`, `powerpoint-font-color-titlu`, `powerpoint-ctrl-c-v-caseta`, `powerpoint-sageata-dreapta`,
+  `powerpoint-durata-aplica-la-toate`, `powerpoint-animatii-move-up`, `powerpoint-fundal-aplica-la-toate`):
+  `prezentare_activa` (numele prezentării active, `null` fără prezentare), `prezentari_deschise` (câte),
+  `dialog` `{titlu, intrebare, butoane, apasat}` (fereastra care întreabă, ca la Word/Excel; butoanele în ordinea de pe
+  ecran, sus-jos și stânga-dreapta), `culoare_text` (#RRGGBB, literele casetei din `forma_citita`), `durata_tranzitie`
+  (secundele tranziției fiecărui diapozitiv, 2 zecimale), `ordine_animatii` (pe diapozitivul activ, indicele formei — de la
+  1, în ordinea din Shapes — al fiecărei animații, în ordinea din Animation Pane), `fundal_diapozitive`
+  (`[{tip: solid|gradient|imagine|textura|model|alt, culoare?}]`, culoarea doar la `solid`), `forme_diapozitiv`
+  (pe diapozitiv, `[{fel: substituent|forma|imagine|caseta_text|tabel|alta, forma?, text}]`, `forma` = numele din galeria
+  Shapes, ex. „Arrow: Right”) și `pozitii_forme` (pe diapozitiv, `[[stânga, sus, lățime, înălțime]]` în puncte, rotunjite).
+  `culoare` NU intră în `formatare_text` (forma ei rămâne `{text, bold, marime}`);
 - **explorer**: `nume_fisiere` (numele reale din folderul de lucru, cu extensie, folderele cu „/” — comparate ca mulțime),
   `ordine_afisata` (în ordinea vederii), `in_cos`, `continut_fisiere`, `dialog` (ultimul dialog apărut:
   `{titlu, intrebare, butoane, apasat}`, `null` dacă n-a fost niciunul), `cale_curenta`, `selectie`;

@@ -356,11 +356,14 @@ Până la răspuns, simulatorul face ce scrie în paranteză.
 
 <!-- RUNDA11-POWERPOINT:BEGIN -->
 ## Runda 11 (B-powerpoint, constructorul): ce face PowerPoint real și n-are referință (nu se implementează ca „fidel” până nu e probat)
-- [ ] **R11-1** Listele ▾ necapturate (README_referinte.md, „listele derulante și galeriile deschise”): New Slide ▾ și Layout
+- [x] **R11-1** Listele ▾ necapturate (README_referinte.md, „listele derulante și galeriile deschise”): New Slide ▾ și Layout
   (`SlideLayoutGallery`) arată în simulator DOAR aspectele numite de scenariile reale (Title Slide, Title and Content, Title Only);
   Office Theme are mai multe (lecțiile citează Two Content, Blank, Comparison, Section Header…). Pictures ▾
   (`FlyoutAnchorInsertPictures`: This Device… / Stock Images / Online Pictures) dă mesajul central. De capturat într-o rundă
   `acoperire`: lista Layout, lista New Slide ▾, lista Pictures ▾, grila Table ▾ (scenariu: deschiderea fiecărei liste, dump UIA).
+  → LĂMURIT 20.11.2026 (runda `acoperire` după runda 11): `referinte/uia_powerpoint.json` › `lista.SlideNewGallery`,
+  `lista.SlideLayoutGallery`, `lista.FlyoutAnchorInsertPictures`, `lista.TableInsertGallery` (+ `acoperire_r11.fapte`);
+  scenariile reale `powerpoint-two-content-new-slide` / `-layout` (`referinte/scenarii_real/`).
 - [ ] **R11-2** Casetele aspectelor (poziție, mărime, font: titlul Title Slide 60 pt e dovedit — `powerpoint-bold-text.json`;
   subtitlul 24, titlul Title and Content 44, conținutul 28 NU) și textul-îndemn din caseta goală („Click to add title”…; simulatorul
   arată doar chenarul punctat, fără text). Scenariu: `Shapes(i).Left/Top/Width/Height`, `TextFrame.TextRange.Font.Size` și
@@ -377,14 +380,19 @@ Până la răspuns, simulatorul face ce scrie în paranteză.
 - [ ] **R11-7** Galeria Animations aplicată a doua oară pe aceeași casetă ÎNLOCUIEȘTE efectul (Add Animation adaugă): în simulator
   da; scenariul real `powerpoint-animatie-fly-in` are o singură aplicare (`[2]`). Scenariu: Appear apoi Fly In pe aceeași casetă.
 - [ ] **R11-8** Delete pe o casetă de aspect GOALĂ aleasă ca obiect: dispare sau rămâne? (simulatorul: dispare.)
-- [ ] **R11-9** `powerpoint-diapozitiv-nou-buton`: rulatorul O4 apasă CENTRUL lui `mso:SlideNewGallery` (SplitButton [129,83,42,78]);
+- [x] **R11-9** `powerpoint-diapozitiv-nou-buton`: rulatorul O4 apasă CENTRUL lui `mso:SlideNewGallery` (SplitButton [129,83,42,78]);
   centrul (y = 122) cade în partea ▾ (MenuItem `SlideNewGallery_Dropdown` [129,120,42,41]), care în PowerPoint deschide lista
   aspectelor — simulatorul o deschide (fidel geometriei referinței). Realul a fost rulat cu UIA Invoke pe SlideNewGallery
   (`scenarii_real/powerpoint-diapozitiv-nou-buton.json › cum`). De hotărât de orchestrator: scenariul ținește partea de sus
   (`tinta: "panglica:Home/Slides/New Slide"`) sau se probează pe real un clic de mouse în punctul (150,122).
-- [ ] **R11-10** `powerpoint-imagine` (`mso:PictureInsertFromFile`) și `powerpoint-salvare-ca` (`fila: FileTab`, apoi `mso:FileSaveAs`):
+  → LĂMURIT 20.11.2026: scenariul rescris pe partea de SUS (`tinta: panglica:Home/Slides/New Slide` = copilul Button „New Slide”
+  al SplitButton-ului din referință); realul = UIA Invoke pe acel copil → diapozitiv nou Title and Content
+  (`scenarii_real/powerpoint-diapozitiv-nou-buton.json`, mod_probat true).
+- [x] **R11-10** `powerpoint-imagine` (`mso:PictureInsertFromFile`) și `powerpoint-salvare-ca` (`fila: FileTab`, apoi `mso:FileSaveAs`):
   țintele nu există pe ecran în referință (pe panglică e `FlyoutAnchorInsertPictures`; fila File e `FileTabButton`; Save As e un
   rând din Backstage fără idMso). Rămân neexecutabile până la o rundă `acoperire` (lista Pictures ▾) / o reparație a scenariului.
+  → LĂMURIT 20.11.2026: ambele rescrise pe drumul real și rulate gest_real: imagine = Insert › Pictures ▾ › This Device... ›
+  nume › Enter (3 forme); salvare-ca = File › Save As › Browse › nume › Enter („Vulcanii.pptx”); `scenarii_real/`, mod_probat true.
 - [ ] **R11-11** (constructorul 2) Formatarea pe bucăți de text — ce nu e probat pe PowerPoint real:
   (a) Bold / Italic / Underline / Increase Font cu cursorul STRÂNS în cuvânt → tot cuvântul (simulatorul: da, ca Word —
   `scenarii_real/word-ctrl-b-fara-selectie.json`); cu cursorul în afara unui cuvânt → doar formatul de scriere;
@@ -406,9 +414,18 @@ Până la răspuns, simulatorul face ce scrie în paranteză.
   (e) eticheta „Insert Table...” din lista Table ▾ (comanda `TableInsert` e copilul lui `TableInsertGallery` în lista Microsoft S11;
   eticheta nu e capturată);
   (f) Font Color: culoarea implicită a butonului și paleta ▾ nu sunt în referință → Font Color rămâne cu mesajul central.
+  → (f) LĂMURIT 20.11.2026: `uia_powerpoint.json` › `lista.FontColorPicker` (+ `_minibara`), butonul „Font Color Red” la
+  pornire (`acoperire_r11.fapte.a_font_color`), scenariul real `powerpoint-font-color-titlu` (Red → #FF0000). (a)-(e) rămân.
   Scenarii: dump UIA al fiecărei ferestre cu un text aldin / subliniat / aliniat la stânga ales; lista Table ▾ deschisă.
-- [ ] **R11-13** (constructorul 2) „Save your changes” la File › Close / Ctrl+W pe o prezentare modificată (lecția m1-l03 o cere:
+- [x] **R11-13** (constructorul 2) „Save your changes” la File › Close / Ctrl+W pe o prezentare modificată (lecția m1-l03 o cere:
   Save / Don't Save / Cancel) NU e în `uia_powerpoint.json` (Excel îl are: `dialog.save_your_changes_to_this_file`). Simulatorul:
   File › Close dă mesajul central. Starea `modificat` (true după orice schimbare, false după Save / Save As) e gata. Scenariu
   `powerpoint-ctrl-w-modificat` într-o rundă `acoperire` (dump UIA al ferestrei, butoanele, ce rămâne după Don't Save).
+  → LĂMURIT 20.11.2026: `uia_powerpoint.json` › `dialog.save_your_changes_to_this_file` (aceeași fereastră la Ctrl+W, File ›
+  Close și ✕; Don't Save → PowerPoint fără prezentare: `acoperire_r11.fapte.b_dont_save`); scenariile reale
+  `powerpoint-ctrl-w-modificat` (Cancel → prezentarea rămâne) și `powerpoint-ctrl-n` („Presentation2”, 2 deschise).
+- [ ] **R11-14** (runda `acoperire` după runda 11) Caseta Duration (Transitions): ce arată după „0,5” + Enter. Pe desktopul
+  ascuns caseta n-a primit focusul nici prin UIA SetFocus, nici prin clicul de mouse postat (focusul a rămas în mdiClass) —
+  [NEVERIFICAT]. Dovedit doar: Fade din galerie pune 0,7 s, iar Apply To All copiază 0,7 pe toate
+  (`scenarii_real/powerpoint-durata-aplica-la-toate.json`). De probat cu omul: clic în casetă, „0,5”, Enter → ce scrie caseta.
 <!-- RUNDA11-POWERPOINT:END -->
