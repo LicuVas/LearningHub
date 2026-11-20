@@ -429,3 +429,29 @@ Până la răspuns, simulatorul face ce scrie în paranteză.
   [NEVERIFICAT]. Dovedit doar: Fade din galerie pune 0,7 s, iar Apply To All copiază 0,7 pe toate
   (`scenarii_real/powerpoint-durata-aplica-la-toate.json`). De probat cu omul: clic în casetă, „0,5”, Enter → ce scrie caseta.
 <!-- RUNDA11-POWERPOINT:END -->
+
+<!-- RUNDA12-POWERPOINT:START -->
+## Runda 12 (B-powerpoint, constructorul 1) — [presupus] în powerpoint.js, de lămurit cu omul sau într-o rundă `acoperire`
+- [ ] **R12-1** KeyTips: ORDINEA și locul insignelor pe ecran (referința dă doar șirurile `tasta_acces`). Bonusul `Alt, H, 1` pe
+  PowerPoint real n-a fost rulat. Simulatorul: insigna sub centrul controlului, una pe literă (la butoanele împărțite câștigă
+  partea care deschide lista: `Alt, H, I` → lista New Slide, ale cărei rânduri au `Alt, H, I, D/L/R` în referință).
+  De probat: Alt → H → 1 pe un titlu ales; Alt → H → I.
+- [ ] **R12-2** Închiderea: (a) Ctrl+W / File › Close pe o prezentare NEmodificată o închide fără întrebare; (b) ✕ pe ULTIMA
+  prezentare închide de tot PowerPoint-ul — simulatorul rămâne în fereastra goală „PowerPoint” (ca după Ctrl+W); (c) Enter în
+  File name al ferestrei „Save your changes” = Save (în referință niciun buton nu e „implicit”); (d) Save din fereastră salvează
+  cu numele din casetă și închide. Scenarii: `ctrl-w-nemodificat`, `x-ultima-prezentare-dont-save`, `enter-in-save-your-changes`.
+- [ ] **R12-3** Culorile: în afară de Red #FF0000, Light Blue #00B0F0, alb (RGB 255,255,255) și negrul textului (#000000), valorile
+  #RRGGBB ale paletei (Standard Colors, temă Office, nuanțele Lighter/Darker N% calculate cu lumMod/lumOff) și culoarea citită la
+  text amestecat (primul caracter). Scenariu: câte o culoare de temă + o nuanță, citite prin COM (Font.Color.RGB).
+- [ ] **R12-4** Geometria aspectelor Section Header, Two Content (pozițiile; numărul 3 e dovedit), Comparison, Blank, Content with
+  Caption, Picture with Caption și numărul formelor lor. Scenariu `pozitii-aspecte` (Shape.Left/Top/Width/Height pe fiecare).
+- [ ] **R12-5** Inserarea: imaginea din Insert Picture (centrată, 360×270 pt; orice nume nevid e primit) și forma din Shapes pusă
+  cu un clic (72×72 pt, colțul în punctul apăsat; Text Box = casetă în editare). Scenariu: `pozitii_forme` după `imagine` și
+  `sageata-dreapta`.
+- [ ] **R12-6** Durata tranziției: doar Fade = 0,7 s e dovedit; la celelalte efecte simulatorul păstrează durata de dinainte;
+  „0,5” + Enter în Duration = 0,5 s pe diapozitivul activ (leagă de R11-14).
+- [ ] **R12-7** Fundalul: un diapozitiv neatins = `{tip: solid, culoare: #FFFFFF}` (panoul arată „Fill Color RGB(255, 255, 255)”,
+  dar tipul neatins nu e citit prin COM); „Automatic” din Color ▾ = alb; eticheta „Fill Color RGB(r, g, b)” după schimbare.
+- [ ] **R12-8** Animation Pane: numele formelor în rânduri în afară de „Title 1” / „Subtitle 2” (Content Placeholder 2, TextBox N…),
+  categoria efectelor în afară de Entrance, clicul pe rând alege și caseta lui pe diapozitiv.
+<!-- RUNDA12-POWERPOINT:END -->
