@@ -54,8 +54,43 @@
   (R13-1 … R13-10); notele din `runde/13/` (cadru, tinta, contra, diferente, stare_autor, o4_ppt.py, h.py, proba_grav.py,
   proba_grav_*.json, regres_*).
 
+## Constructorul 2 (preia de la 6751b1f6)
+- **Pasul 0 — FĂCUT**: căderea din runde/12/proba_grav.py = schimbarea VOITĂ. Cu zona de note închisă, cele 4 capturi 360 px sunt
+  identice la pixel cu 552ac0c5 (0 pixeli diferiți ×4); cu ea deschisă diferă doar banda y 322-609 (diapozitiv + note).
+  Dovada: `runde/13/pas0_telefon.json` (+ `pas0_telefon.py`), scris în `diferente.md` › „Pasul 0”. `ShowNotes_la_pornire: true`.
+
+- **Bucata 5 — A3 FĂCUT** (`powerpoint.js` › `potrivestePanou()`, chemat din `panouLateral`, `variantaFundal` și ResizeObserver):
+  panoul se potrivește zonei de PE ECRAN; locul din referință (sus 37 px = y 218, dreapta 8 px); `Pane`-ul cu ScrollBar propriu
+  (FB) / `List 'Animation Pane'` se micșorează și se derulează (overflow-y auto, bara desenată ascunsă cât se derulează); butoanele
+  de SUB el urcă și rămân la vedere. Legenda panoului pe banda de 37 px (`.lh-ap-p-panou-cap`, aria-hidden, [presupus] R13-11 — de
+  scris în de_verificat). La 1366×768 nimic nu se micșorează (panou 520). CSS +2 rânduri (`.lh-ap-powerpoint .lh-ap-p-panou-cap`).
+  Proba: `proba_grav.py` e acum pe SECȚIUNI (`--doar a3`, `--ref <sha>`, `--inainte` = 7ab108fe); `a3` = 7/7 (mica: rotița derulează
+  48 px, Apply to All atins → toate #00B0F0; tel360/390: atingeri + glisare CDP; Animation Pane: rândul 2 → Move Up = [2, 1]).
+
+- **Bucata 6 — A1 + A2 FĂCUT** (`powerpoint.js` › `OPT.la` + `listaRef` + tastele de acces; CSS +2 reguli `.lh-ap-p-antet`,
+  `.lh-ap-p-ic-forma` refăcută): titlul grupului pe banda lui din referință în TOATE listele `lista.*` (Shapes 10 grupuri, Theme /
+  Standard Colors 32 / 35 px, Theme Fonts / All Fonts, Office Theme, 1x1 Table); rândurile Shapes = SVG din `desenForma` + `title`;
+  cele 12 Action Buttons (`ascuns` = în afara ecranului capturii) desenate; lista mai înaltă decât fereastra rămâne lipită sub buton
+  (y 159), tăiată + derulabilă (bara desenată ascunsă); paletele (Font Color, mini-bara, FB › Color, Shape Fill, Shape Outline) cu
+  același cod + `title` = numele culorii; fără ▾ la „More … Colors...” / „Eyedropper”. KeyTips: cu o listă deschisă, săgețile /
+  Enter ascund insignele și umblă în listă, Esc închide lista și urcă un nivel ([presupus] R13-15). Proba `--doar a1,a2` = 11/11.
+
+- **Bucata 7 — MINOR FĂCUT (o parte)**: „Font Color Red” pe partea-culoare a lui Font Color cu text ales; indicatorul gol fără
+  diapozitive (R13-16); Solid fill bifat după clic; Animation Pane rânduri 22 / 22 + „Play From” cu rând ales; „Save your changes”
+  cu bara de titlu goală și întrebarea în corp (R13-17); FB / Animation Pane la y 218 (bucata 5); Shapes y 159, Action Buttons, bara
+  închisă (bucata 6); fără ▾ la More Colors / Eyedropper; „Office Theme” / „1x1 Table” scrise. `de_verificat.md`: R13-11 … R13-17.
+  Proba `--doar minor_c2` = 5/5. RĂMÂN (explicate în diferente.md): +3 px ale listelor, miniaturile Layout, „Pov”, fereastra la
+  360 px (x = −26), zonele de atins ≥ 32 px în grile de 24 px, fila „Fill” ca text, R13-4 (caseta Font) păstrată.
+
+- **Proba + regresul (constructorul 2, după ultima scriere sub aplicatii/)** — `regres_c2.sh` → `regres_rezumat_c2.txt`:
+  `13/proba_grav.py` worktree **48/48**; `--inainte` (7ab108fe) 4/38 (34 picate; unele secțiuni se opresc la mijloc);
+  `12/proba_grav.py` (copie %TEMP%) 1 picată = pasul 0 (voită); 11/proba_powerpoint 0; Word 5/4/4-tel/3/2 = 0; Excel 10/9/8/7-cont/6
+  = 0; 7/proba_grav 2 și 7/proba_grav_cont2 3 = ACELEAȘI verificări ca la predarea 1 (comparate pe nume). Ieșirile json noi din
+  runde/7-10 mutate în %TEMP%/lh_r13c2_regres_iesiri/.
+- **Pasul 7** pornit singur pe mașină (`masurare_pas7.log`, ora în `pas7_pornit.txt`).
+
 ## Urmează (constructorul 2)
-0. Lămurește căderea din runde/12/proba_grav.py (mai sus).
+0. ~~Lămurește căderea din runde/12/proba_grav.py~~ (FĂCUT, mai sus).
 5. A3 (Format Background + Animation Pane pe fereastra mică / telefon: `panouLateral` folosește `ZR[3]` = zona din referință).
 6. A1 (Shapes: titlurile grupurilor, desenul din `desenForma`, `title`, locul listei, Action Buttons 0×0) și A2 (paletele: titlurile
    „Theme Colors” / „Standard Colors”, `title` = numele culorii).

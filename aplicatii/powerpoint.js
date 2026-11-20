@@ -296,10 +296,38 @@
         if (ctx.cheie === 'bara_stare' && n.t === 'Button' && /^Notes\s*$/.test(n.e || '')) e.setAttribute('data-lh-buton-note', '');
         /* rândurile listelor din referință care pe ecran sunt doar o mostră / pictogramă (culorile, formele, grila tabelului):
            numele rămâne în data-lh-eticheta (§3, „butonul doar cu pictogramă”), desenul e aria-hidden */
-        if (/^lista\.(FontColorPicker|FormatBackground_Color)/.test(ctx.cheie || '') && n.t === 'ListItem') {
+        /* A2 (critic 12): toate paletele (Font Color în panglică și pe mini-bară, Format Background › Color, Shape Fill, Shape Outline)
+           cu ACELAȘI cod; fiecare pătrat are title = numele culorii din referință (sfatul pe hover: aspectul [presupus] R13-12). „More
+           Colors...” / „Eyedropper” (MenuItem fără copii, fără submeniu capturat) nu au săgeată ▾ (critic 12 §7). */
+        /* MINOR critic 12 §7 · „Save your changes to this file?”: bara de titlu e goală în referință (TitleBar ''); întrebarea se
+           scrie în corpul ferestrei, pe banda liberă de deasupra lui File name (Pane [461, 258] … Edit [_, 331]); aspectul ei
+           [presupus] R13-17 */
+        if (ctx.cheie === INTREB && n.t === 'TitleBar') e.querySelectorAll('.lh-ap-titlu-dialog').forEach(x => { x.textContent = ''; });
+        if (ctx.cheie === INTREB && n.t === 'Pane' && (n.c || []).some(c => c.e === 'File name')) {
+          const q = document.createElement('span');
+          q.className = 'lh-ap-p-intrebare';
+          q.textContent = ctx.titluDialog || '';
+          e.appendChild(q);
+        }
+        const paleta = /^lista\.(FontColorPicker(_minibara)?|FormatBackground_Color|ShapeFillColorPicker|OutlineColorPicker)$/.test(ctx.cheie || '');
+        if (paleta && n.t === 'ListItem') {
           const c = culoareDin(n.e);
           e.innerHTML = '<span class="lh-ap-p-culoare" aria-hidden="true"' + (c ? ' style="background:' + c + '"' : '') + '></span>';
           e.setAttribute('aria-label', n.e);
+          e.title = n.e;
+        }
+        if (paleta && n.t === 'MenuItem' && !(n.c || []).length && (/\.\.\.$/.test(n.e || '') || n.e === 'Eyedropper')) e.querySelectorAll(':scope > .lh-ap-sag').forEach(x => x.remove());
+        /* A1 / A2 (critic 12): titlul grupului pe banda din referință = locul gol dintre începutul grupului și primul rând (Shapes:
+           „Recently Used Shapes” … „Action Buttons”, 28-31 px; paletele: „Theme Colors” 32 px, „Standard Colors” 34-35 px; Font:
+           „Theme Fonts”, „All Fonts”; Layout / New Slide: „Office Theme”; Table: „1x1 Table”). Textul = numele grupului din
+           referință; aspectul benzii [presupus] R13-12. */
+        if (/^lista\./.test(ctx.cheie || '') && n.t === 'Group' && /\S/.test(n.e || '') && n.r && (n.c || []).length && n.c[0].r && n.c[0].r[1] - n.r[1] >= 18) {
+          const hd = document.createElement('span');
+          hd.className = 'lh-ap-p-antet';
+          hd.setAttribute('aria-hidden', 'true');
+          hd.style.height = (n.c[0].r[1] - n.r[1]) + 'px';
+          hd.textContent = n.e;
+          e.appendChild(hd);
         }
         if (/^panou\.LaunchFormatBackground/.test(ctx.cheie || '') && n.t === 'MenuItem' && /^Fill Color/.test(n.e || '')) {
           const c = ((D() && D().fundal) || FUNDAL_IMPLICIT).culoare || '#FFFFFF';
@@ -308,7 +336,16 @@
           e.setAttribute('aria-label', et);
           e.innerHTML = '<span class="lh-ap-p-culoare" aria-hidden="true" style="background:' + c + ';right:18px"></span>';
         }
-        if (ctx.cheie === 'lista.ShapesInsertGallery' && n.t === 'ListItem') { e.innerHTML = '<span class="lh-ap-p-ic-forma" aria-hidden="true"></span>'; e.setAttribute('aria-label', n.e); }
+        /* A1 (critic 12): fiecare rând al galeriei Shapes = desenul formei lui, din numele ei (desenForma, aceeași funcție ca pe
+           diapozitiv; [presupus] R13-3), cu title = numele din referință (sfatul pe hover [presupus] R13-12) */
+        if (ctx.cheie === 'lista.ShapesInsertGallery' && n.t === 'ListItem') {
+          e.innerHTML = '<svg class="lh-ap-p-ic-forma" viewBox="-4 -4 108 108" aria-hidden="true">' + desenForma(n.e) + ' fill="#fff" stroke="#444" stroke-width="1.2" vector-effect="non-scaling-stroke" stroke-linejoin="round"/></svg>';
+          e.setAttribute('aria-label', n.e);
+          e.title = n.e;
+          /* cele 12 „Action Button: …” au în referință `ascuns` = în afara ECRANULUI capturii (lista trecea de marginea monitorului,
+             [321, 996, 24, 24]), nu ascunse: în lista derulabilă se desenează la locul lor (critic 12 §3 A1) */
+          if (n.ascuns && n.r && n.r[2] > 0 && n.r[3] > 0) e.style.display = '';
+        }
         if (ctx.cheie === 'lista.TableInsertGallery' && n.t === 'ListItem') { e.innerHTML = '<span class="lh-ap-p-ic-tabel" aria-hidden="true"></span>'; e.setAttribute('aria-label', n.e); }
       },
       /* câmpurile în care se scrie: File name (Save As), Font Size (Home), Size (Font), coloanele / rândurile (Insert Table),
@@ -557,7 +594,9 @@
     }
     function actualizeazaBare() {
       if (elTitlu) { elTitlu.firstChild.textContent = titlu(); elTitlu.setAttribute('data-lh-eticheta', titlu()); }
-      if (elIndicator) { const t = 'Slide ' + (M.activ + 1) + ' of ' + M.dia.length; elIndicator.firstChild.textContent = t; elIndicator.setAttribute('data-lh-eticheta', 'View Indicator ' + t); }
+      /* fără prezentare / fără diapozitive (diapozitiv_activ null) indicatorul rămâne gol, nu „Slide 1 of 0” (MINOR critic 12 §7;
+         ce scrie PowerPoint atunci nu e capturat → gol [presupus] R13-16) */
+      if (elIndicator) { const t = faraPrez() || !M.dia.length ? '' : 'Slide ' + (M.activ + 1) + ' of ' + M.dia.length; elIndicator.firstChild.textContent = t; elIndicator.setAttribute('data-lh-eticheta', 'View Indicator' + (t ? ' ' + t : '')); }
     }
     /* comenzile gri în referință (activ:false — „starea DE LA DUMP”, cu nimic ales: README_referinte.md) devin active când e o
        casetă aleasă / un text în editare; la Transitions, când diapozitivul are o tranziție (R11-6, [presupus]) */
@@ -571,6 +610,12 @@
         const pe = fara ? false : n.a !== 0 ? true : filaActiva === 'TabTransitions' ? areTr : areSel;
         e.classList.toggle('lh-ap-gri', !pe);
         if (pe) e.removeAttribute('aria-disabled'); else e.setAttribute('aria-disabled', 'true');
+      });
+      /* MINOR critic 12 §7: partea „culoare” a lui Font Color se cheamă „Font Color Red” cu text ales, „Font Color” fără
+         (acoperire_r11.fapte › a_font_color › buton_cu_text_ales / buton_fara_text_ales › copii[0].eticheta) */
+      loculPanglicii.querySelectorAll('[data-lh-id-mso="FontColorPicker"] > [data-lh-tip="Button"]').forEach(b => {
+        const f = formaSel(), nume = f && textual(f) ? 'Font Color Red' : 'Font Color';
+        b.setAttribute('data-lh-eticheta', nume); b.setAttribute('aria-label', nume); if (b.title) b.title = nume;
       });
       loculPanglicii.querySelectorAll('.lh-ap-p-galerie-el').forEach(e => e.classList.remove('lh-ap-p-gal-ales'));
       const g = filaActiva === 'TabTransitions' ? (D() && D().tranzitie) || 'None' : filaActiva === 'TabDesign' ? M.tema :
@@ -725,7 +770,17 @@
       m.style.height = h + 'px';
       m.style.left = Math.max(0, Math.min(b.left - R.left + dx, R.width - w - 2)) + 'px';
       m.style.top = Math.max(0, Math.min(b.top - R.top + dy, R.height - h - 2)) + 'px';
-      if (h < SUP[cheie].r[3]) m.style.overflowY = 'auto';   // lista Shapes (849 px) e mai înaltă decât fereastra: se derulează
+      /* A1 (critic 12): o listă mai înaltă decât fereastra (Shapes, 849 px; referința [319, 159, 309, 849], lipită sub buton) rămâne
+         lipită sub buton și se taie jos, cu derulare (cum se poartă PowerPoint pe 768 nu e capturat → [presupus] R13-13); doar
+         dacă sub buton nu încap nici 200 px urcă, ca înainte. Bara desenată din referință (ScrollBar, Size box) se ascunde: derularea
+         listei tăiate o face bara ei. */
+      const susB = b.top - R.top + dy;
+      if (SUP[cheie].r[3] > R.height - 4 && R.height - susB - 2 >= 200) { m.style.top = susB + 'px'; m.style.height = (R.height - susB - 2) + 'px'; }
+      if ((parseFloat(m.style.height) || h) < SUP[cheie].r[3]) {
+        m.style.overflowY = 'auto';
+        m.style.overflowX = 'hidden';
+        m.querySelectorAll('[data-lh-tip="ScrollBar"],[data-lh-tip="Thumb"][data-lh-eticheta="Size box"]').forEach(x => { if (x.parentElement && x.parentElement.closest('.lh-ap-p-lista-ref') === m) x.style.display = 'none'; });
+      }
       root.appendChild(m);
       meniu = m;
       return 'meniu_derulant';
@@ -1143,15 +1198,56 @@
       const p = desen(cheie);
       p.style.position = 'absolute';
       p.style.left = 'auto';
-      p.style.right = '2px';
-      p.style.top = '2px';
       p.style.width = s.r[2] + 'px';
-      p.style.height = Math.min(s.r[3], ZR[3] - 4) + 'px';
       p.classList.add('lh-ap-p-panou');
       zonaSup.appendChild(p);
       panouLat = { cheie, el: p };
+      potrivestePanou();
       if (cheie === 'panou.AnimationCustom') randuriAnimatii();
       return 'panou';
+    }
+    /* A3 (critic 12): panoul se potrivește zonei de PE ECRAN (zonaSup), nu zonei din referință (ZR). Locul din referință: sus
+       s.r[1] − ZR[1] (panou.* y = 218 față de zona_document y = 181 → 37 px), dreapta (ZR[0] + ZR[2]) − (s.r[0] + s.r[2]) = 8 px,
+       jos (ZR[1] + ZR[3]) − (s.r[1] + s.r[3]) = 7 px. Pe un ecran mai scund, ca în panou.LaunchFormatBackground#Solid fill:
+       conținutul stă în `Pane`-ul care are ScrollBar propriu ([1095, 278, 255, 417]); el se micșorează și se derulează (rotița,
+       degetul), iar butoanele de SUB el (Apply to All, Reset Background [_, 701]) urcă cu cât s-a micșorat și rămân la vedere.
+       La Animation Pane se derulează `List 'Animation Pane'`; Play All / Move Up / Move Down, deasupra ei, rămân pe loc.
+       La 1366×768 (zona 564 = 37 + 520 + 7) nu se schimbă nimic. Banda de 37 px de deasupra = legenda panoului (numele lui),
+       care nu e în UI Automation → aspectul ei [presupus] R13-11. */
+    function potrivestePanou() {
+      if (!panouLat) return;
+      const p = panouLat.el, n0 = p.__nod;
+      if (!n0 || !n0.r) return;
+      const H0 = n0.r[3], sus = Math.max(0, n0.r[1] - ZR[1]), jos = Math.max(0, (ZR[1] + ZR[3]) - (n0.r[1] + n0.r[3]));
+      const zh = zonaSup.clientHeight || ZR[3];
+      const h = Math.max(60, Math.min(H0, zh - sus - Math.max(2, Math.min(jos, zh - sus - H0))));   // 7 px jos doar cât încape
+      p.style.top = sus + 'px';
+      p.style.right = Math.max(0, (ZR[0] + ZR[2]) - (n0.r[0] + n0.r[2])) + 'px';
+      p.style.height = h + 'px';
+      let cap = p.querySelector(':scope > .lh-ap-p-panou-cap');
+      if (!cap) { cap = el('div', 'lh-ap-p-panou-cap', { 'aria-hidden': 'true' }); cap.textContent = n0.e || ''; p.appendChild(cap); }
+      cap.style.top = -sus + 'px';
+      cap.style.height = sus + 'px';
+      const noduri = [...p.querySelectorAll('[data-lh-tip="Pane"],[data-lh-tip="List"]')].filter(e => e.__nod && e.__nod.r);
+      const der = noduri.find(e => (e.__nod.c || []).some(c => c.t === 'ScrollBar')) || noduri.filter(e => e.__nod.t === 'List').sort((a, b) => b.__nod.r[3] - a.__nod.r[3])[0];
+      if (!der) { p.style.overflowY = h < H0 ? 'auto' : ''; return; }
+      const nd = der.__nod, hd = Math.max(40, nd.r[3] - (H0 - h)), ld = nd.r[3] - hd;
+      der.style.height = hd + 'px';
+      der.style.overflowY = ld > 0 ? 'auto' : '';
+      der.style.overflowX = ld > 0 ? 'hidden' : '';
+      der.style.overscrollBehavior = ld > 0 ? 'contain' : '';
+      [...der.children].forEach(c => { if (c.__nod && c.__nod.t === 'ScrollBar') c.style.display = ld > 0 ? 'none' : ''; });   // bara lui = bara derulării
+      for (let a = der.parentElement; a && a !== p.parentElement; a = a.parentElement) {
+        if (a !== p && a.__nod && a.__nod.r) a.style.height = Math.max(0, a.__nod.r[3] - ld) + 'px';
+        if (a === der.parentElement || a.contains(der)) {
+          [...a.children].forEach(c => {
+            const n = c.__nod, pr = a.__nod;
+            if (!n || !n.r || !pr || !pr.r || c === der || c.contains(der)) return;
+            if (n.r[1] >= nd.r[1] + nd.r[3] - 1) c.style.top = (n.r[1] - pr.r[1] - ld) + 'px';
+          });
+        }
+      }
+      p.style.overflowY = H0 - ld > h ? 'auto' : '';
     }
     /* Animation Pane (critic 11, GRAV P5): rândurile = animațiile diapozitivului activ, în ordinea secvenței, cu numele din
        referință (panou.AnimationCustom#doua_animatii: „On Click\nEntrance\nFade : Title 1: Vulcanii ”); rândul ales = cel ales
@@ -1185,7 +1281,7 @@
           'data-lh-tinta': 'fereastra:' + nume, 'aria-selected': i === ia ? 'true' : 'false' });
         if (i === ia) r.setAttribute('data-lh-selectat', '');
         r.__anim = i;
-        r.style.top = (6 + i * 26) + 'px';
+        r.style.top = (6 + i * 22) + 'px';   // pas 22, înălțime 22 (referința, critic 12 §7)
         r.textContent = (i + 1) + '  ' + a.efect + ' : ' + numeForma(f, a.s) + ': ' + (f.text || '').split('\n')[0];
         lst.appendChild(r);
       });
@@ -1194,6 +1290,14 @@
       stareB('Move Up', ia > 0);
       stareB('Move Down', ia >= 0 && ia < n - 1);
       stareB('Play All', n > 0);
+      stareB('Play From', n > 0);
+      /* cu un rând ales butonul se cheamă „Play From” (acoperire_r11.fapte › d_efecte › animation_pane › rand_1_ales › Play From) */
+      panouLat.el.querySelectorAll('[data-lh-eticheta="Play All"],[data-lh-eticheta="Play From"]').forEach(b => {
+        if (b.__anim != null) return;
+        const nume = ia >= 0 ? 'Play From' : 'Play All';
+        b.setAttribute('data-lh-eticheta', nume); b.setAttribute('aria-label', nume);
+        const tx = b.querySelector('.lh-ap-text'); if (tx) tx.textContent = nume;
+      });
     }
     function mutaAnimatie(dir) {
       const d = D(), i = animIdx(), j = i + dir;
@@ -1215,6 +1319,13 @@
       vechi.replaceWith(p);
       panouLat.el = p;
       panouLat.varianta = cheie;
+      potrivestePanou();
+      /* MINOR critic 12 §7: după Solid fill, butonul „Solid fill” apare bifat (starea e `solid`) */
+      if (/#Solid fill$/.test(cheie)) {
+        const r = p.querySelector('[data-lh-tip="RadioButton"][data-lh-eticheta="Solid fill"]'), c = r && r.querySelector('.lh-ap-caseta');
+        if (r) { r.classList.add('lh-ap-bifat'); r.setAttribute('aria-checked', 'true'); }
+        if (c) c.innerHTML = pang.glif('punct', 12);
+      }
       return 'panou';
     }
     function clicPanou(elx, v) {
@@ -1224,7 +1335,7 @@
         if (elx.__anim != null) { animAles = elx.__anim; const a = D().animatii[animAles]; if (a) { sel = { d: M.activ, s: a.s, edit: false }; deseneaza(); } return 'alegere_animatie'; }
         if (v === 'Move Up') return mutaAnimatie(-1);
         if (v === 'Move Down') return mutaAnimatie(1);
-        if (v === 'Play All') return 'previzualizare';
+        if (v === 'Play All' || v === 'Play From') return 'previzualizare';
       }
       if (panouLat.cheie === 'panou.LaunchFormatBackground') {
         if (v === 'Solid fill') return variantaFundal('panou.LaunchFormatBackground#Solid fill');
@@ -2106,10 +2217,13 @@
       if (e.key === 'Alt') { altSingur = true; return; }
       altSingur = false;
       if (!kt.activ) return;
+      /* o listă deschisă din taste de acces (Alt, H, F C; Alt, N, S H): săgețile / Enter ascund insignele și umblă în listă, iar Esc
+         închide lista și urcă un nivel (insignele filei). Necapturat în referință (README_referinte.md:148) → [presupus] R13-15 */
+      if (meniu && /^(ArrowUp|ArrowDown|ArrowLeft|ArrowRight|Enter)$/.test(e.key)) { ktIesi(); return; }
       e.preventDefault();
       e.stopPropagation();
       if (e.key === 'Escape') {
-        if (kt.cale.length && !(backstage && kt.cale.length <= 1)) { kt.cale = kt.cale.slice(0, -1); kt.prefix = ''; if (meniu && !kt.cale.length) inchideMeniu(); ktArata(); }
+        if (kt.cale.length && !(backstage && kt.cale.length <= 1)) { kt.cale = kt.cale.slice(0, -1); kt.prefix = ''; if (meniu) inchideMeniu(); ktArata(); }
         else ktIesi();
         I.tastaFaraClic('iesire_taste_acces');
         return;
@@ -2139,7 +2253,7 @@
       return false;
     };
     I.distruge = () => { if (I._ro) try { I._ro.disconnect(); } catch (e) { /* */ } };
-    if (typeof ResizeObserver === 'function') { I._ro = new ResizeObserver(() => { if (root.isConnected) { deseneazaDiapozitiv(); deseneazaMiniaturi(); } }); I._ro.observe(pane); }
+    if (typeof ResizeObserver === 'function') { I._ro = new ResizeObserver(() => { if (root.isConnected) { deseneazaDiapozitiv(); deseneazaMiniaturi(); potrivestePanou(); } }); I._ro.observe(pane); }
     activeazaFila('TabHome');
     deseneaza();
     if (!scenariu) requestAnimationFrame(() => { if (root.isConnected) deseneaza(); });

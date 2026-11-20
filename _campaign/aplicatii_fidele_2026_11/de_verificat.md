@@ -512,4 +512,21 @@ Până la răspuns, simulatorul face ce scrie în paranteză.
   `powerpoint-note` fără rezultat probat).
 - [ ] **R13-10** Slide Sorter: grila (220 px pe miniatură, 24 px între ele, numărul sub miniatură); clicul pe o miniatură o alege,
   tragerea NU reordonează aici (în real reordonează). Reading View = fereastra aplicației albă, cu diapozitivul (nu e capturată).
+- [ ] **R13-11** Panoul lateral (Format Background, Animation Pane): legenda cu numele panoului pe banda de 37 px de deasupra lui
+  (y 181-218, unde referința nu are elemente) — textul, mărimea 15 px și fondul alb sunt presupuse; pe un ecran mai scund partea
+  derulabilă (`Pane` cu ScrollBar / `List`) se micșorează, butoanele de sub ea rămân jos (structura e din referință, cum se
+  așază PowerPoint pe 657 px nu e capturat). Scenariu: Format Background deschis pe 1366×657 la 125 %, captură UIA.
+- [ ] **R13-12** Titlurile grupurilor din liste (bandă gri deschis, 12 px semibold) și sfatul pe hover al culorilor / formelor
+  (`title` = numele din referință): aspectul presupus; numele și locul benzii sunt din referință. Scenariu: captură de ecran a
+  galeriei Shapes și a paletei Font Color, cu mouse-ul pe „Dark Blue”.
+- [ ] **R13-13** O listă mai înaltă decât fereastra (Shapes, 849 px) rămâne lipită sub buton și se taie jos, cu derulare; cum o
+  așază PowerPoint pe un ecran de 768 nu e capturat. Scenariu: Insert › Shapes ▾ pe 1366×768, UIA BoundingRectangle al listei.
+- [ ] **R13-14** Enter pe o formă aleasă cu săgețile în galeria Shapes = ca clicul (cursorul cruce, forma se pune la clicul pe
+  diapozitiv); în PowerPoint real Enter poate pune forma direct în mijlocul diapozitivului. Scenariu: Alt, N, S, H, ↓, Enter.
+- [ ] **R13-15** Taste de acces cu o listă deschisă (Alt, H, F C): săgețile / Enter ascund insignele și umblă în listă; Esc închide
+  lista și arată insignele filei (README_referinte.md:148, „KeyTips afișate” necapturate). Scenariu: Alt, H, F C, Esc, captură.
+- [ ] **R13-16** Fără prezentare (sau cu 0 diapozitive) indicatorul din bara de stare e gol, nu „Slide 1 of 0”; ce scrie PowerPoint
+  atunci nu e capturat. Scenariu: Ctrl+W › Don't Save, UIA pe bara de stare.
+- [ ] **R13-17** „Save your changes to this file?”: întrebarea în corpul ferestrei (20 px, la [486, 280]) — UIA nu o expune ca
+  text; bara de titlu goală e din referință (TitleBar ''). Scenariu: Ctrl+W pe o prezentare modificată, captură de ecran.
 <!-- RUNDA13-POWERPOINT:END -->
