@@ -18,6 +18,7 @@ brute: `runde/15/acoperire_instrumente/` (scripturile probelor în `probe/`).
 | porți | 41 (`cum_fac` 41, restul 0) | **41**, identic pe fiecare poartă |
 | suma măsurată | 41249 | 43029 (= +1780, doar O3); lacăt ok la început și la sfârșit, 0 neconcludente |
 | bancul O3 (+O2), înainte / după | O3 10/11 (neprins O3-02) · O2 9/9 | **O3 14/15** (neprins tot O3-02; O3-12…15 noi, prinși) · O2 9/9 |
+| bancul întreg (`mutanti/rezultat.json`) | 17.11: neprinși O3-02, O4-04 | **70/72**, neprinși aceiași O3-02, O4-04; `validare.json` 72/72 |
 | jucăria Explorer fidelă (V/M2-L09) | — | **0 puncte** pe toate cele 16 suprafețe explorer.* |
 | `ingheata.py --verifica` | 7 abateri (exact fișierele mele) | **0** (427 fișiere) |
 
@@ -279,9 +280,9 @@ desenate nicăieri: fiecare dă „suprafață lipsă” + 7 pe comandă.
   dacă e în alt loc; mutantul O3-14 arată ambele.
 - **O3-02** (poziție greșită a lui Subscript în Word) rămâne neprins, ca la 17.11 și ca înainte de runda asta: nu e
   schimbarea mea. N-am căutat de ce.
-- **`mutanti/rezultat.json`** {REZULTAT_BANCA}
-- **Ce n-am rulat:** bancurile O1, O7, O8 (folosesc și ele `structura_lib.py`). Dovada că nu se mișcă e măsurarea:
-  aceleași numere, iar pe O3 Office aceleași diferențe, suprafață cu suprafață.
+- **`mutanti/rezultat.json`** e la zi. Bancul întreg (`mutanti.py --paralel 3`, 22:17-23:21, 3949 s, după măsurare și reînghețare, `acoperire_instrumente/banca_intreaga.log`) a dat **70/72**: O1 7/7, O2 9/9, O3 14/15, O4 7/8, O5 7/7, O6 6/6, O7 6/6, O8 8/8, O9 6/6. Neprinși sunt O3-02 și O4-04, aceiași ca la 17.11 (66/68 atunci). Niciun oracol nu e sub 5.
+- O1, O7 și O8 folosesc și ele `structura_lib.py`. Nu se mișcă: măsurarea le dă aceleași numere, iar bancul întreg le
+  prinde pe toate (7/7, 6/6, 8/8).
 - Copia ieșirilor de pornire (`acoperire_instrumente/iesiri_inainte/`, ~2,7 MB, nu e în `.gitignore`) a rămas întreagă
   (O1-O9 + porți). Ștergerea părților care nu trebuie a fost refuzată de permisiuni. Pentru comparație contează doar `O3/`.
 - Nimic comis, nimic împins.

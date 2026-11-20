@@ -20,5 +20,11 @@ Făcut:
   de suprafețe (comparatie_o3.txt); `--verifica` după = 0.
 - raportul `runde/15/acoperire_instrumente.md` scris (lipsesc doar tabelul de numere, dovezile și rezultatul băncii întregi).
 
-De făcut: bancul ÎNTREG (pornit 22:17, `banca_intreaga.log`, scrie mutanti/rezultat.json), apoi {TABEL}, {DOVEZI},
-{REZULTAT_BANCA} în raport.
+- raportul complet (tabel, dovezi, ce rămâne, diff, ultima linie INSTRUMENTE_REPARATE), în afară de {REZULTAT_BANCA}.
+- bancul ÎNTREG (pornit 22:17, `banca_intreaga.log`, scrie mutanti/rezultat.json): la 23:08, 62/72 gata — O1 7/7, O2 9/9,
+  O3 14/15 (O3-02), O4 7/8 (O4-04, ca înainte), O6 6/6, O7 6/6, O9 6/6; rămân O5 (2) și O8 (8).
+
+- bancul întreg terminat 23:21 (3949 s): 70/72, neprinși O3-02 și O4-04 (ca la 17.11); mutanti/rezultat.json la zi;
+  `ingheata.py --verifica` = 0 din nou după el.
+
+Nimic de făcut: runda e încheiată, raportul are ultima linie INSTRUMENTE_REPARATE.
