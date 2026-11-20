@@ -239,3 +239,14 @@ Cererea (18.11, 14:59, verbatim): „continua acum cu etapa 0. apoi mergi cu urm
 - Verificat: lacăt 0, date personale 0. Commit de control 1b68edcc. Procese Office: doar WINWORD pid 28392 (-Embedding, pornit 16:56:54 prin DCOM) — nu e al rundei 11 (pornită 22:05) și nu e dovedit al nostru, deci NU se atinge.
 - Deciziile mele pe întrebările lui: runde/11/decizii_orchestrator.md (diapozitiv-nou-buton, imagine, salvare-ca rămân pentru o rundă acoperire; ținta margine_forma păstrată și judecată de critic).
 - Constructorul 2: formatarea pe bucăți de text, ferestrele Font/Paragraph/Insert Table, salvarea/închiderea, apoi pasul 7 complet.
+
+## 19.11.2026 ~23:50 — runda 11 (B-powerpoint): constructorul 2 GATA_PENTRU_CRITIC, criticul 11 pornit
+- Constructorul 2 (280k): formatarea pe bucăți de text, caseta Font Size, ferestrele Font / Paragraph / Insert Table, starea `modificat`; repararea literelor pierdute după F12. Lipsesc (nu-s în referință): „Save your changes” la Close / Ctrl+W și Font Color (R11-12, R11-13).
+- Pasul 7: pornit 23:11:47 (ultima scriere sub aplicatii/ 22:55:01), singur; O1 61, O2 13392, O3 21586, O4 50→33, O5 113→82, O6 0 (concludent din prima, 1022 s), O7 343, O8 102, O9 34→27; porți 41 doar cum_fac; date_personale 0.
+- Verificat de mine: lacăt 0 (INTACT), git status curat în runde/7-10, date personale în diff 0, procese Office: doar WINWORD 28392 (nu e al nostru). Commit a6ba180a.
+- Criticul 11 (opus, unghiul stare_finala_erori, PowerPoint, primul al valului): prompt în scratchpad critic11_prompt.txt; ieșirea runde/11/critic.md. Treaz repornit 23:50 (6 ore).
+
+## 20.11.2026 ~05:50 — criticul 11 blocat, reluat
+- Primul critic 11 a scris ultima dată la 23:59 (sondele p1-p6 în runde/11/critic_probe/), apoi nimic 6 ore, fără procese vii și fără critic.md. Oprit la 05:50.
+- Pornit un critic nou, cu același prompt (scratchpad critic11_prompt.txt) + nota de reluare: poate refolosi uneltele din critic_probe/, dar rulează din nou și judecă singur; timeout la Bash și la Playwright, critic.md scris devreme.
+- Paznic de stagnare: alarmă dacă nu scrie nimic 45 de minute. Treaz repornit 05:48 (6 ore).
