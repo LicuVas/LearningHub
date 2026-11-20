@@ -1,0 +1,388 @@
+diff --git a/aplicatii/aplicatii.css b/aplicatii/aplicatii.css
+index 06b50e61..a281f40f 100644
+--- a/aplicatii/aplicatii.css
++++ b/aplicatii/aplicatii.css
+@@ -366,9 +366,10 @@
+ .lh-ap-p-m-sus{left:0;right:0;top:-4px;height:6px}.lh-ap-p-m-jos{left:0;right:0;bottom:-4px;height:6px}
+ .lh-ap-p-m-st{top:0;bottom:0;left:-4px;width:6px}.lh-ap-p-m-dr{top:0;bottom:0;right:-4px;width:6px}
+ .lh-ap-p-text{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;padding:4px 8px;overflow:hidden;
+-  font-family:'Aptos','Segoe UI',Calibri,sans-serif;line-height:1.1;white-space:pre-wrap;word-break:break-word;color:#000}
++  font-family:Calibri,Carlito,sans-serif;line-height:1.1;white-space:pre-wrap;word-break:break-word;color:#000}
+ .lh-ap-p-text:not(.lh-ap-p-titlu){justify-content:flex-start}
+-.lh-ap-p-titlu{font-family:'Aptos Display','Aptos','Segoe UI',Calibri,sans-serif}
++/* T3 (critic 13): fontul temei capturate = Calibri Light (titluri) / Calibri (corp) — uia_powerpoint.json › acoperire_r12.fapte.c_font.grupuri[0] „Calibri Light (Headings)”, „Calibri (Body)”; rezerva Carlito (aceleași măsuri ca Calibri), apoi sans-serif. Aceeași stivă o folosește powerpoint.js › stivaFont când fontul e ales din listă, ca literele să nu se schimbe. */
++.lh-ap-p-titlu{font-family:'Calibri Light',Carlito,sans-serif}
+ .lh-ap-p-ales{background:#c8c8c8}
+ .lh-ap-p-caret{display:inline-block;width:1px;height:1em;margin:0 -1px 0 0;background:#000;vertical-align:text-bottom;animation:lh-ap-clipeste 1s steps(1) infinite}
+ @keyframes lh-ap-clipeste{50%{opacity:0}}
+diff --git a/aplicatii/aplicatii.js b/aplicatii/aplicatii.js
+index 562cd3e2..33301390 100644
+--- a/aplicatii/aplicatii.js
++++ b/aplicatii/aplicatii.js
+@@ -232,6 +232,12 @@
+   const TASTE = { Delete: 'tasta_delete', Backspace: 'tasta_backspace', Enter: 'tasta_enter', Escape: 'tasta_esc', Tab: 'tasta_tab',
+     Home: 'tasta_home_end', End: 'tasta_home_end', PageUp: 'tasta_pagina', PageDown: 'tasta_pagina', Meta: 'tasta_windows',
+     OS: 'tasta_windows' };
++  /* T4 (critic 13): tasta fizică în curs (keydown → e.key; keyup → null), citită de tastaFaraClic ca să spună dacă ieșirea din
++     modul tastelor de acces vine din Esc (api_biblioteca.md:172 „Esc în modul tastelor de acces: tasta_esc”) sau din Alt apăsat
++     a doua oară (tasta_acces). Pe window, în faza de captură: se vede înaintea ascultătorilor aplicațiilor de pe rădăcină. */
++  let tastaAcum = null;
++  W.addEventListener('keydown', e => { tastaAcum = e.key; }, true);
++  W.addEventListener('keyup', () => { tastaAcum = null; }, true);
+   function litera(e) {
+     const m = /^Key([A-Z])$/.exec(e.code || '');
+     if (m) return m[1].toLowerCase();
+@@ -455,7 +461,90 @@
+       if (I.la && I.la.clic) act = I.la.clic(t, ev, 1, 'tasta_acces');
+       return emite(I, 'tasta_acces', act || I.ultimaActiune || 'tasta_acces', t, ina);
+     };
+-    I.tastaFaraClic = (actiune, el) => emite(I, 'tasta_acces', actiune, tintaDin(I, el || document.activeElement), st());
++    /* T4 (critic 13): Esc în modul tastelor de acces = gestul `tasta_esc` (api_biblioteca.md:172), acțiunea rămâne
++       `iesire_taste_acces`; Alt apăsat a doua oară (keyup, tastaAcum = null) rămâne `tasta_acces`. O singură reparație pentru
++       PowerPoint, Word și Excel (toate trei ies prin I.tastaFaraClic('iesire_taste_acces')). */
++    I.tastaFaraClic = (actiune, el) => emite(I, actiune === 'iesire_taste_acces' && tastaAcum === 'Escape' ? 'tasta_esc' : 'tasta_acces',
++      actiune, tintaDin(I, el || document.activeElement), st());
++
++    /* ---- ferestrele (critic 13, GRAV T1), opt-in: doar aplicațiile care dau I.la.fereastra() -> elementul ferestrei deschise
++       (azi PowerPoint). Word și Excel au deja Alt + literă în ferestre, cu codul lor (word.js:1957, excel.js:3246), și NU primesc
++       cârligul: evenimentele lor rămân neschimbate.
++       - Alt + litera subliniată = `tasta_acces` din referință de pe nod (date/<app>.json › `ta` = uia_<app>.json › tasta_acces,
++         ex. dialog.FileOpen › File name „Alt+n”, Open „Alt+o”; Save your changes › Save „ALT+S”, Don't Save „ALT+n”): butonul se
++         apasă ca la clic, câmpul primește focusul. Un eveniment pe tastă, felul `tasta_acces` (cel existent, ca în Word / Excel;
++         api §4 nu are alt fel pentru Alt + literă în fereastră), ținta = comanda apăsată / câmpul; fără potrivire `fara_efect`.
++       - Tab / Shift+Tab (I.tabFereastra, chemat de aplicație din la.tasta) trec prin controalele ferestrei și nu ies din ea
++         (fereastra modală e capcană de focus: learn.microsoft.com/en-us/windows/win32/dlgbox/dlgbox-programming-considerations).
++         Ordinea Tab nu e capturată: ordinea nodurilor din referință ([presupus] R14-1). */
++    const APASA_F = new Set(['Button', 'SplitButton', 'CheckBox', 'RadioButton', 'MenuItem', 'TabItem']);
++    const CAMP_F = new Set(['Edit', 'ComboBox', 'Spinner']);
++    const tipF = x => x.getAttribute('data-lh-tip');
++    const evFereastra = x => ({ target: x, clientX: NaN, clientY: NaN, shiftKey: false, ctrlKey: false, metaKey: false, altKey: false,
++      button: 0, detail: 0, preventDefault() {} });
++    function controaleFereastra(fer) {
++      const toate = [...fer.querySelectorAll('[data-lh-tip]')].filter(x => {
++        const t = tipF(x);
++        if (!APASA_F.has(t) && !CAMP_F.has(t)) return false;
++        if (x.closest('[data-lh-tip="TitleBar"]') || x.getAttribute('aria-disabled') === 'true' || !vizibil(x)) return false;
++        if (!x.getAttribute('data-lh-eticheta')) return false;
++        if (t === 'RadioButton') {
++          const fr = [...x.parentElement.children].filter(y => tipF(y) === 'RadioButton');
++          const ales = fr.find(y => y.getAttribute('aria-checked') === 'true' || y.classList.contains('lh-ap-bifat'));
++          if (ales ? ales !== x : fr[0] !== x) return false;
++        }
++        return true;
++      });
++      /* o singură oprire pe control: copiii unui control (săgeata „Deschidere” a casetei, caseta Edit din ComboBox) nu se opresc */
++      return toate.filter(x => !toate.some(y => y !== x && y.contains(x)));
++    }
++    function focusControl(x) {
++      const i = x.querySelector('input');
++      const t = i || x;
++      if (t === x && !x.hasAttribute('tabindex')) x.setAttribute('tabindex', '-1');
++      try { t.focus({ preventScroll: true }); if (i && !i.readOnly && i.select) i.select(); } catch (z) { /* */ }
++    }
++    I.tabFereastra = (fer, inapoi) => {
++      const cs = fer ? controaleFereastra(fer) : [];
++      if (!cs.length) return 'fara_efect';
++      const a = document.activeElement;
++      let i = cs.findIndex(x => x === a || x.contains(a));
++      i = i < 0 ? (inapoi ? cs.length - 1 : 0) : (i + (inapoi ? -1 : 1) + cs.length) % cs.length;
++      focusControl(cs[i]);
++      return 'mutare_focus';
++    };
++    /* focusul la deschiderea unei ferestre fără caseta File name: primul câmp în ordinea de mai sus (Font: Latin text font) */
++    I.focusInitialFereastra = fer => {
++      const cs = fer ? controaleFereastra(fer) : [];
++      const x = cs.find(c => CAMP_F.has(tipF(c))) || cs[0];
++      if (x) focusControl(x);
++      return !!x;
++    };
++    r.addEventListener('keydown', e => {
++      const fer = I.la && I.la.fereastra ? I.la.fereastra() : null;
++      if (!fer || !fer.isConnected || !e.altKey || e.ctrlKey || e.metaKey || !/^Key[A-Z]$/.test(e.code || '')) return;
++      e.preventDefault();
++      e.stopPropagation();
++      const ina = st();
++      const re = new RegExp('^alt\\+' + e.code.slice(3) + '$', 'i');
++      const cand = [...fer.querySelectorAll('[data-lh-tip]')].filter(x => x.__nod && re.test(String(x.__nod.ta || '').replace(/\s+/g, '')) &&
++        vizibil(x) && x.getAttribute('aria-disabled') !== 'true');
++      const x = cand.find(c => APASA_F.has(tipF(c))) || cand.find(c => CAMP_F.has(tipF(c)));
++      if (!x) { emite(I, 'tasta_acces', 'fara_efect', tintaDin(I, document.activeElement && r.contains(document.activeElement) ? document.activeElement : null), ina); return; }
++      I.ultimaActiune = null;
++      let act, t;
++      if (APASA_F.has(tipF(x))) {
++        const tx = x.hasAttribute('data-lh-tinta') ? x : (x.querySelector('[data-lh-tinta]') || x);
++        t = tintaDin(I, tx);
++        act = I.la && I.la.clic ? I.la.clic(t, evFereastra(tx), 1, 'tasta_acces') : null;
++        if (fer.isConnected && fer.contains(tx)) focusControl(tx);
++      } else {
++        focusControl(x);
++        t = tintaDin(I, x.querySelector('input') || x);
++        act = 'focus_camp';
++      }
++      emite(I, 'tasta_acces', act || I.ultimaActiune || 'tasta_acces', t, ina);
++    }, true);
+   }
+ 
+   /* ------------------------------------------------------------ asistarea (§6) */
+@@ -535,7 +624,10 @@
+       if (typeof p.asteapta === 'function') { try { bun = !!p.asteapta(ev); } catch (e) { bun = false; } }
+       else bun = ev.tinta === p.tinta || (!!canonPas(p) && ev.tinta === canonPas(p)) || (!!ev.activat && ev.activat === p.tinta);
+       if (bun) { L.ascunde(); k++; gres = 0; porneste(); return; }
+-      if (NEGRESELI.has(ev.gest) || (ev.gest === 'tasta_acces' && NAVIGARE_TA.has(ev.actiune))) return;
++      /* T4 (critic 13): Esc care doar iese din modul tastelor de acces (tasta_esc / iesire_taste_acces) nu schimbă nimic,
++         ca navigarea: nu e greșeală */
++      if (NEGRESELI.has(ev.gest) || (ev.gest === 'tasta_acces' && NAVIGARE_TA.has(ev.actiune)) ||
++        (ev.gest === 'tasta_esc' && ev.actiune === 'iesire_taste_acces')) return;
+       gres++;
+       if (gres >= dupaGreseli) arata();
+     });
+diff --git a/aplicatii/powerpoint.js b/aplicatii/powerpoint.js
+index 1b9e6a3b..1b5cc475 100644
+--- a/aplicatii/powerpoint.js
++++ b/aplicatii/powerpoint.js
+@@ -240,7 +240,11 @@
+         pornire_animatii: M.dia.map(d => d.animatii.map(a => a.pornire || 'la_clic')),
+         umplere_forme: M.dia.map(d => d.forme.map(f => clona(umplereForma(f)))),
+         note_diapozitive: M.dia.map(d => d.note || ''),
+-        vedere: M.expunere ? (M.expunere.citire ? 'citire' : 'expunere') : (M.vedere || 'normala')
++        vedere: M.expunere ? (M.expunere.citire ? 'citire' : 'expunere') : (M.vedere || 'normala'),
++        /* critic 13 §7 (api §4: „La tastare … dupa diferă de inainte”): caseta panglicii / ferestrei în care se scrie acum (Font,
++           Font Size, File name, Size…) și textul ei; null când focusul nu e într-o casetă. Cheie în plus față de api §5 (nicio
++           stare_citita n-o cere), doar ca tastarea într-o casetă să se vadă în `dupa`. */
++        caseta_activa: casetaActiva()
+       };
+     };
+ 
+@@ -386,6 +390,16 @@
+        diapozitivele pe rânduri, în locul miniaturilor și al diapozitivului; aspectul grilei [presupus] R13-10 */
+     const sorter = el('div', 'lh-ap-p-sortare', { role: 'listbox', 'aria-label': 'Slide Sorter' });
+     let notaActiva = false;
++    function casetaActiva() {
++      const a = document.activeElement;
++      if (!a || a.tagName !== 'INPUT' || !root.contains(a) || a.closest('[data-lh-intrare-document]')) return null;
++      return { tinta: L._tintaDin(I, a), text: String(a.value == null ? '' : a.value) };
++    }
++    /* ținta implicită a gesturilor fără element (textul venit prin „input” — telefon, IME): zona de note când cursorul e în note
++       (critic 13 §7: pe telefon tastarea în note emitea `diapozitiv`), altfel forma aleasă / miniatura / diapozitivul */
++    Object.defineProperty(I, 'zonaTinta', { configurable: true,
++      get: () => (notaActiva && !M.expunere ? 'zona_note' : sel ? 'forma:' + (sel.d + 1) + '/' + (sel.s + 1) : M.panou === 'miniaturi' ? 'miniatura:' + (M.activ + 1) : 'diapozitiv'),
++      set: () => { /* calculată */ } });
+     pane.append(slide, notaEl);
+     zonaSup.append(mini, pane, sorter, intrare);
+     I.intrare = intrare;
+@@ -416,7 +430,13 @@
+     /* ============================================================ desenul */
+     /* fiecare paragraf = un bloc .lh-ap-p-par (aliniere, spațiere, interlinie, indent); în el, bucățile cu același format = <span>.
+        Cursorul și umplutura paragrafului gol sunt aria-hidden (nu sunt text al documentului, §3). */
+-    const stilFmt = (f, x, z) => 'font-size:' + marimeLa(f, x) * z + 'px;' + ((x.f || f.font) ? "font-family:'" + numeFontCom(x.f || f.font).replace(/'/g, '') + "','Segoe UI',sans-serif;" : '') + (x.b ? 'font-weight:700;' : 'font-weight:400;') + (x.c ? 'color:' + x.c + ';' : '') +
++    /* T3 (critic 13): fontul ales din listă se desenează cu aceeași stivă ca fontul temei din aplicatii.css (Calibri Light /
++       Calibri, rezerva Carlito): „Calibri Light (Headings)” ales pe un titlu care era deja în fontul temei nu schimbă literele */
++    const stivaFont = n => {
++      const c = numeFontCom(n).replace(/'/g, '');
++      return /^Calibri( Light)?$/i.test(c) ? "'" + c + "',Carlito,sans-serif" : "'" + c + "','Segoe UI',sans-serif";
++    };
++    const stilFmt = (f, x, z) => 'font-size:' + marimeLa(f, x) * z + 'px;' + ((x.f || f.font) ? 'font-family:' + stivaFont(x.f || f.font) + ';' : '') + (x.b ? 'font-weight:700;' : 'font-weight:400;') + (x.c ? 'color:' + x.c + ';' : '') +
+       (x.i ? 'font-style:italic;' : '') + (x.u ? 'text-decoration:underline;' : '');
+     const AL_CSS = { Left: 'left', Centered: 'center', Right: 'right', Justified: 'justify', Distributed: 'justify' };
+     function htmlText(f, cuSel, z) {
+@@ -521,7 +541,9 @@
+       const d = D(), t = d ? d.note || '' : '';
+       notaEl.classList.toggle('lh-ap-p-note-activ', notaActiva);
+       notaEl.innerHTML = t ? '<div class="lh-ap-p-note-text">' + esc(t) + (notaActiva ? '<span class="lh-ap-p-caret" aria-hidden="true"></span>' : '') + '</div>' :
+-        notaActiva ? '<div class="lh-ap-p-note-text"><span class="lh-ap-p-caret" aria-hidden="true"></span></div>' : '<div class="lh-ap-p-note-gol" aria-hidden="true">Click to add notes</div>';
++        /* critic 13 §7 (R4): îndemnul zonei goale nu e în referință (acoperire_r12.NEVERIFICAT.zona_de_note_in_uia: „nu se poate
++           citi”) → zona goală rămâne goală, fără text scris din memorie (de_verificat R14-5) */
++        notaActiva ? '<div class="lh-ap-p-note-text"><span class="lh-ap-p-caret" aria-hidden="true"></span></div>' : '<div class="lh-ap-p-note-gol" aria-hidden="true"></div>';
+     }
+     function deseneazaSortare() {
+       zonaSup.classList.toggle('lh-ap-p-in-sortare', M.vedere === 'sortare');
+@@ -661,6 +683,10 @@
+           'data-lh-tinta': 'fila:' + k.e, 'aria-selected': 'false' });
+         t.style.cssText = 'left:' + x0 + 'px;top:0;width:' + (k.e.length * 7 + 22) + 'px;height:30px';
+         t.innerHTML = '<span class="lh-ap-text">' + esc(k.e) + '</span>';
++        /* T2 (critic 13): tasta de acces a filei contextuale = cea a grupului cu numele filei din referință
++           (panglica_context.Ctx_ShapeFormat › Group 'Shape Format' tasta_acces „Alt, J D”; Picture Format „Alt, J P”…) */
++        const gr = (function g(n) { if (!n) return null; if (n.t === 'Group' && n.e === k.e && n.ta) return n; for (const c of n.c || []) { const r = g(c); if (r) return r; } return null; })(SUP[k.s]);
++        t.__nod = { t: 'TabItem', e: k.e, id: k.id, ta: gr ? gr.ta : undefined };
+         x0 += k.e.length * 7 + 23;
+         RAND_FILE.appendChild(t);
+         contextFile.push(t);
+@@ -678,7 +704,7 @@
+       actualizeazaContext();
+       actualizeazaPanglica();
+       if (panouLat && panouLat.cheie === 'panou.AnimationCustom') randuriAnimatii();
+-      I.zonaTinta = sel ? 'forma:' + (sel.d + 1) + '/' + (sel.s + 1) : M.panou === 'miniaturi' ? 'miniatura:' + (M.activ + 1) : 'diapozitiv';
++      /* ținta zonei (I.zonaTinta, getter-ul de mai jos) se calculează la fiecare citire */
+     }
+     /* MINOR critic 11 §6 (I1, api §7: „zonele de atins ≥ 32 px” la 360-390 px): lansatorul grupului (16×16 → 21×21 la zoom-ul 1,34
+        al telefonului) primește o zonă de atingere de până la 24×24 (= 32×32 pe ecran), lărgită DOAR spre locul liber din grupul lui
+@@ -956,8 +982,25 @@
+          apăsate imediat după F12 să ajungă în casetă, ca în Windows; și încă o dată după gest */
+       const fo = () => { if (!dialog || !dialog.el.contains(camp) || document.activeElement === camp) return; try { camp.focus(); camp.select(); } catch (e) { /* */ } };
+       if (camp) { camp.removeAttribute('readonly'); camp.value = baza === INTREB ? numePropus() : baza === POZA || baza === DESCHIDE ? '' : numePrez(); Promise.resolve().then(fo); setTimeout(fo, 0); }
++      /* T1 (critic 13): fereastra fără File name (Font, Paragraph, Insert Table) se deschide cu focusul în primul ei câmp, în ordinea
++         nodurilor din referință (Font: Latin text font; [presupus] R14-1), nu pe rădăcina aplicației */
++      else {
++        const fi = () => { if (dialog && dialog.el === d && !d.contains(document.activeElement) && I.focusInitialFereastra) I.focusInitialFereastra(d); };
++        Promise.resolve().then(fi); setTimeout(fi, 0);
++      }
+       return true;
+     }
++    /* T1: butonul implicit al ferestrei (Enter cu focusul pe un control care nu e buton de apăsat; api §4 › activat) */
++    function implicitDialog() {
++      if (!dialog) return 'fara_efect';
++      const b = dialog.baza;
++      if (b === INTREB) { I.activat = 'fereastra:Save'; return raspunsInchidere('Save'); }
++      if (b === POZA) { I.activat = 'fereastra:Open'; return insereazaImagine(); }
++      if (b === DESCHIDE) { I.activat = 'fereastra:Open'; return deschideFisier(); }
++      if (b === 'dialog.FileSaveAs') { I.activat = 'dialog_salvare:Save'; return salveazaDinDialog(); }
++      if (/^dialog\.(FontDialogPowerPoint|PowerPointParagraphDialog|TableInsertDialog)$/.test(b)) { I.activat = 'fereastra:OK'; return okDialog(); }
++      return 'fara_efect';
++    }
+     /* ferestrele Font / Paragraph / Insert Table arată starea textului ales; OK aplică doar ce s-a schimbat față de ce arătau,
+        Cancel / Închidere / Esc nu schimbă nimic. Câmpurile și valorile de pornire = referința (dialog.* din uia_powerpoint.json);
+        numele valorilor în afară de cele din referință (Bold / Italic / Bold Italic, Left / Right…) sunt [presupus] (R11-12). */
+@@ -1130,6 +1173,30 @@
+       const d = dialog.el, w = SUP[DESCHIDE].r[2], h = SUP[DESCHIDE].r[3];
+       d.style.left = Math.max(0, (root.clientWidth - w) / 2) + 'px';
+       d.style.top = Math.max(0, (root.clientHeight - h) / 2) + 'px';
++      /* critic 13 §7 (m1-l03:243 „Browse → Documente → …”): Ctrl+O › Browse se deschide în Documente — uia_powerpoint.json ›
++         acoperire_r12.fapte.b_ctrl_o_browse.la_deschidere: campuri[10] SplitButton „Toate locațiile”, campuri[11] SplitButton
++         „Documente” (adresa), butoanele „Până la "Desktop" (Alt + săgeată în sus)”, „Reîmprospătare "Documente" (F5)”. Suprafața
++         desenată (dialog.FileOpen) vine dintr-o captură în alt dosar, cu adresa redactată (personală) și scoasă din date: aici se
++         pune adresa capturii b_ctrl_o_browse, pe locul benzii de adresă din suprafață (Pane [146.4, 39.2, 324, 35.2]); lățimile =
++         cele din dialog.FileSaveAs › „Adresă: Documente” (34 / 83 px; aspectul [presupus] R14-6) */
++      const banda = d.querySelector('[data-lh-tip="ProgressBar"] > [data-lh-tip="Pane"]');
++      if (banda) {
++        [['Toate locațiile', 6.4, 34], ['Documente', 40.8, 83]].forEach(([et, x, lw]) => {
++          const b = el('div', 'lh-ap-n lh-ap-t-SplitButton lh-ap-p-adresa', { 'data-lh-tip': 'SplitButton', 'data-lh-eticheta': et, role: 'button',
++            'aria-label': et, 'data-lh-tinta': 'fereastra:' + et });
++          b.style.cssText = 'left:' + x + 'px;top:0;width:' + lw + 'px;height:34px';
++          b.innerHTML = et === 'Documente' ? '<span class="lh-ap-text">Documente</span>' : '<span class="lh-ap-text" aria-hidden="true">›</span>';
++          b.__nod = { t: 'SplitButton', e: et };
++          banda.appendChild(b);
++        });
++      }
++      const reet = (re, et) => d.querySelectorAll('[data-lh-tip="Button"]').forEach(x => {
++        if (!re.test(x.getAttribute('data-lh-eticheta') || '')) return;
++        x.setAttribute('data-lh-eticheta', et); x.setAttribute('aria-label', et); if (x.title) x.title = et;
++        if (x.getAttribute('data-lh-tinta')) x.setAttribute('data-lh-tinta', 'fereastra:' + et);
++      });
++      reet(/^Până la "Temp"/, 'Până la "Desktop" (Alt + săgeată în sus)');
++      reet(/^Reîmprospătare "<folder>"/, 'Reîmprospătare "Documente" (F5)');
+       const ph = [...d.querySelectorAll('[data-lh-tip="ListItem"]')].filter(x => /nesalvat/.test(x.getAttribute('data-lh-eticheta') || ''));
+       const model = ph[0];
+       if (model) {
+@@ -1570,7 +1637,17 @@
+         return r;
+       }
+       switch (idm) {
+-        case 'Font': return listaFont(elx.closest('[data-lh-id-mso="Font"]') || elx);
++        case 'Font': {
++          const r = listaFont(elx.closest('[data-lh-id-mso="Font"]') || elx);
++          /* critic 13 §6 (R13-4): clicul în TEXTUL casetei alege tot textul, ca „Ari” tastat să înlocuiască numele (nu „CalibAriri…”);
++             alegerea se reface după ce browserul a terminat clicul (mouseup pune cursorul la punctul clicului) */
++          const inp = tgClic && tgClic.closest && tgClic.closest('input');
++          if (inp && !inp.readOnly && elx.contains(inp)) {
++            try { inp.focus({ preventScroll: true }); inp.select(); } catch (x) { /* */ }
++            setTimeout(() => { if (document.activeElement === inp) try { inp.select(); } catch (x) { /* */ } }, 0);
++          }
++          return r;
++        }
+         case 'ShapeFillColorPicker_Dropdown': return formaSel() ? listaRef('lista.ShapeFillColorPicker', elx, 'umplere') : 'indisponibil';
+         case 'ShapeFillColorPicker': return aplicaUmplere(ultima.umplere);
+         case 'OutlineColorPicker_Dropdown': return formaSel() ? listaRef('lista.OutlineColorPicker', elx, 'contur') : 'indisponibil';
+@@ -1919,7 +1996,12 @@
+         if (elx.closest('[data-lh-id-mso="Font"]') && !faraPrez()) {
+           const r = formaSel() && textual(formaSel()) ? listaFont(elx.closest('[data-lh-id-mso="Font"]')) : 'indisponibil';
+           const inp = elx.querySelector('input') || (tgClic && tgClic.closest && tgClic.closest('input'));
+-          if (inp && !inp.readOnly) { try { inp.focus(); inp.select(); } catch (x) { /* */ } }
++          /* critic 13 §6 (R13-4): clicul alege TOT textul casetei. Alegerea se face și după ce browserul a terminat clicul
++             (mouseup / click pun cursorul la punctul clicului): „Ari” tastat înlocuiește numele, nu se lipește în el */
++          if (inp && !inp.readOnly) {
++            try { inp.focus(); inp.select(); } catch (x) { /* */ }
++            setTimeout(() => { if (document.activeElement === inp) try { inp.select(); } catch (x) { /* */ } }, 0);
++          }
+           return r;
+         }
+         const cb = elx.closest('[data-lh-tip="ComboBox"]');
+@@ -1985,6 +2067,13 @@
+         if (/^(ArrowLeft|ArrowUp|PageUp|Backspace|p)$/.test(k)) { e.preventDefault(); return pasExpunere(-1); }
+         return 'fara_efect';
+       }
++      /* T1 (critic 13): Tab / Shift+Tab într-o fereastră trec prin controalele EI și nu ies niciodată din ea (nici pe bara de titlu a
++         aplicației), oriunde ar fi focusul (aplicatii.js › I.tabFereastra; ordinea [presupus] R14-1) */
++      if (dialog && k === 'Tab' && !ctrl && !e.altKey) {
++        e.preventDefault();
++        if (!inCamp && dialog.el.contains(document.activeElement)) I.tintaTasta = L._tintaDin(I, document.activeElement);
++        return I.tabFereastra ? I.tabFereastra(dialog.el, e.shiftKey) : 'fara_efect';
++      }
+       if (inCamp) {
+         if (dialog && dialog.baza === INTREB && k === 'Escape') { e.preventDefault(); return raspunsInchidere('Cancel'); }
+         /* Enter în File name = Save ([presupus] R12-2: în referință niciun buton nu e „implicit”) */
+@@ -2037,11 +2126,25 @@
+       }
+       if (meniu && k === 'Escape') { inchideMeniu(); return 'inchidere_meniu'; }
+       if (meniu && /^(ArrowUp|ArrowDown|ArrowLeft|ArrowRight|Enter)$/.test(k)) { e.preventDefault(); return navigaLista(k); }
++      /* critic 13 §6 / T2: cât o listă a panglicii (Font, culori, Shapes…) sau un meniu e deschis, literele NU intră în diapozitiv
++         (focusul real e în listă). Ce fac literele în listă (salt la nume) nu e capturat → [presupus] R14-4: fără efect. */
++      if (meniu && (g === 'tastare' || g === 'tasta_backspace' || g === 'tasta_delete')) { e.preventDefault(); return 'fara_efect'; }
+       if (unealta && k === 'Escape') { unealta = null; slide.classList.remove('lh-ap-p-cruce'); return 'anulare'; }
+       if (dialog) {
++        /* ținta tastei = focusul din momentul ei (§4), citit înainte ca tasta să închidă fereastra */
++        const fx = document.activeElement && dialog.el.contains(document.activeElement) ? document.activeElement : null;
++        const cx = fx && fx.closest('[data-lh-tip]'), tcx = cx ? cx.getAttribute('data-lh-tip') : '';
++        if (fx) I.tintaTasta = L._tintaDin(I, fx);
+         if (k === 'Escape' && dialog.baza === INTREB) return raspunsInchidere('Cancel');
+         if (k === 'Escape') { inchideDialog(); return 'anulare'; }
+-        if (k === 'Enter' && /^dialog\.(FontDialogPowerPoint|PowerPointParagraphDialog|TableInsertDialog)$/.test(dialog.baza)) { e.preventDefault(); I.activat = 'fereastra:OK'; return okDialog(); }
++        /* T1: Enter pe un buton cu focusul (Tab până la el) îl apasă; Space apasă butonul / bifează caseta cu focusul; Enter în
++           rest = butonul implicit (dlgbox-programming-considerations: ENTER = „IDOK or … the default push button”) */
++        const tx = cx && (cx.hasAttribute('data-lh-tinta') ? cx : cx.querySelector('[data-lh-tinta]'));
++        if (tx && ((k === 'Enter' && /^(Button|SplitButton)$/.test(tcx)) || (k === ' ' && /^(Button|SplitButton|CheckBox|RadioButton)$/.test(tcx)))) {
++          e.preventDefault();
++          return I.la.clic(L._tintaDin(I, tx), { target: tx, clientX: NaN, clientY: NaN, shiftKey: false, ctrlKey: false, metaKey: false, altKey: false, button: 0, detail: 0, preventDefault() {} }, 1, g) || 'fara_efect';
++        }
++        if (k === 'Enter') { e.preventDefault(); return implicitDialog(); }
+         return 'fara_efect';
+       }
+       if (backstage) { if (k === 'Escape') { inchideBackstage(); return 'inapoi'; } return 'fara_efect'; }
+@@ -2137,8 +2240,11 @@
+       }
+       return null;
+     };
+-    I.la.text = v => (dialog || backstage || M.expunere || kt.activ) ? 'fara_efect' : scrie(v);
+-    I.la.sterge = g => (dialog || backstage || M.expunere || kt.activ) ? 'fara_efect' : sterge(g === 'tasta_backspace');
++    /* T1: fereastra deschisă (Open, Save your changes, Insert Picture, Save As, Font, Paragraph…) pentru tastele comune
++       (aplicatii.js: Alt + litera din referință, Tab ținut în fereastră) */
++    I.la.fereastra = () => (dialog && dialog.el) || null;
++    I.la.text = v => (dialog || backstage || M.expunere || kt.activ || meniu) ? 'fara_efect' : scrie(v);
++    I.la.sterge = g => (dialog || backstage || M.expunere || kt.activ || meniu) ? 'fara_efect' : sterge(g === 'tasta_backspace');
+ 
+     /* ---- tastele de acces (KeyTips) — critic 11, GRAV P1. Ca în word.js / excel.js: Alt apăsat și eliberat arată literele
+        filelor; litera deschide fila și arată literele comenzilor ei; literele următoare apasă comanda; Esc urcă un nivel.
+@@ -2205,9 +2311,22 @@
+           I.tastaFaraClic('camp', exact.x);
+           return true;
+         }
+-        I.activeazaTasta(exact.x, cheie);
+         const cale = kt.cale.concat([cheie]);
+-        if (kt.activ && ktTinte(cale).out.length) { kt.cale = cale; ktArata(); } else ktIesi();
++        /* critic 13 §7 (asistentul): litera filei DEJA active (H cu Home activă) doar arată literele filei = navigare, nu „fila” */
++        const nod = exact.x.__nod || {};
++        if (!kt.cale.length && nod.t === 'TabItem' && exact.x.getAttribute('aria-selected') === 'true' && ktTinte(cale).out.length) {
++          kt.cale = cale;
++          ktArata();
++          I.tastaFaraClic('prefix_tasta_acces');
++          return true;
++        }
++        I.activeazaTasta(exact.x, cheie);
++        if (kt.activ && ktTinte(cale).out.length) { kt.cale = cale; ktArata(); }
++        /* T2 (critic 13): o listă deschisă din taste (Alt, H, S O) fără litere în referință rămâne a tastelor: nicio literă nu
++           ajunge în formă sau în casetă; ↑ ↓ Enter umblă în ea, Esc o închide (literele listei în afara drumului capturat
++           „Alt, J D, …” nu se inventează: [presupus] R14-3) */
++        else if (kt.activ && meniu) { kt.cale = cale; ktCurata(); }
++        else ktIesi();
+       } else if (out.some(o => o.cheie.indexOf(kt.prefix) === 0)) { ktArata(); I.tastaFaraClic('prefix_tasta_acces'); }
+       else { kt.prefix = kt.prefix.slice(0, -1); I.tastaFaraClic('fara_efect'); }
+       return true;
