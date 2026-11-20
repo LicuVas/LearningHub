@@ -250,3 +250,10 @@ Cererea (18.11, 14:59, verbatim): „continua acum cu etapa 0. apoi mergi cu urm
 - Primul critic 11 a scris ultima dată la 23:59 (sondele p1-p6 în runde/11/critic_probe/), apoi nimic 6 ore, fără procese vii și fără critic.md. Oprit la 05:50.
 - Pornit un critic nou, cu același prompt (scratchpad critic11_prompt.txt) + nota de reluare: poate refolosi uneltele din critic_probe/, dar rulează din nou și judecă singur; timeout la Bash și la Playwright, critic.md scris devreme.
 - Paznic de stagnare: alarmă dacă nu scrie nimic 45 de minute. Treaz repornit 05:48 (6 ore).
+
+## 20.11.2026 ~06:30 — criticul 11 gata (GRAV 5), jurnal 13, CONTINUA; pornită runda `acoperire` PowerPoint
+- Criticul 11 (reluat, 311k): GRAV P1 KeyTips lipsesc (Alt,H,1 scrie „h1” în titlu); P2 Font Color doar mesaj; P3 ✕ / File › Close / Ctrl+W/N/O doar mesaj; P4 Pictures, Shapes, Two Content lipsesc, Ctrl+C pe casetă tace; P5 Duration readOnly, Move Up/Down gri, Solid fill / Apply to All doar mesaj. Scenariile diapozitiv-nou-buton și salvare-ca: simulatorul are dreptate. margine_forma canonică (MINOR). Word + Excel: 0 pixeli diferiți. Nicio lecție de a VI-a nu se duce încă la capăt (m1-l02 aproape).
+- Jurnal rândul 13 (runda 11, GRAV 5); opreste.py: CONTINUA (1/6), a scris runde/12/prompt.md (unghiul aspect). Commit ebb4bd28.
+- Decizia: P2-P5 cer referințe care lipsesc → întâi o rundă `acoperire` pe PowerPoint (ca la Excel după r7), apoi runda 12 repară P1-P5 cu referințele complete. Promptul: runde/11/acoperire_prompt.md; înainte = runde/11/masurare_final_r11.json.
+- Reguli speciale I6: PowerPoint e o singură instanță — verificare înainte de fiecare pornire, sesiuni scurte, nicio închidere dacă apare o prezentare străină, curățarea intrărilor Recent ale fișierelor de probă.
+- Paznic de stagnare 45 min pe referinte/scenarii/runde/11.
