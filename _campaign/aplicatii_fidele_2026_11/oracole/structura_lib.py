@@ -15,7 +15,8 @@ Ce face:
   întâmplare: aceeași măsurare de două ori = același număr);
 - extrage arborele randat cu oracole/arbore_randat.js și îl compară cu referința reală după oracole/CONVENTIE_ARBORE.md;
 - ține randarea într-un cache (randare_<amprentă>.json) cheiat pe sha256 al fișierelor sitului + al extractorului + al
-  acestui modul: O1/O2/O3/O7/O8 rulate unul după altul randează o singură dată. Unde stă cache-ul: LH_IESIRI dacă e
+  acestui modul + al referințelor uia_*.json (Office; din 20.11.2026 și Windows / Explorer, ale căror suprafețe randarea le
+  deschide prin plasă): O1/O2/O3/O7/O8 rulate unul după altul randează o singură dată. Unde stă cache-ul: LH_IESIRI dacă e
   dat; altfel oracole/_iesiri/ (scutit de repere.lock) DOAR pe worktree; pe orice altă rădăcină (copiile din %TEMP%)
   în %TEMP%/lh_structura_cache/ — niciodată în dosarul lucrării. În cache și în <oracol>.json se scriu doar căi
   RELATIVE la rădăcina sitului (rădăcina însăși = „.”). LH_FARA_CACHE=1 = randare de la zero: se acceptă doar o
@@ -518,6 +519,302 @@ def referinte():
     return _CACHE["refs"]
 
 
+# ====================================================================== referințele shell (Windows / File Explorer)
+# Runda `acoperire` pe instrumente, 20.11.2026. referinte/uia_windows.json și uia_explorer.json sunt în formatul lui
+# referinte/dump_shell_uia.py: suprafata -> {ferestre: [{arbore, clasa, rect_ecran_100, …}]}, nodul {nume, tip, clasa,
+# id (AutomationId), rect [x, y, l, h] față de colțul ferestrei la 100% DPI, copii, in_afara_ecranului, dezactivat, …}.
+# Le citește DOAR O3, prin referinte_shell(): referinte() de mai sus (O2, O7, O8 și randarea) rămâne cum era, deci
+# Word / Excel / PowerPoint și celelalte oracole nu se mișcă. Regulile convertorului:
+#  - nodul shell -> nodul canonic al referinței: nume -> eticheta, tip -> tip, id -> id_mso (doar la comenzile cu id
+#    UNIC în suprafață: TextBox, UpButton, SystemTrayIcon, NotifyItemIcon se repetă și nu identifică nimic), rect ->
+#    rect_css fără nicio scalare (pixelii la 100% DPI = pixelii CSS ai cadrului 1366×768 cu care lucrează comparația;
+#    pozițiile se compară oricum față de colțul suprafeței, cu toleranța TOL_PX), copii -> copii;
+#  - o comandă fără dreptunghi sau marcată in_afara_ecranului nu se vede (= vizibil False în formatul Office);
+#    containerele se străbat mereu (meniul Explorer stă într-un „Pop-up” marcat în afara ecranului, cu comenzile pe ecran);
+#  - în meniurile clasice Win32 textul de după Tab e scurtătura („Anulare Copiere<Tab>Ctrl+Z”), nu numele: se taie;
+#  - tooltip-urile și ferestrele-zgomot (SysShadow, a doua bară de activități Shell_SecondaryTrayWnd = monitorul al doilea
+#    al profesorului; elevul are un singur ecran) se sar;
+#  - arborele panoului de navigare (TreeItem în TreeItem) se turtește în ordinea de pe ecran: o comandă cu nume e o
+#    unitate și copiii ei nu se citesc (CONVENTIE_ARBORE.md §3), deci altfel ar rămâne doar „Desktop”;
+#  - ASCUNSE: un nod cu nume (sau id) ascuns pentru date personale („[element personal ascuns]”, „[… ascuns]”,
+#    „[id ascuns]”, „[rețea ascunsă]”, „[utilizator]”, „[cont]” …) sau sărit ca cont („ascuns”: „cont … sărit”) NU se
+#    compară ca etichetă: e o comandă PREZENTĂ, fără text — se potrivește cu orice comandă desenată rămasă nepotrivită,
+#    de aceeași familie de tip, de preferință între vecinii ei deja potriviți (aliniaza). Nepotrivită = lipsă, ca oricare;
+#  - o captură cu mai multe ferestre (meniul + submeniul, lista + rândul de pictograme) = un nod rădăcină „Pane” cu
+#    ferestrele drept copii, în ordinea de pe ecran (sus-jos, stânga-dreapta), fiecare mutată cu colțul ei față de colțul
+#    reuniunii; un „Pop-up” citit de două ori (o dată ca fereastră proprie, o dată în gazda altei ferestre: aceleași
+#    comenzi, în același loc pe ecran) se numără o singură dată, în prima fereastră;
+#  - fereastra Explorer se TAIE pe AutomationId în suprafețele din suprafete.json (SHELL_SUPRAFETE): fiecare parte își
+#    are colțul ei (o fereastră desenată mai îngustă nu mută lista sau bara de stare față de colțul lor).
+SHELL = ("windows", "explorer")
+SHELL_FISIER = {"windows": "uia_windows.json", "explorer": "uia_explorer.json"}
+SHELL_ASCUNS_RE = re.compile(r"\[(?:[^\[\]]*ascuns[ăa]?|utilizator|calculator|cont|nume|SID|email|telefon)\]", re.I)
+SHELL_ETICHETA_ASCUNSA = "[ascuns]"
+SHELL_ZGOMOT_CLASE = {"SysShadow", "tooltips_class32", "Shell_SecondaryTrayWnd"}
+SHELL_ZGOMOT_TIP = {"ToolTip"}
+SURSA_SHELL = "referinte/%s › %s (UI Automation pe Windows-ul profesorului, sesiunea din 20.11.2026)"
+# cheia de randare (data-lh-suprafata) -> (cheia capturii din referință, regula): None = toată captura; ("tăiat", id-uri)
+# = nodurile cu acele AutomationId, scoase din captură; "rest" = ce rămâne din captură după toate tăieturile ei
+SHELL_SUPRAFETE = {
+    "explorer": {
+        "fereastra": ("explorer_fereastra", "rest"),
+        "file_fereastra": ("explorer_fereastra", ("TabView",)),
+        "butoane_navigare": ("explorer_fereastra", ("NavigationCommands",)),
+        "bara_adresa": ("explorer_fereastra", ("PART_AutoSuggestBox", "FirstCrumbStackPanel", "PART_BreadcrumbBar")),
+        "cautare": ("explorer_fereastra", ("FileExplorerSearchBox",)),
+        "bara_comenzi": ("explorer_fereastra", ("FileExplorerCommandBar", "FileExplorerSecondaryCommandBar")),
+        "panou_navigare": ("explorer_fereastra", ("ProperTreeHost",)),
+        "zona_continut": ("explorer_fereastra", ("listview",)),
+        "panou_detalii": ("explorer_fereastra", ("PreviewThumbnailInner", "RPaneCoverSheet_NoSel")),
+        "bara_stare": ("explorer_fereastra", ("StatusBarModuleInner",)),
+        "meniu_nou": ("explorer_meniu_nou", None),
+        "meniu_sortare": ("explorer_meniu_sortare", None),
+        "meniu_vizualizare": ("explorer_meniu_vizualizare", None),
+        "meniu_fisier": ("explorer_meniu_fisier", None),
+        "meniu_fisier_clasic": ("explorer_meniu_fisier_clasic", None),
+        "meniu_fundal": ("explorer_meniu_fundal", None),
+    },
+    "windows": {
+        "bara_activitati": ("bara_activitati", None),
+        "start": ("start", None),
+        "meniu_desktop": ("meniu_desktop", None),
+        "meniu_desktop_clasic": ("meniu_desktop_clasic", None),
+    },
+}
+# suprafete.json -> cheile de randare care o acoperă (o legătură forțată e mai rea decât una lipsă: ce nu e aici rămâne
+# fara_referinta, cu motivul din SHELL_FARA_MOTIV)
+SHELL_LEGATURI = {
+    "explorer.fereastra": ["fereastra"], "explorer.file_fereastra": ["file_fereastra"],
+    "explorer.butoane_navigare": ["butoane_navigare"], "explorer.bara_adresa": ["bara_adresa"],
+    "explorer.cautare": ["cautare"], "explorer.bara_comenzi": ["bara_comenzi"],
+    "explorer.panou_navigare": ["panou_navigare"], "explorer.zona_continut": ["zona_continut"],
+    "explorer.panou_detalii": ["panou_detalii"], "explorer.bara_stare": ["bara_stare"],
+    "explorer.meniu_nou": ["meniu_nou"], "explorer.meniu_sortare_vizualizare": ["meniu_sortare", "meniu_vizualizare"],
+    "explorer.meniu_clic_dreapta": ["meniu_fisier", "meniu_fisier_clasic", "meniu_fundal"],
+    "windows.bara_activitati": ["bara_activitati"], "windows.zona_notificare": ["bara_activitati"],
+    "windows.meniu_start": ["start"], "windows.meniu_clic_dreapta": ["meniu_desktop", "meniu_desktop_clasic"],
+}
+# legătura cere ca suprafața de randare să conțină o comandă (ca „zoom” -> bara_stare la Office)
+SHELL_CONDITII = {"windows.zona_notificare": ("bara_activitati", r"^ceas\b")}
+SHELL_FARA_MOTIV = {
+    "explorer.redenumire": "caseta de redenumire pe loc (F2) nu e în nicio captură UI Automation; observat_vizual spune "
+                           "doar ce se colorează (fără „.docx”) — e comportament (O4), nu structură",
+    "explorer.dialog.*": "dialogurile au doar titlul, întrebarea și butoanele, în referinte/scenarii_real/explorer_*.json "
+                         "(verdictul O4), fără arbore UI Automation (tipuri, poziții, celelalte controale); O3 le-ar putea "
+                         "compara doar ca listă de butoane în ordine, iar orice alt control desenat ar ieși „în plus” fals "
+                         "— nu le inventez structura",
+    "windows.alimentare": "doar butonul „Alimentare” e capturat (în start, comparat acolo); meniul Oprire / Repornire nu",
+    "windows.cautare": "doar butonul „Căutare” (bara_activitati) și caseta din Start sunt capturate (comparate acolo); "
+                       "panoul de căutare cu rezultatele nu",
+    "windows.calendar": "calendarul de la ceas nu e capturat (doar butonul „Ceas” din bara_activitati)",
+    "windows.desktop": "desktopul (pictogramele, fundalul) nu e capturat; doar meniul lui de clic dreapta",
+    "windows.fereastra": "nicio fereastră generică nu e capturată; bara de titlu a Explorer-ului (explorer.fereastra) e a "
+                         "altei aplicații",
+    "windows.securitate_windows": "aplicația Securitate Windows nu e capturată",
+}
+SHELL_NECOMPARATE = {
+    "explorer": {"explorer_proprietati": "fereastra Proprietăți nu e o suprafață din suprafete.json (martor pentru "
+                                         "proprietati_fisier); comparată, ar adăuga un dialog pe care nicio lecție nu-l cere",
+                 "proprietati_fisier": "proba Etapei 0 (desktopul ascuns), alt format (file pe filele dialogului); "
+                                       "același dialog ca explorer_proprietati"},
+    "windows": {"start_toate": "aceeași suprafață ca start, derulată în jos (sesiune_windows_10min.md); O3 compară Start "
+                               "așa cum se deschide"},
+}
+
+
+def _shell_nod(n, dx, dy):
+    """nodul shell -> listă de noduri canonice ale referinței (formatul Office; TreeItem-urile copii urcă lângă părinte)."""
+    if not isinstance(n, dict) or n.get("taiat") or n.get("eroare") or n.get("tip") in SHELL_ZGOMOT_TIP:
+        return []
+    nume = str(n.get("nume") or "")
+    if "\t" in nume:                    # meniul clasic Win32: după Tab vine scurtătura („Anulare Copiere\tCtrl+Z”)
+        nume = nume.split("\t")[0].rstrip()
+    ascuns = bool(n.get("ascuns")) or bool(SHELL_ASCUNS_RE.search(nume))
+    r = n.get("rect")
+    rc = [r[0] + dx, r[1] + dy, r[2], r[3]] if isinstance(r, list) and len(r) == 4 else None
+    o = {"tip": n.get("tip"), "eticheta": SHELL_ETICHETA_ASCUNSA if ascuns else nume, "rect_css": rc, "copii": []}
+    if ascuns:
+        o["ascuns_shell"] = True
+    aid = n.get("id")
+    if aid and not SHELL_ASCUNS_RE.search(str(aid)):
+        o["id_mso"] = str(aid)
+    if n.get("clasa"):
+        o["clasa"] = n["clasa"]
+    if n.get("dezactivat"):
+        o["activ"] = False
+    if o["tip"] in TIPURI_UNITATE and (nume or ascuns) and not n.get("ascuns") \
+            and (rc is None or n.get("in_afara_ecranului")):
+        o["vizibil"] = False            # (un cont SĂRIT de dump n-are dreptunghi, dar era pe ecran: rămâne prezent)
+    sub = []
+    for c in n.get("copii") or []:
+        for k in _shell_nod(c, dx, dy):
+            (sub if o["tip"] == "TreeItem" and k.get("tip") == "TreeItem" else o["copii"]).append(k)
+    return [o] + sub
+
+
+def _shell_unitati(n):
+    us = []
+    _turteste(n, us)
+    return us
+
+
+def _shell_ferestre(sup):
+    """ferestrele unei capturi -> un singur nod canonic (o fereastră: rădăcina ei; mai multe: „Pane” cu ele drept copii)."""
+    fs = [f for f in sup.get("ferestre") or [] if f.get("arbore") and f.get("clasa") not in SHELL_ZGOMOT_CLASE]
+    if not fs:
+        return None
+    fs.sort(key=lambda f: ((f.get("rect_ecran_100") or [0, 0])[1], (f.get("rect_ecran_100") or [0, 0])[0]))
+    x0 = min((f.get("rect_ecran_100") or [0, 0])[0] for f in fs)
+    y0 = min((f.get("rect_ecran_100") or [0, 0])[1] for f in fs)
+    radacini, vazute = [], {}
+
+    def deja(u):
+        """aceeași comandă (tip, nume) în același loc pe ecran (±2 px: rotunjirea la scara 125%) într-o fereastră citită"""
+        r = u.get("rect_css")
+        for q in vazute.get((u.get("tip"), u.get("eticheta")), []):
+            if (r is None and q is None) or (r and q and all(abs(a - b) <= 2 for a, b in zip(r, q))):
+                return True
+        return False
+
+    def fara_dubluri(n):
+        pastrate = []
+        for c in n.get("copii") or []:
+            us = _shell_unitati(c) if c.get("tip") == "Window" else []
+            if us and all(deja(u) for u in us):
+                continue                    # același Pop-up, citit deja în altă fereastră
+            pastrate.append(fara_dubluri(c))
+        n["copii"] = pastrate
+        return n
+    for f in fs:
+        r = f.get("rect_ecran_100") or [0, 0, 0, 0]
+        k = _shell_nod(f["arbore"], r[0] - x0, r[1] - y0)
+        if not k:
+            continue
+        rad = fara_dubluri(k[0]) if radacini else k[0]
+        radacini.append(rad)
+        for u in _shell_unitati(rad):
+            vazute.setdefault((u.get("tip"), u.get("eticheta")), []).append(u.get("rect_css"))
+    if len(radacini) == 1:
+        return radacini[0]
+    w = max((f.get("rect_ecran_100") or [0, 0, 0, 0])[0] + (f.get("rect_ecran_100") or [0, 0, 0, 0])[2] for f in fs) - x0
+    h = max((f.get("rect_ecran_100") or [0, 0, 0, 0])[1] + (f.get("rect_ecran_100") or [0, 0, 0, 0])[3] for f in fs) - y0
+    return {"tip": "Pane", "eticheta": "", "rect_css": [0, 0, w, h], "copii": radacini}
+
+
+def _shell_taie(n, ids, gasite):
+    """scoate din arborele n nodurile cu AutomationId în ids (le pune în gasite, în ordinea arborelui)."""
+    pastrate = []
+    for c in n.get("copii") or []:
+        if c.get("id_mso") in ids and c.get("id_mso") not in gasite:
+            gasite[c["id_mso"]] = c
+        else:
+            pastrate.append(_shell_taie(c, ids, gasite))
+    n["copii"] = pastrate
+    return n
+
+
+def _shell_radacina(noduri):
+    if len(noduri) == 1:
+        return noduri[0]
+    rs = [x["rect_css"] for x in noduri if x.get("rect_css")]
+    rr = None
+    if rs:
+        x0, y0 = min(r[0] for r in rs), min(r[1] for r in rs)
+        rr = [x0, y0, max(r[0] + r[2] for r in rs) - x0, max(r[1] + r[3] for r in rs) - y0]
+    return {"tip": "Pane", "eticheta": "", "rect_css": rr, "copii": list(noduri)}
+
+
+def canon_shell(root):
+    """forma canonică a unei suprafețe shell (ca o suprafață Office fără grupuri: un grup implicit cu unitățile turtite);
+    id-ul rămâne doar la comenzile cu id unic în suprafață; o comandă ascunsă intră fără text (et „”, ascuns=True)."""
+    us = _shell_unitati(root)
+    nr = {}
+    for x in us:
+        if x.get("id_mso"):
+            nr[x["id_mso"]] = nr.get(x["id_mso"], 0) + 1
+    out = []
+    for x in us:
+        if x.get("id_mso") and nr[x["id_mso"]] > 1:
+            x = dict(x)
+            x.pop("id_mso")
+        u = _unit(x)
+        if x.get("ascuns_shell"):
+            u.update(et="", cand=[], id=None, ascuns=True)
+        out.append(u)
+    rr = root.get("rect_css")
+    return {"rect": rr, "grupuri": [{"g": "", "raw": "", "cand": [""], "rect": rr, "u": out}]}
+
+
+class ReferintaShell:
+    """Referința unei aplicații shell pentru O3: canon = {cheia de randare: forma canonică}; surse = {cheie: (captura,
+    regula)}; leaga(id din suprafete.json) -> cheile de randare."""
+
+    def __init__(self, app):
+        self.app = app
+        self.canon, self.surse, self.taieturi_negasite = {}, {}, {}
+        self.necomparate = dict(SHELL_NECOMPARATE.get(app, {}))
+        p = D / "referinte" / SHELL_FISIER.get(app, "")
+        self.bruta = citeste_json(p) if app in SHELL_FISIER and p.exists() else None
+        if not self.bruta:
+            return
+        S = self.bruta.get("suprafete") or {}
+        regulile = SHELL_SUPRAFETE.get(app, {})
+        for cap in dict.fromkeys(v[0] for v in regulile.values()):
+            if cap not in S:
+                continue
+            chei = {k: r for k, (c, r) in regulile.items() if c == cap}
+            ids = set().union(*[set(r) for r in chei.values() if isinstance(r, tuple)])
+            if not ids:
+                for k in chei:
+                    rad = _shell_ferestre(S[cap])
+                    if rad is not None:
+                        self.canon[k] = canon_shell(rad)
+                        self.surse[k] = (cap, "toată captura")
+                continue
+            rad = _shell_ferestre(S[cap])
+            if rad is None:
+                continue
+            gasite = {}
+            rad = _shell_taie(rad, ids, gasite)
+            for k, r in chei.items():
+                if r == "rest":
+                    self.canon[k] = canon_shell(rad)
+                    self.surse[k] = (cap, "restul ferestrei după tăieturi: cadrul cu bara de titlu")
+                elif isinstance(r, tuple):
+                    noduri = [gasite[i] for i in gasite if i in r]
+                    lipsa = [i for i in r if i not in gasite]
+                    if lipsa:
+                        self.taieturi_negasite[k] = lipsa
+                    if noduri:
+                        self.canon[k] = canon_shell(_shell_radacina(noduri))
+                        self.surse[k] = (cap, "tăiat pe AutomationId: " + ", ".join(r))
+
+    def leaga(self, sid):
+        chei = [k for k in SHELL_LEGATURI.get(sid, []) if k in self.canon]
+        cond = SHELL_CONDITII.get(sid)
+        if chei and cond:
+            c = self.canon.get(cond[0])
+            if not (c and any(re.search(cond[1], u["et"]) for g in c["grupuri"] for u in g["u"])):
+                return []
+        return chei
+
+    def motiv_fara(self, sid):
+        if sid in SHELL_FARA_MOTIV:
+            return SHELL_FARA_MOTIV[sid]
+        if sid.startswith(self.app + ".dialog."):
+            return SHELL_FARA_MOTIV.get(self.app + ".dialog.*", "")
+        if sid in SHELL_LEGATURI:
+            return "captura legată lipsește din referinte/" + SHELL_FISIER.get(self.app, "")
+        return "nicio captură UI Automation pentru ea în referinte/" + SHELL_FISIER.get(self.app, "")
+
+
+def referinte_shell():
+    """{app: ReferintaShell} pentru Windows și File Explorer — doar O3 (oracol_ui.py) le folosește."""
+    if "refs_shell" not in _CACHE:
+        _CACHE["refs_shell"] = {a: ReferintaShell(a) for a in SHELL}
+    return _CACHE["refs_shell"]
+
+
 # ====================================================================== comparația
 def _lis_indici(seq):
     """indicii (în seq) ai unui cel mai lung subșir strict crescător."""
@@ -570,6 +867,19 @@ def aliniaza(R, X, lax=False):
                 used.add(xi)
                 pr[ri] = xi
                 break
+    # referințele shell (canon_shell): o comandă ASCUNSĂ pentru date personale e prezentă, fără text — ia o comandă
+    # desenată rămasă nepotrivită, de aceeași familie de tip, întâi dintre vecinii ei deja potriviți (ordinea rămâne).
+    # Unitățile Office și cele randate nu au „ascuns”: pentru ele bucla nu face nimic.
+    for ri, r in enumerate(R):
+        if ri in pr or not r.get("ascuns"):
+            continue
+        lo = max((xi for k, xi in pr.items() if k < ri), default=-1)
+        hi = min((xi for k, xi in pr.items() if k > ri), default=len(X))
+        libere = [xi for xi in range(len(X)) if xi not in used and tip_compatibil(r.get("tip"), X[xi].get("tip"))]
+        alese = [xi for xi in libere if lo < xi < hi] or libere
+        if alese:
+            used.add(alese[0])
+            pr[ri] = alese[0]
     pairs = sorted(pr.items())
     keep = _lis_indici([xi for _, xi in pairs])
     dez = [pairs[k] for k in range(len(pairs)) if k not in keep]
@@ -697,7 +1007,10 @@ CONTEXT_TAB = {"TabPictureToolsFormat": "Ctx_PictureFormat", "TabTableToolsDesig
 
 
 def referinta_suprafata(app, sid, ref):
-    """Suprafața din suprafete.json -> cheile de referință care o acoperă ([] = fără referință = 1 diferență la O3)."""
+    """Suprafața din suprafete.json -> cheile de referință care o acoperă ([] = fără referință = 1 diferență la O3).
+    Windows / File Explorer: ref = ReferintaShell (referinte_shell), legăturile din SHELL_LEGATURI."""
+    if isinstance(ref, ReferintaShell):
+        return ref.leaga(sid)
     if not ref or not ref.canon:
         return []
     rest = sid[len(app) + 1:]
@@ -1323,7 +1636,7 @@ def amprenta_site():
             pass
     for p in (JS_EXTRACTOR, Path(__file__), D / "inventar.json"):
         h.update(p.read_bytes())
-    for a in OFFICE:
+    for a in OFFICE + list(SHELL):      # shell (20.11.2026): randarea deschide și suprafețele lor (_deschide_shell)
         q = D / "referinte" / f"uia_{a}.json"
         if q.exists():
             h.update(hashlib.sha256(q.read_bytes()).digest())
@@ -1494,6 +1807,11 @@ def _randeaza_pagina(pg, base, task, js):
                 t1 = time.time()
                 _deschide_restul(pg, js, inst, o, ref, sup, rez, mergi, extrage)
                 ceas("dialoguri_backstage_meniuri", t1)
+            elif app not in dialog_facut and app in SHELL:
+                dialog_facut.add(app)
+                t1 = time.time()
+                if _deschide_shell(pg, js, inst, o, sup, rez, mergi, extrage):
+                    ceas("dialoguri_backstage_meniuri", t1)
         ir["suprafete"] = _canon_inst(app, sup)
         rez["instante"].append(ir)
         # O8: comenzile citate în pagină, apăsate pe rând, pe primul exercițiu complet al fiecărui simulator
@@ -1620,6 +1938,33 @@ def _deschide_restul(pg, js, inst, o, ref, sup, rez, mergi, extrage):
                         sup[k] = v
             except Exception as e:
                 rez["erori"].append(f"{inst['id']} deschideSuprafata {k}: {str(e).splitlines()[0][:100]}")
+
+
+def _deschide_shell(pg, js, inst, o, sup, rez, mergi, extrage):
+    """Windows / File Explorer (runda `acoperire` pe instrumente, 20.11.2026): suprafețele referinței shell care nu se văd
+    la pornire (meniurile Nou / Sortați / Vizualizați, clic dreapta, Start) se deschid doar prin plasa
+    LHAplicatii.deschideSuprafata(<cheie>) (CONVENTIE_ARBORE.md §4.6): gesturile lor nu sunt încă în convenție. Fără
+    plasă (situl de azi: nicio lecție nu încarcă biblioteca) nu face nimic. → True dacă plasa există."""
+    try:
+        are = pg.evaluate("() => !!(window.LHAplicatii && typeof window.LHAplicatii.deschideSuprafata === 'function')")
+    except Exception:
+        are = False
+    if not are:
+        return False
+    for k in referinte_shell()[inst["aplicatie"]].canon:
+        if k in sup:
+            continue
+        try:
+            mergi(inst["nav"])
+            if pg.evaluate("k => __LHO.deschideSuprafata(k)", k):
+                pg.wait_for_timeout(150)
+                pg.evaluate(js)
+                v = extrage(o)["suprafete"].get(k)
+                if v:
+                    sup[k] = v
+        except Exception as e:
+            rez["erori"].append(f"{inst['id']} deschideSuprafata {k}: {str(e).splitlines()[0][:100]}")
+    return True
 
 
 # Reparația 7b (R12, prima frază): o comandă CITATĂ de lecție care, apăsată, dă DOAR mesajul „aici nu e simulată” e

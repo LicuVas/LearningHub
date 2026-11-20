@@ -24,8 +24,22 @@ reale. O bibliotecă ce nu respectă convenția apare ca „suprafață lipsă�
   doar fila activă trebuie să fie în DOM), `panglica_context.<Ctx_Id>` (ex. `panglica_context.Ctx_TableDesign`),
   `backstage.nav`, `backstage.<Pagina>` (ex. `backstage.Save As`), `meniu_contextual.<tinta>` (ex. `meniu_contextual.text`),
   `dialog.<idMso>` (ex. `dialog.FontDialog`; fila a doua a unui dialog: `dialog.FontDialog#Advanced`), `panou.<idMso>`.
-- Suprafețele aplicațiilor fără referință încă (Windows, Explorer, Paint): cheia = partea de după punct din `suprafete.json`
-  (ex. `meniu_start`, `panou_navigare`, `bara_instrumente`). Referința lor vine într-o rundă `acoperire`.
+- **Windows și File Explorer** (referința shell din 20.11.2026: `referinte/uia_windows.json`, `referinte/uia_explorer.json`,
+  citite de O3 prin `structura_lib.referinte_shell()`): cheia = cheia de randare din `structura_lib.SHELL_SUPRAFETE`.
+  - Explorer, fereastra pe PĂRȚI (suprafețe imbricate; o comandă aparține suprafeței celei mai apropiate): `fereastra`
+    (cadrul, cu bara de titlu: Sistem, Minimizare, Maximizare, Închidere) și în ea `file_fereastra`, `butoane_navigare`,
+    `bara_adresa`, `cautare`, `bara_comenzi`, `panou_navigare`, `zona_continut`, `panou_detalii`, `bara_stare`;
+    fiecare parte își măsoară pozițiile față de colțul ei.
+  - Explorer, meniurile: `meniu_nou`, `meniu_sortare`, `meniu_vizualizare` (cu submeniul „Afișați” deschis, ca în captură),
+    `meniu_fisier`, `meniu_fisier_clasic`, `meniu_fundal`. Windows: `bara_activitati`, `start`, `meniu_desktop`,
+    `meniu_desktop_clasic`. Un meniu din mai multe ferestre (lista + rândul de pictograme, meniul + submeniul) = O
+    suprafață, cu pozițiile față de colțul ei.
+  - Panoul de navigare: elementele arborelui (`TreeItem`) se marchează ca FRAȚI, în ordinea de pe ecran (copiii unei
+    comenzi nu se citesc, §3); nivelul se vede doar din poziție.
+  - Ce nu se vede la pornire (meniurile, Start) se citește prin plasa §4.6: gesturile shell nu sunt încă în §4.
+- Suprafețele fără referință încă (Paint; la Windows / Explorer cele fără captură: dialogurile Explorer, desktopul,
+  calendarul … — motivul fiecăreia în `oracol_ui.json › fara_referinta_motiv`): cheia = partea de după punct din
+  `suprafete.json` (ex. `bara_instrumente`). Referința lor vine într-o rundă `acoperire`.
 - Doar suprafețele VIZIBILE se citesc. Ce se deschide (Backstage, meniuri, dialoguri, file) se deschide prin GEST (§4).
 
 ## 3. Nodurile
@@ -89,6 +103,11 @@ Fiecare element de interfață din suprafață poartă:
   la final, fără sufixul de scurtătură `(Ctrl …)`, cratima neîntreruptibilă = `-`, spațiile strânse, fără `¶ ` în față.
   Potrivirea: întâi `id_mso` (când îl au ambele), apoi eticheta (textul vizibil întreg: un rând sau toate împreună);
   pe bara de stare se acceptă și numele fără valoare (`Page Number Page 1 of 1` ~ `Page 1 of 1`).
+- Referința shell (Windows / Explorer, 20.11.2026): AutomationId-ul e `id_mso` doar la comenzile cu id UNIC în suprafață;
+  un nod ascuns pentru date personale („[element personal ascuns]”, „[… ascuns]”, „[id ascuns]”, „[rețea ascunsă]”,
+  „[utilizator]”, „[cont]”) e o comandă PREZENTĂ, fără text: se potrivește cu orice comandă desenată rămasă nepotrivită,
+  de aceeași familie de tip (întâi între vecinii ei potriviți); nedesenată = `lipsa`. Restul regulilor convertorului
+  (ferestre, zgomot, tăieturi) stau în comentariul de la `structura_lib.referinte_shell`.
 - Diferențele: `lipsa` (în referință, nu în pagină), `in_plus` (în pagină, nu în referință), `ordine` (potrivite − cel mai
   lung subșir comun), `suprafata_lipsa` (= toate unitățile ei lipsă + 1), `eticheta` (același idMso, alt nume PE ECRAN —
   la O2 și la O3), `eticheta_declarata` (data-lh-eticheta ≠ textul de pe ecran — la O2 și la O3), `grup_fara_legenda`

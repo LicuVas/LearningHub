@@ -16,9 +16,15 @@ Numărul = PUNCTE, pe COMANDĂ (reparația f: o comandă deja greșită care dev
 a referinței are punctele = câte feluri de diferență are (`ordine`, `tip`, `eticheta`, `pozitie`, `eticheta_declarata`,
 cel mult 5), dar o comandă mutată în alt grup (`grupare`) are cel puțin 6, iar una LIPSĂ cel puțin 7 — deci
 „desenată greșit → în alt grup → lipsă” crește mereu. Restul (`in_plus`, felurile de grup și de suprafață) = 1 punct.
-În plus, din suprafete.json: fiecare suprafață FĂRĂ referință (Windows, File Explorer, Paint întregi; riglele, panourile
-etc. necapturate) = 1, și fiecare suprafață care NU există în aplicația reală (ex. tastele pentru telefon) = 1 (abatere
-de aprobat). Gata (R4a) = 0. Detalii: <iesiri>/oracol_ui.json."""
+Windows și File Explorer (runda `acoperire` pe instrumente, 20.11.2026): referinte/uia_windows.json și uia_explorer.json
+(formatul referinte/dump_shell_uia.py) se citesc prin structura_lib.referinte_shell(): fiecare captură legată de
+suprafete.json devine o suprafață de referință, cu cheia de randare din structura_lib.SHELL_SUPRAFETE (fereastra Explorer
+tăiată pe AutomationId în bara_comenzi, panou_navigare, zona_continut …), comparată la fel ca cele Office; nodurile ascunse
+pentru date personale sunt comenzi prezente, fără text.
+În plus, din suprafete.json: fiecare suprafață FĂRĂ referință (Paint întreg; riglele, panourile etc. necapturate;
+dialogurile Explorer, desktopul, calendarul … — motivul fiecăreia în fara_referinta_motiv) = 1, și fiecare suprafață care
+NU există în aplicația reală (ex. tastele pentru telefon) = 1 (abatere de aprobat). Gata (R4a) = 0.
+Detalii: <iesiri>/oracol_ui.json."""
 import sys
 from collections import Counter
 from pathlib import Path
@@ -51,12 +57,13 @@ def puncte(chei):
 
 def masoara():
     refs = L.referinte()
+    shell = L.referinte_shell()      # Windows / File Explorer: doar aici (O2, O7, O8 și randarea folosesc referinte())
     supr = L.suprafete()["aplicatii"]
     c = L.randare()
     toate = [i for r in c["pagini"].values() for i in r["instante"]]
     total, pe_fel, pe_suprafata, n_chei = 0, Counter(), {}, 0
-    for app in L.OFFICE:
-        ref = refs[app]
+    for app in L.OFFICE + list(L.SHELL):
+        ref = shell[app] if app in L.SHELL else refs[app]
         if not ref.canon:
             continue
         ii = [i for i in toate if i["aplicatie"] == app]
@@ -76,24 +83,34 @@ def masoara():
                                           "mostre": sorted(d)[:25]}
             total += pct
             n_chei += len(d)
-    fara, nereale = [], []
+    fara, nereale, motiv = [], [], {}
     for app in L.APLICATII:
-        ref = refs[app]
+        ref = shell[app] if app in L.SHELL else refs[app]
         for s in supr.get(app, {}).get("suprafete", []):
             if s.get("in_aplicatia_reala") is False:
                 nereale.append(s["id"])
             elif not L.referinta_suprafata(app, s["id"], ref):
                 fara.append(s["id"])
+                if app in L.SHELL:
+                    motiv[s["id"]] = ref.motiv_fara(s["id"])
     total += len(fara) + len(nereale)
     pe_fel["fara_referinta"] += len(fara)
     pe_fel["nu_exista_in_aplicatia_reala"] += len(nereale)
-    harta = {s["id"]: L.referinta_suprafata(a, s["id"], refs[a]) for a in L.APLICATII for s in supr.get(a, {}).get("suprafete", [])}
+    harta = {s["id"]: L.referinta_suprafata(a, s["id"], shell[a] if a in L.SHELL else refs[a])
+             for a in L.APLICATII for s in supr.get(a, {}).get("suprafete", [])}
+    ref_shell = {a: {"fisier": "referinte/" + L.SHELL_FISIER[a],
+                     "suprafete": {k: {"captura": r.surse[k][0], "regula": r.surse[k][1], "unitati": L.nr_unitati(r.canon[k]),
+                                       "ascunse": sum(1 for g in r.canon[k]["grupuri"] for u in g["u"] if u.get("ascuns"))}
+                                   for k in r.canon},
+                     "taieturi_negasite": r.taieturi_negasite, "capturi_necomparate": r.necomparate}
+                 for a, r in shell.items()}
     det = {"definitie": __doc__.split("\n\n", 1)[1], "toleranta_px": L.TOL_PX, "fereastra": L.VIEWPORT,
            "puncte": {"lipsa": P_LIPSA, "grupare": P_GRUPARE, "comanda_desenata": "1 pe fel, cel mult "
                       f"{len(FELURI_COMANDA_DESENATA)}", "restul": 1},
            "chei_de_diferenta": n_chei + len(fara) + len(nereale),
            "pe_suprafata": pe_suprafata, "pe_fel": dict(pe_fel.most_common()), "fara_referinta": fara,
-           "nu_exista_in_aplicatia_reala": nereale, "harta_suprafete_referinta": harta,
+           "fara_referinta_motiv": motiv, "nu_exista_in_aplicatia_reala": nereale, "harta_suprafete_referinta": harta,
+           "referinte_shell": ref_shell,
            "randare": {"generat": c.get("generat"), "secunde": c.get("secunde"), "instante": len(toate)}}
     linii = [f"suprafețe de referință comparate: {len(pe_suprafata)} (desenate în cel puțin o pagină: "
              f"{sum(1 for v in pe_suprafata.values() if v['randari'])}); din suprafete.json fără referință: {len(fara)}, "
