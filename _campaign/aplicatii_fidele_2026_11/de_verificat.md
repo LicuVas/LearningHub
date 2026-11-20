@@ -428,6 +428,8 @@ Până la răspuns, simulatorul face ce scrie în paranteză.
   ascuns caseta n-a primit focusul nici prin UIA SetFocus, nici prin clicul de mouse postat (focusul a rămas în mdiClass) —
   [NEVERIFICAT]. Dovedit doar: Fade din galerie pune 0,7 s, iar Apply To All copiază 0,7 pe toate
   (`scenarii_real/powerpoint-durata-aplica-la-toate.json`). De probat cu omul: clic în casetă, „0,5”, Enter → ce scrie caseta.
+  → runda `acoperire` după runda 12 (20.11.2026): tot nerulat; lămurit doar ce scrie caseta FĂRĂ tastare: „02,00” fără tranziție,
+  „00,70” după Fade, „01,00” după Push / Wipe (`uia_powerpoint.json › acoperire_r12.fapte.d_durate`).
 <!-- RUNDA11-POWERPOINT:END -->
 
 <!-- RUNDA12-POWERPOINT:START -->
@@ -440,6 +442,8 @@ Până la răspuns, simulatorul face ce scrie în paranteză.
   prezentare închide de tot PowerPoint-ul — simulatorul rămâne în fereastra goală „PowerPoint” (ca după Ctrl+W); (c) Enter în
   File name al ferestrei „Save your changes” = Save (în referință niciun buton nu e „implicit”); (d) Save din fereastră salvează
   cu numele din casetă și închide. Scenarii: `ctrl-w-nemodificat`, `x-ultima-prezentare-dont-save`, `enter-in-save-your-changes`.
+  → runda `acoperire` după runda 12: (c) NU se poate proba pe desktopul ascuns fără să scriu la om (Enter = Save ar salva în
+  Documente / OneDrive; caseta nu primește o cale spre %TEMP%) — `acoperire_r12.NEVERIFICAT.enter_in_save_your_changes`.
 - [ ] **R12-3** Culorile: în afară de Red #FF0000, Light Blue #00B0F0, alb (RGB 255,255,255) și negrul textului (#000000), valorile
   #RRGGBB ale paletei (Standard Colors, temă Office, nuanțele Lighter/Darker N% calculate cu lumMod/lumOff) și culoarea citită la
   text amestecat (primul caracter). Scenariu: câte o culoare de temă + o nuanță, citite prin COM (Font.Color.RGB).
@@ -448,10 +452,19 @@ Până la răspuns, simulatorul face ce scrie în paranteză.
 - [ ] **R12-5** Inserarea: imaginea din Insert Picture (centrată, 360×270 pt; orice nume nevid e primit) și forma din Shapes pusă
   cu un clic (72×72 pt, colțul în punctul apăsat; Text Box = casetă în editare). Scenariu: `pozitii_forme` după `imagine` și
   `sageata-dreapta`.
+  → runda `acoperire` după runda 12 (parțial): pe Two Content cu caseta din dreapta GOALĂ, PowerPoint pune imaginea ÎN acea
+  casetă (substituent cu imagine, [486, 163, 408, 304], tot 3 forme) — `acoperire_r12.fapte.e_imagine_two_content`,
+  `scenarii_real/powerpoint-imagine-two-content.json`; centrarea 360×270 pe Title Slide și forma pusă cu un clic rămân.
 - [ ] **R12-6** Durata tranziției: doar Fade = 0,7 s e dovedit; la celelalte efecte simulatorul păstrează durata de dinainte;
   „0,5” + Enter în Duration = 0,5 s pe diapozitivul activ (leagă de R11-14).
+  → runda `acoperire` după runda 12 (parțial): fiecare efect din galerie pune durata LUI, oricare era înainte — Fade 0,7, Push
+  1,0, Wipe 1,0 (și unul după altul pe același diapozitiv: 0,7 → 1,0 → 1,0 → 0,7); fără tranziție 2,0; EntryEffect pus prin
+  COM NU schimbă durata (2,0 — de aici „02,00” din `acoperire_r11.fapte.d_efecte`) — `acoperire_r12.fapte.d_durate`,
+  `scenarii_real/powerpoint-durata-{fade,push,wipe}.json`. Rămâne doar „0,5” + Enter (R11-14).
 - [ ] **R12-7** Fundalul: un diapozitiv neatins = `{tip: solid, culoare: #FFFFFF}` (panoul arată „Fill Color RGB(255, 255, 255)”,
   dar tipul neatins nu e citit prin COM); „Automatic” din Color ▾ = alb; eticheta „Fill Color RGB(r, g, b)” după schimbare.
+  → runda `acoperire` după runda 12 (parțial): diapozitivul neatins, citit prin COM = Fill.Type 1 (solid), ForeColor #FFFFFF
+  (`acoperire_r12.fapte.c_background_styles.inainte`); „Automatic” și eticheta rămân.
 - [ ] **R12-8** Animation Pane: numele formelor în rânduri în afară de „Title 1” / „Subtitle 2” (Content Placeholder 2, TextBox N…),
   categoria efectelor în afară de Entrance, clicul pe rând alege și caseta lui pe diapozitiv.
 - [ ] **R12-9** (constructorul 2, MINOR critic 11 §6) Fereastra Font: Font style și Underline style; fereastra Paragraph: Alignment —
@@ -465,4 +478,12 @@ Până la răspuns, simulatorul face ce scrie în paranteză.
   e necapturat; (b) lansatoarele Paragraph / Drawing (și cele din Animations, View, filele contextuale) au butonul de deasupra la
   2-4 px: zona lor rămâne 32 × ~28 (mai mult ar acoperi „Convert to SmartArt” / „Shape Effects”); (c) „More Options” de lângă Undo
   (17 × 39) și butoanele barei de stare (28 px înălțime) sunt la fel în Word și Excel (cod comun) — de hotărât în valul comun.
+- [ ] **R12-11** (runda `acoperire` după runda 12) Sfaturile la hover (numele culorii din Font Color / Shape Fill ▾, numele formei din
+  Shapes ▾ — lecția m1-l06:143, GRAV A1 / A2): WM_MOUSEMOVE postat pe desktopul ascuns n-a deschis niciun ToolTip
+  (`acoperire_r12.fapte.c_shape_fill_outline.hover_yellow`). De probat cu omul: mouse-ul ținut pe „Dark Blue” și pe „Arrow: Right”.
+- [ ] **R12-12** (runda `acoperire` după runda 12) Zona de note: nu e expusă în UI Automation (textul de îndemn „Click to add
+  notes”, mărimea zonei); nici tastarea în note nu e încă dovedită: clicul postat n-a nimerit zona, iar reluarea cu punctul
+  reparat s-a întrerupt (`scenarii_real/powerpoint-note.json › nota_autor`; de rulat: `acoperire_powerpoint_r12.py scenarii
+  --id=powerpoint-note,powerpoint-stea-ctrl-c-v`, al doilea cere clipboard-ul omului liber). Tot așa chenarul / mânerele
+  formei alese (Selection.Type 2 e dovedit, desenul nu).
 <!-- RUNDA12-POWERPOINT:END -->

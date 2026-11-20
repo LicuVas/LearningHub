@@ -128,7 +128,12 @@ clic dreapta, ▾, galerie — `meniu:Duplicate Slide`, `meniu:Narrow`, `meniu:3
 `antet_rand`, `miniatura` (diapozitivul N în panoul din stânga), `diapozitiv`, `forma` (`forma:<diapozitiv>/<forma>`),
 `margine_forma` (`margine_forma:<diapozitiv>/<forma>` = MARGINEA casetei: clicul pe ea alege caseta ca obiect, iar clicul
 înăuntru pune cursorul în text, ca în PowerPoint; scrisă `data-lh-tinta="margine_forma"` + `data-lh-id="1/1"`, ca `forma`;
-runda `acoperire` după runda 11, 20.11.2026 — critic.md › `margine_forma:D/S`),
+runda `acoperire` după runda 11, 20.11.2026 — critic.md › `margine_forma:D/S`; în PowerPoint real clicul în MIJLOCUL
+unei forme fără text — stea, săgeată, dreptunghi — și chiar al unei casete de text nealese o alege ca OBIECT,
+Selection.Type 2: `uia_powerpoint.json › acoperire_r12.fapte.a_forma_clic`, runda `acoperire` după runda 12),
+`bara_stare` (un buton din bara de stare: `bara_stare:Slide Sorter`, `bara_stare:Normal`, `bara_stare:Reading View`,
+`bara_stare:Slide Show`, `bara_stare:Notes`; eticheta = numele din `uia_powerpoint.json › bara_stare`, fără spațiul de la
+capăt), `zona_note` (zona de note de sub diapozitivul activ, unde se scrie cu tastatura; runda `acoperire` după runda 12),
 `tabel`, `imagine`, `grafic`, `lista` (un element din folderul curent: `lista:tema.docx`), `arbore` (panoul de navigare:
 `arbore:Ana`), `bara_comenzi` (`bara_comenzi:Nou`), `nav` (`nav:sus`, `nav:inapoi`, `nav:inainte`), `adresa`, `cautare`,
 `cos` (`cos:notite.txt`), `desktop` (`desktop:Coș de reciclare`), `bara_activitati` (`bara_activitati:Start`), `start`,
@@ -215,6 +220,17 @@ Ce spune `stare()` la `text` / `celule` trebuie să fie ȘI pe ecran (regula „
   (pe diapozitiv, `[{fel: substituent|forma|imagine|caseta_text|tabel|alta, forma?, text}]`, `forma` = numele din galeria
   Shapes, ex. „Arrow: Right”) și `pozitii_forme` (pe diapozitiv, `[[stânga, sus, lățime, înălțime]]` în puncte, rotunjite).
   `culoare` NU intră în `formatare_text` (forma ei rămâne `{text, bold, marime}`);
+  din runda `acoperire` după runda 12 (20.11.2026; sensul exact în `descriere` a scenariilor `powerpoint-font-titlu`,
+  `powerpoint-animatie-start`, `powerpoint-shape-fill`, `powerpoint-note`, `powerpoint-slide-sorter`,
+  `powerpoint-imagine-two-content`): `font_text` (numele fontului literelor casetei din `forma_citita`, cum îl dă PowerPoint
+  — `TextRange.Font.Name`: „Calibri Light” după Font ▾ › Calibri Light (Headings); NU intră în `formatare_text`, ca
+  `culoare_text`), `pornire_animatii` (pe fiecare diapozitiv, cum pornește fiecare animație în ordinea din Animation Pane:
+  `la_clic` | `cu_precedenta` | `dupa_precedenta` = On Click / With Previous / After Previous), `umplere_forme` (pe fiecare
+  diapozitiv, umplerea fiecărei forme în ordinea din Shapes: `{tip: fara|solid|gradient|imagine|textura|model|alt,
+  culoare?}`, culoarea doar la `solid`; casetele aspectului fără umplere = `{tip: fara}`), `note_diapozitive` (textul din
+  zona de note a fiecărui diapozitiv, `""` dacă n-are), `vedere` (`normala` | `sortare` | `citire` | `expunere` |
+  `pagina_note` = Normal / Slide Sorter / Reading View / Slide Show / Notes Page); în `forme_diapozitiv`, un substituent al
+  aspectului care a primit o imagine (Two Content › Pictures pune imaginea ÎN caseta goală) are `fel: imagine`;
 - **explorer**: `nume_fisiere` (numele reale din folderul de lucru, cu extensie, folderele cu „/” — comparate ca mulțime),
   `ordine_afisata` (în ordinea vederii), `in_cos`, `continut_fisiere`, `dialog` (ultimul dialog apărut:
   `{titlu, intrebare, butoane, apasat}`, `null` dacă n-a fost niciunul), `cale_curenta`, `selectie`;
@@ -264,7 +280,16 @@ face gesturile cu mouse-ul și tastatura adevărate (Playwright), biblioteca doa
 1. **Pornirea**: `deschide(scenariu.aplicatie, {loc, continut: scenariu.start, profil: scenariu.profil, scenariu: true, focus: true})`.
    `continut` = obiectul `start` din formatul comun, neschimbat: Word `{paragrafe, cursor, selectie, aliniere, tabel}`,
    Excel `{celule, selectie, format}`, PowerPoint `{diapozitive: [{aspect, texte}], diapozitiv_activ, panou, selectie_text,
-   selectie_forma, forma_citita}`, Explorer `{folder, arbore, continut, setari: {extensii_vizibile, confirmare_la_cos},
+   selectie_forma, forma_citita}` — din runda `acoperire` după runda 12 (20.11.2026, ca lecțiile m1-l05, m1-l06, m2-l08,
+   m2-l09 să-și încarce diapozitivele): `diapozitive[i].forme` `[{fel: forma|caseta_text|imagine, forma?, text?, pozitie,
+   umplere?, fisier?}]` = formele puse DUPĂ casetele aspectului, în ordinea dată (indicele lor în Shapes continuă după
+   substituenți: Title Only + o stea → steaua = forma 2), `forma` = numele din galeria Shapes (la `fel: forma`, ex. „Star: 5
+   Points”, „Arrow: Right”, „Rectangle”, „Oval”), `pozitie` = `[stânga, sus, lățime, înălțime]` în puncte (ca
+   `pozitii_forme`), `umplere` = #RRGGBB (opțional), `fisier` = numele imaginii (la `fel: imagine`); `diapozitive[i].fonturi`
+   `[nume|null …]` = fontul literelor fiecărei casete din `texte`, în aceeași ordine; `fisiere` `[{nume, diapozitive:
+   [{aspect, texte}]}]` = prezentările din dosarul de lucru (ce arată fereastra Open). Pe PowerPoint real: Shapes.AddShape /
+   AddTextbox / AddPicture, TextRange.Font.Name, Presentation.SaveAs (`referinte/acoperire_powerpoint_r12.py`).
+   Explorer `{folder, arbore, continut, setari: {extensii_vizibile, confirmare_la_cos},
    sortare, sursa_lipirii: {folder, arbore, continut}}` (folderul de lucru și, alături de el, folderul sursă).
 2. **Pasul -> ținta** (`LHSimRunner.tintaPas`): `id_mso`/`mso` -> `mso:<id>` (cu `fila` -> întâi clic pe `mso:<fila>` dacă e
    pe ecran); `celula` -> `celula:<A1>`; `diapozitiv` -> `miniatura:<n>`; `forma:[d,s]` -> `forma:<d>/<s>`; `cuvant`

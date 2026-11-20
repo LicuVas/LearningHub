@@ -1,4 +1,4 @@
-<!-- Runda 13 · etapa B · aplicația powerpoint · unghiul gest_tastatura · generat de pregateste_runda.py la 2026-11-20 11:42 din prompt_runda.md (sha256 09a338ac5aaa) -->
+<!-- Runda 13 · etapa B · aplicația powerpoint · unghiul gest_tastatura · generat de pregateste_runda.py la 2026-11-20 14:06 din prompt_runda.md (sha256 09a338ac5aaa) -->
 
 <rol>
 Ești runda 13 (etapa B) a lucrării „Aplicațiile fidele” din LearningHub. Nu ești autorul rundelor anterioare și nu le
@@ -62,10 +62,10 @@ Fă pașii în ordine. Fiecare pas lasă un ARTEFACT în D/runde/13/; un pas fă
        - ## 6. [FARA_REFERINTA] (nu se numără GRAV; de dus la proba omului / în `de_verificat`)
        - GRAV_VECHI_DESCHISE: 2
        - GRAV: 4
-     Oracolele după runda precedentă: O1=61, O2=13392, O3=25076, O4=30 (era 48), O5=82, O6=0, O7=341, O8=102, O9=27
-     Cele mai mari rămase: O3=25076, O2=13392, O7=341 (la etapa B ținta = suprafața cu (O3+O4+O8) × lecții cea mai mare, din inventar.json)
-     Porțile după runda precedentă (n = probleme): test_joc=0, controale_taiate=0, cum_fac=41, fereastra_mica=0, date_personale=0, word2007_j2=0
-     Ținta rundei precedente: runda 2 B-powerpoint: cele 5 GRAV ale criticului 11 (P1 KeyTips, P2 Font Color, P3 inchiderea/Ctrl+N/O, P4 obiectele, P5 Duration/Animation Pane/Format Background) + MINOR, pe referintele rundei acoperire (supliment_B_powerpoint_runda12.md); 2 constructori · reparat: ['constructorul 1 (PREDARE, 552ac0c5): P1-P5 in powerpoint.js, date/powerpoint.json regenerat, css doar PowerPoint', 'constructorul 2 (2623887c): MINOR (modificat dupa Ctrl+Z/Y post-salvare, diapozitiv_activ null, zone >=32 px la 360 px), pasul 7', 'criticul 12: P1, P2, P5 INCHISE; P3 (Ctrl+O > Browse, File > New > Blank Presentation) si P4 (steaua din m1-l05, continutul de pornire fara forme/imagini) DESCHISE; noi A1 Shapes fara pictograme/grupuri/nume, A2 paletele fara titluri si nume, A3 Format Background taiat pe fereastra mica/telefon, A4 comenzi de pe drumul lectiilor tot pe mesaj (note, Slide Sorter, Shape Fill, Background Styles, Animations Start, lista Font)']
+     Oracolele după runda precedentă: O1=61, O2=13392, O3=26855 (era 25076), O4=50 (era 30), O5=82, O6=0, O7=341, O8=102, O9=27
+     Cele mai mari rămase: O3=26855, O2=13392, O7=341 (la etapa B ținta = suprafața cu (O3+O4+O8) × lecții cea mai mare, din inventar.json)
+     Porțile după runda precedentă (n = probleme): test_joc=0, controale_taiate=2 (era 0), cum_fac=41, fereastra_mica=0, date_personale=0, word2007_j2=0
+     Ținta rundei precedente: referintele reale lipsa pentru GRAV-urile deschise dupa critic 12 (P3 Blank/Open-Browse, P4 clic pe stea + Ctrl+C/V + start cu forme, A4 listele si comenzile din lectii, contradictia Duration): capturi UIA PowerPoint real (POWERPNT /B pe desktop ascuns) + scenarii reale + api §3/§5/§7.1 · reparat: ['runde/12/acoperire_powerpoint.md: ACOPERIRE_PARTIALA; O3 25076->26855 (exact cele 8 suprafete noi), O4 30->50 (14 scenarii noi, 12 cu mod_probat; stea-ctrl-c-v si note [NEVERIFICAT]); Duration lamurita: fara tranzitie 2 s, Fade 0,7, Push 1, Wipe 1 (r11 pusese Fade prin COM); clic in mijlocul formei = forma ca obiect (Selection.Type 2)']
       (GRAV-urile criticului din runda trecută au întâietate).
    Scrii numerele care au ales ținta și LISTA fișierelor pe care le deține runda (doar acelea se modifică).
 
