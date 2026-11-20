@@ -572,3 +572,85 @@ Până la răspuns, simulatorul face ce scrie în paranteză.
 - [ ] **R14-7** Grosimea conturului (Shape Outline › Weight) nu e în `stare()` (api §5 n-are cheie): evenimentul `contur_forma` are
   `inainte` = `dupa`. Scenariu: `powerpoint-shape-outline-weight` (Line.Weight după Weight › 3 pt), ca să intre o cheie în api §5.
 <!-- RUNDA14-POWERPOINT:END -->
+
+<!-- RUNDA16-WORD:START (scris de constructorul rundei 16, 20.11.2026 — cele 8 GRAV ale criticului 5; ce n-are referință) -->
+## Runda 16 · Word · ferestrele de fișiere și Word fără document — de lămurit (un minut fiecare)
+
+Până la răspuns, simulatorul face ce scrie în paranteză.
+
+- [ ] **R16-1** Word, **F12** → File name `Pop?Mihai` (apoi `Pop_Mihai:7A`, `Pop*Mihai`) → Enter: ce fereastră apare (titlul,
+  textul, butoanele)? O captură UI Automation a ferestrei, pe un document de probă în %TEMP%, ar închide rândul. Word real prin COM
+  refuză numele („This is not a valid file name.”), dar fereastra desenată nu e în referință. (Simulatorul: nimic nu se salvează,
+  fereastra Save As rămâne deschisă, mesajul central „Windows nu primește în numele fișierului semnele \ / : * ? " < > |. În aplicația
+  reală apare o fereastră de eroare (aici nu e simulată). Schimbă numele.”)
+- [ ] **R16-2** Word, **F12** într-un folder cu un `.docx` și un `.pdf`: lista ferestrei Save As arată doar `.docx`-ul (filtrul
+  „Word Document (*.docx)”) sau și PDF-ul? Apoi Save as type › PDF: lista arată doar PDF-ul? (Simulatorul: doar fișierele tipului ales;
+  numele fără extensie, ca în Open — vezi și R5-1.)
+- [ ] **R16-3** Word, un fișier deschis și **modificat** (nesalvat), apoi Ctrl+F12 › același fișier › Open: Word întreabă ceva
+  („revert to saved”?) sau doar aduce fereastra în față? (Simulatorul: aduce documentul existent în față, cu modificările, fără
+  întrebare. Cazul nemodificat e dovedit prin COM: același document, `documente_deschise` neschimbat.)
+- [ ] **R16-4** Word fără niciun document (Ctrl+W pe ultimul): sunt gri TOATE comenzile panglicii (Insert, Layout, View…) sau doar
+  cele de pe Home? Filele se pot apăsa? Ce scrie bara de stare? (Simulatorul: toate comenzile panglicii gri și fără efect, filele și
+  File active, câmpurile Font / Font Size dezactivate; COM a dovedit doar Bold, Italic, FontSize, Paste, FileSave, FileSaveAs,
+  FilePrint, FileClose = gri, FileNewDefault și FileOpen = active.)
+- [ ] **R16-5** Word cu două documente deschise (Ctrl+N): View › Window › **Switch Windows** — ce rânduri are lista (numele
+  ferestrelor, cu cifre?)? (Simulatorul: mesajul central; între documente se trece cu Ctrl+W.)
+<!-- RUNDA16-WORD:END -->
+
+<!-- RUNDA17-EXCEL:START (scris de constructorul rundei 17, 20.11.2026 — X10 / A1 / T1 ale criticului 10; ce n-are referință) -->
+- [ ] **R17-1** Excel cu un grafic ales (clic pe marginea lui albă): ce face **Backspace**? (îl șterge ca Delete / nimic). Și
+  Home › **Cut** / Ctrl+X cu graficul ales: decupează graficul? Scenariul care lămurește: m2-l11, graficul Line pe LUNI,
+  ales, Backspace → `grafice_pe_foaie`. (Simulatorul: Backspace `fara_efect`, Cut lucrează pe celule; pe telefon graficul
+  se mută cu degetul, dar ștergerea lui fără tasta Delete rămâne nedovedită.)
+- [ ] **R17-2** Chart Design › Add Chart Element › **Data Labels ▸** pe un grafic **Clustered Bar** și pe un **Pie**: ce rânduri
+  are lista (`lista.AddChartElementMenu#Data Labels#Clustered Bar`, `#Pie`)? (Simulatorul: mesajul central la Bar / Pie.)
+- [ ] **R17-3** Graficul Line cu etichetele **Right**, apoi Change Chart Type › Column › OK (m2-l11:69, „Titlul și etichetele
+  rămân”): ce `Position` au etichetele după schimbare (Outside End? altul?) și rămân `HasDataLabels`? (Simulatorul: starea
+  păstrează „Right”, desenul le pune la capătul coloanei.)
+<!-- RUNDA17-EXCEL:END -->
+
+<!-- RUNDA18-WINDOWS:START (scris de constructorul rundei 18, 20.11.2026 — Windows 11 în bibliotecă; ce n-are referință) -->
+- [ ] **R18-1** Start, pe Windows-ul real: ce SCRIE pe ecran sub o dală-folder („Browser, Folder cu elemente 6” în UI
+  Automation) și sub o categorie din „Toate” („Productivitate categorie cu elemente 36, …”)? Doar „Browser” / „Productivitate”?
+  O captură de ecran a Start-ului (sau `dump_shell_uia.py` cu textul copiilor) lămurește. (Simulatorul: dala arată numele
+  întreg din referință; categoria arată doar pictogramele celor 3 aplicații.)
+- [ ] **R18-2** Desktop › clic dreapta › **Nou ▸**: ce rânduri are submeniul (e aceeași listă ca Explorer › Nou: Folder,
+  Comandă rapidă, …)? Captura `meniu_desktop` are doar rândul „Nou” (`extins: False`). (Simulatorul: lista din
+  `uia_explorer.json › explorer_meniu_nou`.)
+- [ ] **R18-3** Start › **Alimentare** (Oprire / Repornire / Repaus …), panoul **Căutare** (bara și caseta din Start) și
+  **calendarul** de la ceas: nu sunt capturate. (Simulatorul: mesajul central standard, `data-lh-nesimulat`.)
+- [ ] **R18-4** O fereastră oarecare (Notepad, Explorer) pe Windows 11: bara de titlu (înălțime, butoane, pictograma
+  aplicației) și ce face clicul pe butonul ei din bară (activă → minimizată; minimizată → restaurată; neactivă → activă).
+  (Simulatorul: așa, cu butoanele din `explorer_fereastra`.)
+- [ ] **R18-5** Desktopul din laborator: ce pictograme are (Acest PC, Coș de reciclare, alte comenzi rapide?) și unde stau.
+  (Simulatorul: Acest PC + Coș de reciclare, coloană la stânga; fundal albastru simplu.)
+- [ ] **R18-6** Numele aplicațiilor pe butoanele barei când sunt deschise Word / PowerPoint / Paint („Word - 1 fereastră
+  deschisă”?). Referința are doar Explorer, Excel, Chrome… (Simulatorul: Word, PowerPoint, Paint.)
+- [ ] **R18-7** Butonul **Explorer** din bară și dublul clic pe **Acest PC** deschid File Explorer: legătura cu biblioteca
+  Explorer (banda r15) vine după ce ambele trec de critic. (Simulatorul: eveniment + mesajul central.)
+- [ ] **R18-8** **Afișați desktopul** (colțul din dreapta al barei): minimizează toate ferestrele, iar al doilea clic le
+  aduce înapoi? (Simulatorul: doar minimizează.)
+- [ ] **R18-9** Start deschis: caseta „Casetă de căutare” (Edit, [479,154,689,32] în captură) se vede pe ecran sau e a
+  ferestrei de căutare ascunse? (Simulatorul: n-o desenează; pe ecran rămâne butonul „Căutați aplicații, setări și documente”.)
+<!-- RUNDA18-WINDOWS:END -->
+
+<!-- RUNDA15-EXPLORER:START -->
+## Runda 15 · B-explorer (File Explorer în bibliotecă) — de verificat pe Windows real
+Fiecare rând: ce NU dă referința înghețată + scenariul care l-ar lămuri. Până atunci simulatorul face ce scrie în paranteză și NU se numără fidel.
+- **R15-1** Referința e PC-ul profesorului, nu laboratorul: unitățile RamDisk (A:), Google Drive (G:), Volum nou (W:), tipul „FastStone PNG File”, rândurile meniurilor din programe instalate de el (Dropbox, Notepad++, 7-Zip, PDF24, Bytello, ShareX…). Scenariu: o sesiune UIA de 10 minute pe un PC din laborator (explorer_fereastra, explorer_meniu_fisier, _fisier_clasic, _nou), ca referință a doua. (azi: etichetele profesorului)
+- **R15-2** Tragerea în vederea Detalii: de pe un rând NEALES, apucat de coloana „Data modificării”, mută fișierul sau desenează dreptunghiul de selecție? Scenariu `gest_real`: trage 100 px în jos de coloana Data a unui fișier neales; citește selecția și locul fișierului. (azi: de pe nume sau rând ales = mutare; altfel dreptunghi)
+- **R15-3** Meniul de clic dreapta pe un element din Coșul de reciclare (scenariul dă doar „Restaurare”). Scenariu: captura UIA a meniului. (azi: un singur rând, „Restaurare”)
+- **R15-4** Meniul clasic de pe fundal („Afișați mai multe opțiuni” din meniu_fundal), submeniurile Sortați după / Grupare după / Vizualizare / Nou din meniu_fundal și meniul „Mai multe opțiuni” (…) din bara de comenzi. Scenariu: capturi UIA. (azi: mesajul central „aici nu e simulată”; „Nou” deschide meniul Nou al barei de comenzi)
+- **R15-5** Bara de stare: forma la singular („1 element”?), pragul „de” (20 de elemente?) și textul selecției („1 element selectat”, dimensiunea). Scenariu: captura barei cu 1 element și cu o selecție. (azi: „N elemente”)
+- **R15-6** Poziția submeniului Nou deschis din meniul de fundal. Scenariu: captura UIA cu submeniul deschis. (azi: lângă meniu)
+- **R15-7** Ctrl+Z / Ctrl+Y după copiere, mutare, redenumire, ștergere în Coș, folder nou: ce anulează, eticheta „Anulare X” din meniul de fundal pentru fiecare operație, dacă cere confirmare. Scenarii `gest_real`. (azi: o unitate pe operație, eticheta „Anulare” + numele comenzii)
+- **R15-8** Numele fișierelor noi din Nou › Document text / Microsoft Word Document / … Scenariu: Nou › Document text, Enter → nume_fisiere. (azi: doar Folder e simulat; restul = mesajul central)
+- **R15-9** Dialogul Shift+Delete pe un FOLDER și pe mai multe elemente; dialogul de nume existent la redenumirea unui FOLDER. Scenarii model_obiect + captura textelor. (azi: mesajul central)
+- **R15-10** Căutarea: pagina de rezultate („Rezultatele căutării în …”, coloane, recursiv). Scenariu: tastează în caseta Căutați, citește lista. (azi: filtru pe folderul curent)
+- **R15-11** Fereastra îngustă (360-390 px): cum se strânge bara de comenzi (observat_vizual nu spune). Scenariu: captură cu fereastra la 390 px. (azi: se derulează lateral)
+- **R15-12** Folderul gol: textul din listă („Acest folder este gol.”?). Scenariu: captura listei unui folder gol. (azi: lista goală)
+- **R15-13** Enter / Esc în dialogurile Da/Nu (butonul implicit, ce face Esc). Scenariu `gest_real`. (azi: Enter = Da, Esc = Nu / Se omite)
+- **R15-14** Bara de adrese în modul editare (Ctrl+L / F4): ce cale scrie pentru un folder din Documente; prima firimitură pentru Documente (referința are „Acest PC” pe o cale din C:). Scenariu: captura casetei. (azi: „Documente\<folder>”, firimitura „Acest PC”)
+- **R15-15** Butonul „Mai multe” (…) al firimiturilor la cale lungă (în referință). (azi: nedesenat; căile lecțiilor sunt scurte)
+- **R15-16** Panoul Detalii / Examinare pentru un fișier ales (ce arată). Scenariu: captură. (azi: pictograma fișierului)
+<!-- RUNDA15-EXPLORER:END -->

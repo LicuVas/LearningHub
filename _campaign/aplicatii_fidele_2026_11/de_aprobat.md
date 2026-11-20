@@ -31,3 +31,28 @@ Aprobat → se mută în `abateri.md`; respins → se repară sau se scoate.
 - [ ] **A14-3** **Asistentul (§6.3)** nu numără greșeală Esc-ul care doar iese din modul tastelor de acces (`tasta_esc` cu
   `actiune: 'iesire_taste_acces'`), ca pe celelalte taste de navigare. api §6.3 enumeră excepțiile fără el. Ce îl închide: api §6.3
   îl adaugă la excepții (rundă `acoperire`).
+
+## Runda 17 · Excel
+<!-- RUNDA17-EXCEL:START (scris de constructorul rundei 17, 20.11.2026) -->
+- [ ] **A17-1** **Grila nu se lungește până la A1048576 / XFD.** Ctrl+↓ / Ctrl+→ după ultimul bloc duc celula activă la marginea
+  foii, ca în Excel (scenariile `excel-ctrl-jos-ultimul-rand`, `excel-ctrl-dreapta-ultima-coloana` trec: `selectie` = A1048576 /
+  XFD7, Name Box la fel), dar grila desenată se oprește la ultimele date + 2000 de rânduri / 200 de coloane (plafon 3000 × 300):
+  celula activă de acolo nu se vede pe ecran. Excel derulează până la ea. De ce o păstrez: grila e desenată întreagă în DOM,
+  iar 1.048.576 × 16.384 de celule ar îngheța pagina; nicio lecție a clasei a VIII-a nu cere Ctrl+săgeți (criticul 10,
+  [FARA_REFERINTA] 4). Ce o închide: o grilă desenată pe ferestre (doar rândurile din jurul celulei active), sau Vasile o acceptă.
+<!-- RUNDA17-EXCEL:END -->
+
+<!-- RUNDA18-WINDOWS:START (scris de constructorul rundei 18, 20.11.2026) -->
+- [ ] **A18-1** **Ceasul barei arată ora curentă**, nu „19:48 20.11.2026” din captură (formatul e cel din referință:
+  „Ceas HH:MM / ZZ.LL.AAAA”). O3 numără 8 puncte (eticheta capturată lipsă + cea vie în plus). De ce o păstrez: pe un PC
+  ceasul merge; un ceas oprit l-ar încurca pe elev. Ce o închide: Vasile o acceptă, sau o regulă O3 pentru valorile de moment.
+- [ ] **A18-2** **Butoanele „deschise” din captură nu se desenează** („Terminal - 7 ferestre deschise”, „KeePassXC …”,
+  „Google Chrome - 1 fereastră deschisă”, „AutoHotkey …”): erau ferestrele deschise atunci pe PC-ul profesorului (stare, nu
+  configurație). Bara arată butoanele ferestrelor din `stare().ferestre`. O3 numără 28 (4 × lipsă) + 7 (`pozitie`: grupul
+  se recentrează) în proba rundei. Ce o închide: Vasile o acceptă, sau o regulă O3 care tratează butoanele „deschise” ca stare.
+<!-- RUNDA18-WINDOWS:END -->
+
+<!-- RUNDA15-EXPLORER:START -->
+## Runda 15 · B-explorer — abateri de aprobat de Vasile (se numără până la aprobare)
+- **A15-1** Fâșia de desktop cu pictograma „Coș de reciclare” în stânga ferestrei Explorer, în aceeași rădăcină (`aplicatii/explorer.js:409`, în afara suprafețelor Explorer; `continut.desktop: false` o scoate). În Windows real Coșul stă pe desktop, nu în Explorer; fâșia ține locul desktopului până când Explorer se deschide în desktopul bibliotecii (banda Windows, runda 18). Fără ea, scenariul `explorer_restaurare_din_cos` (dublu clic pe `desktop:Coș de reciclare`) nu se poate juca.
+<!-- RUNDA15-EXPLORER:END -->

@@ -76,6 +76,9 @@
   /* ------------------------------------------------------------ deschide / inchide */
   const SURSE_APP = { word: ['word.js', 'date/word.json'], excel: ['excel.js', 'date/excel.json'],
     powerpoint: ['powerpoint.js', 'date/powerpoint.json'] };
+  SURSE_APP.windows = ['windows.js', 'date/windows.json'];   // runda 18 (B-windows): Windows 11 RO, generat din uia_windows.json
+  SURSE_APP.explorer = ['explorer.js', 'date/explorer.json'];   // runda 15 (B-explorer): File Explorer RO, generat din uia_explorer.json
+  PROFILURI.explorer = ['explorer_windows11', 'windows11']; SETARI_IMPLICITE.profil.explorer = 'explorer_windows11';   // runda 15
   function incarcaApp(nume) {
     const s = SURSE_APP[nume];
     if (!s) return Promise.reject(new Error('„' + nume + '” nu e încă în bibliotecă (vine într-un val următor)'));
