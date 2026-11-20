@@ -184,14 +184,37 @@ def start(S):
     return out
 
 
-def meniu(S, cheie, fer_pref=None):
+def _comenzi(n, tip="MenuItem"):
+    out = []
+    for c in n.get("copii") or []:
+        if c.get("tip") == tip:
+            out.append(c)
+        else:
+            out.extend(_comenzi(c, tip))
+    return out
+
+
+def fereastra_care_cuprinde(fs, tip="MenuItem"):
+    """runda 22 (W1, critic 18): într-o captură cu mai multe ferestre, fereastra desenată e cea care își CUPRINDE comenzile
+    (meniu_desktop: ferestre[0] 304×385 cu rândurile până la y 362; ferestre[1] 304×69 e gazda barei de comenzi de sus,
+    Flyout [10,2,282,48], cu aceleași rânduri citite încă o dată, în afara ei). Prima care le cuprinde pe toate."""
+    for i, F in enumerate(fs):
+        rr = F.get("rect_ecran_100") or [0, 0, 0, 0]
+        cs = [c.get("rect") for c in _comenzi(F.get("arbore") or {}, tip) if isinstance(c.get("rect"), list)]
+        if cs and all(r[0] >= 0 and r[1] >= 0 and r[0] + r[2] <= rr[2] and r[1] + r[3] <= rr[3] for r in cs):
+            return i
+    raise SystemExit("nicio fereastră nu-și cuprinde comenzile")
+
+
+def meniu(S, cheie):
     sup = S[cheie]
     fs = sup["ferestre"]
-    idx = fer_pref if fer_pref is not None else 0
+    idx = fereastra_care_cuprinde(fs)
     F = fs[idx]
     base = "uia_windows.json › %s › ferestre[%d] › arbore" % (cheie, idx)
     rr = F["rect_ecran_100"]
-    out = {"rect": [0, 0, rr[2], rr[3]], "sursa": base, "randuri": []}
+    out = {"rect": [0, 0, rr[2], rr[3]], "sursa": base + (" (fereastra care își cuprinde rândurile; din %d ferestre)" % len(fs) if len(fs) > 1 else ""),
+           "randuri": []}
 
     def walk(n, cale):
         for i, c in enumerate(n.get("copii") or []):
@@ -202,6 +225,56 @@ def meniu(S, cheie, fer_pref=None):
                 walk(c, cc)
     walk(F["arbore"], base)
     return out
+
+
+def toate(S, st):
+    """runda 22 (W2, critic 18): Start › „Toate” = aceeași suprafață ca `start`, derulată în jos (sesiune_windows_10min.md:36).
+    Categoriile (7) și butoanele lor (68×68, grilă 2×2) se iau din `start_toate` și se aduc în coordonatele listei NEDERULATE:
+    derularea = sus-ul unui buton întreg în `start` − sus-ul aceluiași buton în `start_toate` (tăiat sus de marginea listei:
+    sus = jos − înălțimea întreagă). Categoriile din `start` (primele 3, tăiate jos la 80 px) se înlocuiesc cu cele întregi."""
+    A = S["start"]["ferestre"][0]["arbore"]
+    T = S["start_toate"]["ferestre"][0]["arbore"]
+    lista = next(c for c in _comenzi(T, "List") if c.get("id") == "AppsList")
+    ly = lista["rect"][1]
+    bA = {curat(b.get("nume")): b["rect"] for b in _comenzi(A, "Button") if isinstance(b.get("rect"), list)}
+    bT = {curat(b.get("nume")): b["rect"] for b in _comenzi(T, "Button") if isinstance(b.get("rect"), list)}
+    H = max(r[3] for r in list(bA.values()) + list(bT.values()) if r[2] >= 60 and r[3] <= 80)   # butonul întreg: 68
+    der = sorted({bA[k][1] - (bT[k][1] + bT[k][3] - H) for k in bA if k in bT and bA[k][3] == H and bT[k][1] == ly})
+    if len(der) != 1:
+        raise SystemExit("derularea dintre start și start_toate nu e unică: %s" % der)
+    der = der[0]
+    catA = {curat(c.get("nume")): c.get("rect") for c in _comenzi(A, "ListItem")}
+    base = "uia_windows.json › start_toate › ferestre[0] › arbore"
+    cats = []
+    for k, c in enumerate(n for n in _comenzi(T, "ListItem") if " categorie cu elemente " in curat(n.get("nume"))):
+        r = c["rect"]
+        nume = curat(c.get("nume"))
+        jos = r[1] + r[3] + der
+        sus = catA[nume][1] if isinstance(catA.get(nume), list) else r[1] + der
+        butoane = []
+        for b in c.get("copii") or []:
+            if b.get("tip") != "Button" or not isinstance(b.get("rect"), list):
+                continue
+            nb = curat(b.get("nume"))
+            rb = b["rect"]
+            if nb in bA and bA[nb][3] == H:
+                rr = list(bA[nb])                                      # întreg în `start`
+            elif rb[1] == ly and rb[3] < H:
+                rr = [rb[0], rb[1] + rb[3] - H + der, rb[2], H]        # tăiat sus în `start_toate`
+            else:
+                rr = [rb[0], rb[1] + der, rb[2], max(rb[3], H)]
+            butoane.append({"nume": nb, "rect": rr})
+        cats.append({"tip": "ListItem", "nume": nume, "rol": "categorie", "eticheta": nume.split(" categorie cu elemente ")[0],
+                     "rect": [r[0], sus, r[2], jos - sus], "butoane": butoane,
+                     "sursa": "%s (ListItem «%s»; +%d px derularea față de start)" % (base, nume[:40], der)})
+    noduri = st["noduri"]
+    poz = next(i for i, n in enumerate(noduri) if n.get("rol") == "categorie")
+    st["noduri"] = noduri[:poz] + cats + [n for n in noduri[poz:] if n.get("rol") != "categorie"]
+    lb = lista["rect"][1] + lista["rect"][3]
+    st["toate"] = {"derulare": der, "jos": max(c["rect"][1] + c["rect"][3] for c in cats) + (lb - max(
+        n["rect"][1] + n["rect"][3] for n in _comenzi(T, "ListItem") if " categorie cu elemente " in curat(n.get("nume")))),
+        "sursa": "uia_windows.json › start_toate (lista derulată până jos: marginea de jos a listei − ultima categorie)"}
+    return st
 
 
 def meniu_nou_explorer():
@@ -281,7 +354,11 @@ def construieste():
                   "sursa": "uia_windows.json › start › Toate › Productivitate („Excel”, W~Microsoft.Office.EXCEL.EXE.15)"},
         "word": {"nume": "Word", "id": None, "sursa": "[NEVERIFICAT] R18-6: Word nu apare în referința Windows"},
         "powerpoint": {"nume": "PowerPoint", "id": None, "sursa": "[NEVERIFICAT] R18-6: PowerPoint nu apare în referința Windows"},
-        "paint": {"nume": "Paint", "id": None, "sursa": "[NEVERIFICAT] R18-6: Paint nu apare în referința Windows"}}
+        "paint": {"nume": "Paint", "id": None, "fereastra_generica": True,
+                  "sursa": "[NEVERIFICAT] R18-6: Paint nu apare în referința Windows; lecția v/m2-l08 („Scrie „pai” și dă clic pe Paint”)"},
+        "calculator": {"nume": "Calculator", "id": None, "fereastra_generica": True,
+                       "sursa": "[NEVERIFICAT] R22-2: Calculator nu apare în referința Windows; lecția v/m2-l08 („Scrie „calc” și dă clic pe "
+                                "Calculator, primul rezultat”)"}}
     pict = [{"nume": "Acest PC", "fel": "pc", "sursa": "uia_explorer.json › explorer_fereastra (panoul de navigare: „Acest PC”)"
              if nume_din_explorer("Acest PC") else "[NEVERIFICAT]"},
             {"nume": "Coș de reciclare", "fel": "cos", "sursa": "api_biblioteca.md §3 (exemplul țintei „desktop:Coș de reciclare”) "
@@ -300,8 +377,8 @@ def construieste():
                  "sursa": (ceas or {}).get("sursa"), "nota": "ora e vie (de_aprobat A18-1); formatul e cel din referință"},
         "sabloane": sabloane,
         "aplicatii": aplicatii,
-        "start": start(S),
-        "meniu_desktop": meniu(S, "meniu_desktop", 1),
+        "start": toate(S, start(S)),
+        "meniu_desktop": meniu(S, "meniu_desktop"),
         "meniu_desktop_clasic": meniu(S, "meniu_desktop_clasic"),
         "meniu_nou": meniu_nou_explorer(),
         "fereastra": {"butoane": butoane_fereastra(),

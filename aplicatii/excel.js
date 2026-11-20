@@ -961,13 +961,24 @@
     /* graficele păstrează mărimea lor (480 × 288 px la zoomul registrului) și pe telefon: mărirea de 1,7 e doar pentru degete pe
        celule; ancora (x, y) rămâne în px de grilă, deci graficul stă pe aceeași celulă (runda 10, A1; diferente.md D-A1-3) */
     const kg = () => M.zoom / 100;
-    const LC = () => 64 * z(), HR = () => 19 * z(), HA = () => 20 * z(), LA = () => 26 * z();
+    const LC = () => 64 * z(), HR = () => 19 * z(), HA = () => 20 * z(), LA = () => latAntetRand() * z();
     let NR = 0, NC = 0, celEl = {}, PX = [0];
-    /* marginile coloanelor (px pe ecran, de la stânga grilei): PX[c] = x-ul coloanei c */
-    function geomCol() { const f = F(); PX = [0]; for (let c0 = 0; c0 < NC; c0++) PX.push(PX[c0] + latPx(f, c0) * z()); }
-    const xCol = c0 => (c0 <= NC ? PX[c0] : PX[NC] + (c0 - NC) * LC());
+    /* runda 21 (critic 17, G17-1): ORIGINEA grilei desenate. Grila normală începe în A1 (R0 = C0 = 0: formulele de mai jos sunt
+       exact cele dinainte). Când celula activă iese din ea (Ctrl+↓ până la A1048576, Ctrl+→ până la XFD7, Name Box), se desenează
+       o FEREASTRĂ de rânduri / coloane în jurul ei (intindere), cu numerele și literele adevărate; OX / OY = px pe ecran de la A1
+       până la colțul ferestrei (graficele, ancorate în px de grilă, se desenează mutate cu atât) */
+    let R0 = 0, C0 = 0, OX = 0, OY = 0;
+    /* antetul rândurilor: 26 px (uia_excel.json › zona_document, DataItem „1” [1, 240, 26, 19]) până la 3 cifre, ca până acum;
+       numerele mai lungi (1000…1048576) încap întregi (lățimea lui Excel la 7 cifre nu e capturată: de_verificat R21-1) */
+    function latAntetRand() { const n = String(R0 + Math.max(NR, 1)); return n.length <= 3 ? 26 : Math.max(26, Math.ceil(latimeText(n) / z() + 8)); }
+    /* marginile coloanelor (px pe ecran, de la stânga grilei desenate): PX[k] = x-ul coloanei C0 + k */
+    function geomCol() {
+      const f = F(); PX = [0]; for (let k = 0; k < NC; k++) PX.push(PX[k] + latPx(f, C0 + k) * z());
+      OX = 0; for (let c0 = 0; c0 < C0; c0++) OX += latPx(f, c0) * z();
+    }
+    const xCol = c0 => { const k = c0 - C0; return k < 0 ? k * LC() : k <= NC ? PX[k] : PX[NC] + (k - NC) * LC(); };
     const wCol = c0 => latPx(F(), c0) * z();
-    function colLa(x) { let c0 = 0; while (c0 < NC - 1 && PX[c0 + 1] <= x) c0++; return c0; }
+    function colLa(x) { let k = 0; while (k < NC - 1 && PX[k + 1] <= x) k++; return C0 + k; }
     /* rândurile: 19 px, afară de cele cu text încadrat (Wrap Text), care cresc singure cu câte 19 px pe rând de text
        (com_r7c.json › wrap: 14,4 pt → 72 pt = 5 rânduri, coloana de 64 px; „Situația notelor la informatică” → 57,6 pt = 4) */
     let PY = [0], INALT = {};
@@ -998,20 +1009,38 @@
       });
       return o;
     }
-    function geomRand() { const f = F(); INALT = inaltimiAuto(f); PY = [0]; for (let r = 0; r < NR; r++) PY.push(PY[r] + (INALT[r] || 19) * z()); }
-    const yRand = r => (r <= NR ? PY[r] : PY[NR] + (r - NR) * HR());
+    function geomRand() {
+      const f = F(); INALT = inaltimiAuto(f); PY = [0]; for (let k = 0; k < NR; k++) PY.push(PY[k] + (INALT[R0 + k] || 19) * z());
+      OY = R0 * 19 * z(); Object.keys(INALT).forEach(r => { if (+r < R0) OY += (INALT[r] - 19) * z(); });
+    }
+    const yRand = r => { const k = r - R0; return k < 0 ? k * HR() : k <= NR ? PY[k] : PY[NR] + (k - NR) * HR(); };
     const hRand = r => (INALT[r] || 19) * z();
-    function randLa(y) { let lo = 0, hi = NR - 1; if (y <= 0) return 0; while (lo < hi) { const m = (lo + hi + 1) >> 1; if (PY[m] <= y) lo = m; else hi = m - 1; } return lo; }
+    function randLa(y) { let lo = 0, hi = NR - 1; if (y <= 0) return R0; while (lo < hi) { const m = (lo + hi + 1) >> 1; if (PY[m] <= y) lo = m; else hi = m - 1; } return R0 + lo; }
+    /* grila normală: plafonul 3000 de rânduri / 300 de coloane; fereastra: 150 de rânduri / 30 de coloane */
+    const GR_R = 3000, GR_C = 300, FE_R = 150, FE_C = 30;
     function intindere() {
-      const f = F(), u = ultim(f), a = f.sel.activa;
-      /* runda 17: Ctrl+↓ / Ctrl+→ duc celula activă la marginea foii (A1048576, XFD7). Grila e desenată întreagă în DOM, deci nu
-         crește până acolo (1.048.576 × 16.384 celule ar îngheța pagina): peste ultimele date + 2000 de rânduri / 200 de coloane,
-         celula activă rămâne în stare și în Name Box, dar grila nu se mai lungește (diferente.md, MĂRUNT) */
-      const LR = u.r + 2000, LC0 = u.c + 200;
-      let r = Math.max(u.r, a.r <= LR ? a.r : 0), c0 = Math.max(u.c, a.c <= LC0 ? a.c : 0);
+      const f = F(), a = f.sel.activa;
+      /* runda 17: Ctrl+↓ / Ctrl+→ duc celula activă la marginea foii (A1048576, XFD7). Grila normală e desenată întreagă în DOM,
+         deci nu crește până acolo (1.048.576 × 16.384 celule ar îngheța pagina): peste ultimele date + 2000 de rânduri / 200 de
+         coloane nu se mai lungește. Runda 21 (G17-1): acolo se desenează FEREASTRA din jurul celulei active (mai jos), iar grila
+         normală se socotește doar din datele de pe ea (o valoare scrisă în A1048576 nu o mai lungește la 3000 × 26 de celule) */
+      let ur = 0, uc = 0;
+      Object.keys(f.cel).forEach(k => { const p = pa(k); if (p && p.r < GR_R && p.c < GR_C) { ur = Math.max(ur, p.r); uc = Math.max(uc, p.c); } });
+      const LR = ur + 2000, LC0 = uc + 200;
+      let r = Math.max(ur, a.r <= LR ? a.r : 0), c0 = Math.max(uc, a.c <= LC0 ? a.c : 0);
       f.sel.zone.forEach(x => { if (x.r1 < MAXR - 1 && x.r1 <= LR) r = Math.max(r, x.r1); if (x.c1 < MAXC - 1 && x.c1 <= LC0) c0 = Math.max(c0, x.c1); });
-      /* plafonul desenului (o celulă scrisă chiar în A1048576 n-ar mai îngheța pagina): 3000 de rânduri, 300 de coloane */
-      return { r: Math.min(3000, Math.max(40, r + 12)), c: Math.min(300, Math.max(26, c0 + 6)) };
+      const n = { r0: 0, r: Math.min(GR_R, Math.max(40, r + 12)), c0: 0, c: Math.min(GR_C, Math.max(26, c0 + 6)) };
+      /* celula activă în afara grilei normale → fereastra în jurul ei (celula activă jos / la dreapta, ca după orice ↓ / →); fereastra
+         rămâne pe loc cât celula activă se mișcă în ea și se mută abia când celula iese */
+      if (a.r >= n.r) {
+        if (R0 > 0 && a.r >= R0 && a.r < R0 + NR) { n.r0 = R0; n.r = NR; }
+        else { n.r0 = Math.max(0, Math.min(a.r - 100, MAXR - FE_R)); n.r = Math.min(FE_R, MAXR - n.r0); }
+      }
+      if (a.c >= n.c) {
+        if (C0 > 0 && a.c >= C0 && a.c < C0 + NC) { n.c0 = C0; n.c = NC; }
+        else { n.c0 = Math.max(0, Math.min(a.c - 20, MAXC - FE_C)); n.c = Math.min(FE_C, MAXC - n.c0); }
+      }
+      return n;
     }
     function mergeLa(f, r, c0) { for (const m of f.merge) { const q = zonaDin(m); if (q && inZona(q, r, c0)) return q; } return null; }
     function deseneazaGrila() {
@@ -1019,7 +1048,7 @@
       /* tastatura stă în celula activă: redesenarea n-are voie să-i ia focusul (altfel tastele de după Enter se pierd) */
       const aveaFocus = document.activeElement === intrare;
       if (intrare.parentNode) intrare.parentNode.removeChild(intrare);
-      NR = x.r; NC = x.c;
+      R0 = x.r0; C0 = x.c0; NR = x.r; NC = x.c;
       geomCol();
       geomRand();
       const lc = LC(), hr = HR();
@@ -1029,11 +1058,13 @@
       antR.style.top = HA() + 'px'; antR.style.width = LA() + 'px';
       corp.style.left = LA() + 'px'; corp.style.top = HA() + 'px';
       void lc;
-      corpIn.style.width = PX[NC] + 'px'; corpIn.style.height = PY[NR] + 'px';
+      /* runda 21: în fereastra de la marginea foii (… XFD) grila se lungește cu lățimea barei verticale desenate peste ea, ca XFD să
+         poată sta întreagă la stânga barei (uia_excel.json › zona_document: Grid [1, 220, 1342, 493], bara Vertical [1346, 220, 17, 496]) */
+      corpIn.style.width = (PX[NC] + (C0 > 0 && C0 + NC >= MAXC ? subBara() : 0)) + 'px'; corpIn.style.height = PY[NR] + 'px';
       aseazaBanda();
       antCin.style.width = (PX[NC] + 40) + 'px'; antRin.style.height = (PY[NR] + 40) + 'px';
       antCin.innerHTML = ''; antRin.innerHTML = ''; corpIn.innerHTML = ''; celEl = {};
-      for (let c0 = 0; c0 < NC; c0++) {
+      for (let c0 = C0; c0 < C0 + NC; c0++) {
         const h = el('div', 'lh-ap-x-ant lh-ap-x-ant-col', { 'data-lh-tip': 'DataItem', 'data-lh-eticheta': colNume(c0), 'data-lh-tinta': 'antet_coloana', 'data-lh-id': colNume(c0) });
         h.style.left = xCol(c0) + 'px'; h.style.width = wCol(c0) + 'px'; h.style.height = HA() + 'px';
         h.textContent = colNume(c0);
@@ -1042,21 +1073,21 @@
         h.appendChild(mg);
         antCin.appendChild(h);
       }
-      for (let r = 0; r < NR; r++) {
+      for (let r = R0; r < R0 + NR; r++) {
         const h = el('div', 'lh-ap-x-ant lh-ap-x-ant-rand', { 'data-lh-tip': 'DataItem', 'data-lh-eticheta': String(r + 1), 'data-lh-tinta': 'antet_rand', 'data-lh-id': String(r + 1) });
         h.style.top = yRand(r) + 'px'; h.style.height = hRand(r) + 'px'; h.style.width = LA() + 'px';
         h.textContent = String(r + 1);
         antRin.appendChild(h);
       }
       const frag = document.createDocumentFragment();
-      for (let r = 0; r < NR; r++) {
-        for (let c0 = 0; c0 < NC; c0++) {
+      for (let r = R0; r < R0 + NR; r++) {
+        for (let c0 = C0; c0 < C0 + NC; c0++) {
           const a = adr(r, c0), m = mergeLa(f, r, c0);
           const d = el('div', 'lh-ap-x-c', { 'data-lh-tinta': 'celula', 'data-lh-id': a });
           let w = wCol(c0), h = hRand(r);
           if (m) {
             if (m.r0 !== r || m.c0 !== c0) { d.style.display = 'none'; frag.appendChild(d); celEl[a] = d; continue; }
-            w = xCol(Math.min(m.c1, NC - 1) + 1) - xCol(m.c0); h = yRand(Math.min(m.r1, NR - 1) + 1) - yRand(m.r0);
+            w = xCol(Math.min(m.c1, C0 + NC - 1) + 1) - xCol(m.c0); h = yRand(Math.min(m.r1, R0 + NR - 1) + 1) - yRand(m.r0);
             d.classList.add('lh-ap-x-imbinat');
           }
           d.style.left = xCol(c0) + 'px'; d.style.top = yRand(r) + 'px'; d.style.width = w + 'px'; d.style.height = h + 'px';
@@ -1079,7 +1110,7 @@
             else if (al === 'stanga' && typeof v === 'string' && !m) {
               if (fm.umplere) s.style.background = '#' + fm.umplere;
               let k = c0 + 1;
-              while (k < NC && !f.cel[adr(r, k)] && !varsat(f, r, k) && !mergeLa(f, r, k)) k++;
+              while (k < C0 + NC && !f.cel[adr(r, k)] && !varsat(f, r, k) && !mergeLa(f, r, k)) k++;
               d.style.setProperty('--lh-ap-x-max', (xCol(k) - xCol(c0)) + 'px');
               d.classList.add('lh-ap-x-curge');
             }
@@ -1112,7 +1143,11 @@
     const maner = el('div', 'lh-ap-x-maner', { 'data-lh-tinta': 'maner_umplere', 'aria-label': 'Fill Handle' });
     const propEl = el('div', 'lh-ap-x-propus', { 'aria-hidden': 'true' });
     propEl.style.display = 'none';
-    const dr = q => ({ x: xCol(q.c0), y: yRand(q.r0), w: xCol(Math.min(q.c1, NC - 1) + 1) - xCol(q.c0), h: yRand(Math.min(q.r1, NR - 1) + 1) - yRand(q.r0) });
+    /* runda 21: o zonă care începe deasupra / la stânga ferestrei se desenează de la marginea ferestrei (nu de la −20 de milioane de px) */
+    const dr = q => {
+      const r0 = Math.max(q.r0, R0 - 1), c0 = Math.max(q.c0, C0 - 1);
+      return { x: xCol(c0), y: yRand(r0), w: xCol(Math.min(q.c1, C0 + NC - 1) + 1) - xCol(c0), h: yRand(Math.min(q.r1, R0 + NR - 1) + 1) - yRand(r0) };
+    };
     function deseneazaSelectia() {
       const f = F(), s = f.sel;
       selStrat.innerHTML = '';
@@ -1137,8 +1172,8 @@
         Object.assign(clipStrat.style, { display: '', left: bc.x + 'px', top: bc.y + 'px', width: bc.w + 'px', height: bc.h + 'px' });
       } else clipStrat.style.display = 'none';
       /* antetele rândurilor și coloanelor selectate (ca în Excel: colorate) */
-      antCin.querySelectorAll('.lh-ap-x-ant').forEach((h, k) => h.classList.toggle('lh-ap-x-ant-sel', s.zone.some(q => k >= q.c0 && k <= q.c1)));
-      antRin.querySelectorAll('.lh-ap-x-ant').forEach((h, k) => h.classList.toggle('lh-ap-x-ant-sel', s.zone.some(q => k >= q.r0 && k <= q.r1)));
+      antCin.querySelectorAll('.lh-ap-x-ant').forEach((h, k) => h.classList.toggle('lh-ap-x-ant-sel', s.zone.some(q => C0 + k >= q.c0 && C0 + k <= q.c1)));
+      antRin.querySelectorAll('.lh-ap-x-ant').forEach((h, k) => h.classList.toggle('lh-ap-x-ant-sel', s.zone.some(q => R0 + k >= q.r0 && R0 + k <= q.r1)));
       const a = adr(s.activa.r, s.activa.c);
       I.zonaTinta = 'celula:' + a;
       /* tastatura stă în celula activă (ținta focusului la taste, §4) */
@@ -1147,7 +1182,7 @@
         const aveaFocus = document.activeElement === intrare;
         ce.appendChild(intrare);
         if (aveaFocus) try { intrare.focus({ preventScroll: true }); } catch (e) { /* */ }
-      }
+      } else if (!ce && !intrare.parentNode) corpIn.appendChild(intrare);   // runda 21 (G17-1), plasă: focusul nu iese din aplicație
       deseneazaEditarea();
       actualizeazaBare();
     }
@@ -1184,10 +1219,14 @@
         Object.assign(propEl.style, { display: '', left: b.x + 'px', top: b.y + 'px', width: b.w + 'px', height: b.h + 'px' });
       }
     }
+    /* cât din dreapta grilei stă sub bara verticală desenată (px); 0 dacă bara nu se vede */
+    function subBara() { const b = barV.pane.getBoundingClientRect(), c = corp.getBoundingClientRect(); return b.width ? Math.max(0, Math.round(c.right - b.left)) : 0; }
     function vedeCelula(r, c0) {
       const lc = wCol(c0), hr = hRand(r), x = xCol(c0), y = yRand(r);
+      /* runda 21: în fereastra pe coloane celula se aduce la stânga barei verticale (pe grila normală, ca înainte) */
+      const lat = corp.clientWidth - (C0 > 0 ? subBara() : 0);
       if (x < corp.scrollLeft) corp.scrollLeft = x;
-      else if (x + lc > corp.scrollLeft + corp.clientWidth) corp.scrollLeft = x + lc - corp.clientWidth;
+      else if (x + lc > corp.scrollLeft + lat) corp.scrollLeft = x + lc - lat;
       if (y < corp.scrollTop) corp.scrollTop = y;
       else if (y + hr > corp.scrollTop + corp.clientHeight) corp.scrollTop = y + hr - corp.clientHeight;
     }
@@ -1291,7 +1330,7 @@
         s.capat = null;
       }
       const need = intindere();
-      if (need.r > NR || need.c > NC) deseneazaGrila(); else deseneazaSelectia();
+      if (need.r > NR || need.c > NC || need.r0 !== R0 || need.c0 !== C0) deseneazaGrila(); else deseneazaSelectia();
       vedeCelula(r, c0);
     }
     const unaSingura = () => { const s = F().sel; return s.zone.length === 1 && s.zone[0].r0 === s.zone[0].r1 && s.zone[0].c0 === s.zone[0].c1; };
@@ -2690,7 +2729,11 @@
       const box = el('div', 'lh-ap-x-grafic' + (ales ? ' lh-ap-x-gr-ales' : ''), { 'data-lh-tinta': 'grafic', 'data-lh-id': String(i + 1), 'aria-label': 'Chart ' + (i + 1) });
       /* critic runda 10, GRAV A1: pe telefon atingerea pornită pe grafic e a graficului (mutare / mărire, ca tragerea unui obiect în
          Excel), nu derularea paginii: fără touch-action:none, browserul o preia ca derulare după ~15 px (pointercancel) */
-      Object.assign(box.style, { left: g.x * z() + 'px', top: g.y * z() + 'px', width: W + 'px', height: Hh + 'px', touchAction: 'none' });
+      Object.assign(box.style, { left: (g.x * z() - OX) + 'px', top: (g.y * z() - OY) + 'px', width: W + 'px', height: Hh + 'px', touchAction: 'none' });
+      /* runda 21: în fereastra de la A1048576 / XFD7 un grafic ancorat departe nu se vede (și nu primește poziții de milioane de px);
+         pe grila normală, la fel doar un grafic pus în fereastră (la milioane de px), ca să nu lungească derularea grilei */
+      const gl = g.x * z() - OX, gs = g.y * z() - OY, dep = OX || OY ? 2000 : 1e6;
+      if (gl + W < -dep || gs + Hh < -dep || gl > PX[NC] + dep || gs > PY[NR] + dep) box.style.display = 'none';
       const t = titluGrafic(g, d);
       let sus = 10 * k;
       if (t != null) {
@@ -2758,7 +2801,7 @@
          360 × 216 pt = 480 × 288 px (Ctx_Format 12,7 × 7,62 cm). În px pe ecran: pt × 4/3 × zoomul graficului. Raportarea la
          derulare: de_verificat R10-1 */
       const kz = kg(), lx = Math.max(0, (corp.clientWidth - 480 * kz) / 2 - 13.6 * kz), ty = Math.max(0, (corp.clientHeight - 288 * kz) / 2 - 9.6 * kz);
-      const x = (corp.scrollLeft + lx) / z(), y = (corp.scrollTop + ty) / z();
+      const x = (corp.scrollLeft + OX + lx) / z(), y = (corp.scrollTop + OY + ty) / z();
       schimba('grafic', () => { grafice().push({ tip, zona: zonaText(q), x, y, w: 480, h: 288 }); });
       M.gr = { i: grafice().length - 1, parte: 'grafic' }; M.grTitlu = null;
       deseneazaGrafice();
@@ -2943,17 +2986,28 @@
     function celulaLa(x, y) {
       const b = corp.getBoundingClientRect();
       const cx = x - b.left + corp.scrollLeft, cy = y - b.top + corp.scrollTop;
-      return { r: Math.max(0, Math.min(NR - 1, randLa(cy))), c: Math.max(0, Math.min(NC - 1, colLa(cx))) };
+      return { r: Math.max(R0, Math.min(R0 + NR - 1, randLa(cy))), c: Math.max(C0, Math.min(C0 + NC - 1, colLa(cx))) };
     }
     const inGrila = tg => corp.contains(tg) || antC.contains(tg) || antR.contains(tg) || colt.contains(tg);
     I.la = {};
-    let ancora = null, josFacut = false;
+    let ancora = null, josFacut = false, atingere = null;
+    /* runda 21 (critic 17, G17-2): pe ecranul tactil degetul pus pe o celulă / un antet poate porni o DERULARE a grilei; browserul o
+       preia și trimite pointercancel, deci nu mai vine ridicarea care emite evenimentul. Apăsarea degetului nu alege nimic (nici nu
+       deselectează graficul): ce făcea apăsarea se face la ATINGEREA scurtă (ridicarea fără tragere → I.la.clic, cu evenimentul
+       clic / selectare_celula), iar derularea nu schimbă starea. Mouse-ul și creionul rămân ca înainte. */
+    const amanat = (e, tinta, tg) => e.pointerType === 'touch' && !dialog && !backstage && inGrila(tg) && tg !== maner && !tg.closest('.lh-ap-x-maner') &&
+      (!!celulaDin(tinta) || /^antet_(coloana|rand):/.test(tinta || '') || tinta === 'selecteaza_tot');
     I.la.jos = (e, tinta) => {
       const tg = e.target;
       if (meniu && !meniu.contains(tg)) inchideMeniu();
       josFacut = false;
+      atingere = null;
       const gx = !dialog && !backstage && /^grafic(:|$)/.test(tinta || '') && tg.closest ? tg.closest('.lh-ap-x-grafic') : null;
       if (gx) return josGrafic(e, tinta, gx);
+      if (amanat(e, tinta, tg)) { atingere = tinta; ancora = null; return null; }
+      return josGrila(e, tinta, tg);
+    };
+    function josGrila(e, tinta, tg) {
       if (M.gr && !dialog && !backstage && inGrila(tg)) deselecteazaGrafic();
       if (dialog || backstage || !inGrila(tg) || tg === maner || tg.closest('.lh-ap-x-maner')) {
         if (tg === maner) { ancora = { umplere: true }; return 'umplere'; }
@@ -2999,7 +3053,7 @@
       ancora = null;
       I.focus();
       return null;
-    };
+    }
     I.la.misca = (e, j) => {
       if (!ancora) return;
       if (ancora.grafic != null) { mutaGrafic(e); return; }
@@ -3066,6 +3120,9 @@
       const tg = e.target;
       const elx = tg && tg.closest ? tg.closest('[data-lh-tinta]') : null;
       if (!tinta) return null;
+      /* runda 21 (G17-2): atingerea scurtă cu degetul face acum ce făcea apăsarea (alegerea celulei / a rândului / a coloanei),
+         apoi clicul obișnuit de mai jos dă acțiunea evenimentului */
+      if (atingere && atingere === tinta && !dialog && !backstage) { atingere = null; josGrila(e, tinta, tg); ancora = null; }
       const [fel] = tinta.split(':');
       const v = tinta.slice(fel.length + 1);
       if (fel === 'grafic' && !dialog && !backstage) { josFacut = false; return M.gr && M.gr.parte === 'titlu' ? 'alegere_titlu_grafic' : 'alegere_grafic'; }

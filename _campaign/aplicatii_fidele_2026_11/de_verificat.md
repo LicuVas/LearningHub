@@ -654,3 +654,102 @@ Fiecare rând: ce NU dă referința înghețată + scenariul care l-ar lămuri. 
 - **R15-15** Butonul „Mai multe” (…) al firimiturilor la cale lungă (în referință). (azi: nedesenat; căile lecțiilor sunt scurte)
 - **R15-16** Panoul Detalii / Examinare pentru un fișier ales (ce arată). Scenariu: captură. (azi: pictograma fișierului)
 <!-- RUNDA15-EXPLORER:END -->
+
+<!-- RUNDA21-EXCEL:START (scris de constructorul rundei 21, 21.11.2026 — G17-1 / G17-2 ale criticului 17; ce n-are referință) -->
+- [ ] **R21-1** Ecranul lui Excel după Ctrl+↓ până la **A1048576** (A1:A7 pline, A7 activă, 1366 × 768) și după Ctrl+→ până la
+  **XFD7**: ce rânduri / coloane se văd (celula activă jos / la dreapta?) și cât de lat e antetul rândurilor la 7 cifre
+  („1048576”). Scenariul care lămurește: `excel-ctrl-jos-ultimul-rand` jucat cu dump UI Automation pe `zona_document`
+  (DataItem-urile antetelor de rând, Grid, bara Vertical). (Simulatorul, runda 21: fereastră de 150 de rânduri cu A1048576
+  jos, antetul cât să încapă numărul — 26 px până la 3 cifre, ca referința; ~58 px la 7 cifre; XFD întreagă la stânga barei.)
+- [ ] **R21-2** Rotița / bara verticală după Ctrl+↓ până la A1048576: cât urcă Excel (oricât, presupun). Scenariul: după
+  Ctrl+↓, rotița în sus ×10 → primul rând vizibil. (Simulatorul: urcă doar până la primul rând al ferestrei, 1048427; Ctrl+↑,
+  Ctrl+Home, ↑, Page Up merg. MĂRUNT.)
+- [ ] **R21-3** Ctrl+Shift+↓ din A7 cu A8… goale (zona până la A1048576): Excel derulează până la capătul zonei sau rămâne
+  la celula activă? Scenariul: `excel-ctrl-jos-ultimul-rand` cu Shift + `ActiveWindow.ScrollRow`. (Simulatorul, neschimbat:
+  celula activă A7 rămâne în vedere, grila nu se mută la capăt.)
+- [ ] **R21-4** Excel pe **ecran tactil**: degetul pus pe o celulă și tras pe grilă derulează foaia sau alege o zonă? Atingerea
+  scurtă alege celula? Nu se poate juca invizibil (cere un ecran tactil) → pentru Vasile, pe o tabletă / un laptop cu ecran
+  tactil. (Simulatorul, runda 21: degetul tras derulează, fără nicio schimbare de stare; atingerea scurtă alege celula, cu
+  evenimentul `clic / selectare_celula`; pe telefon zona se alege din Name Box sau cu Insert pe zona curentă. Lecția
+  m2-l11:62 „apasă pe A1, ține apăsat și trage până la C5” rămâne gest de mouse — criticul 17, [FARA_REFERINTA] 5.)
+- **A17-1** (`de_aprobat.md`, runda 17: „celula de la A1048576 / XFD nu se vede”) e rezolvat de fereastra din runda 21 (celula
+  activă se vede, `proba_grav.py › G1.1`, `G1.10`): rămâne ca orchestratorul să-l închidă după confirmarea criticului 21.
+<!-- RUNDA21-EXCEL:END -->
+
+<!-- RUNDA19-EXPLORER:START (scris de constructorul rundei 19, 21.11.2026 — unghiul gest_tastatura pe File Explorer; ce n-are referință) -->
+## Runda 19 · B-explorer · tastatura — de verificat pe Windows real
+Referința înghețată (`uia_explorer.json`) dă scurtături doar pentru: Înapoi Alt+Stânga, Înainte Alt+Dreapta, Până la … Alt+Sus,
+Reîmprospătare F5, Deschideți Enter, Copiere ca o cale Ctrl+Shift+C, Proprietăți Alt+Enter, Decupare Ctrl+X, Copiere Ctrl+C,
+Redenumire F2, Ștergere del, Anulare Copiere Ctrl+Z (+ tastele din scenariile `explorer_*`: Ctrl+A, Ctrl+V, Delete, Shift+Delete,
+Enter, F2). Restul de mai jos merge azi cum scrie în paranteză și NU se numără fidel până la o captură.
+- **R19-1** Tab / Shift+Tab între zone (panoul de navigare, bara de adrese, căutarea, bara de comenzi, lista). Scenariu `gest_real`:
+  Explorer deschis pe un folder, focusul în listă, Tab de 6 ori; după fiecare, UIA `FocusedElement` (nume, tip). (azi: Tab nu mută
+  focusul, `tasta_tab` → `fara_efect`; `aplicatii.js:390` oprește Tab-ul implicit în afara câmpurilor)
+- **R19-2** Săgețile în lista din vederea Detalii: ← / → (mută selecția sau derulează?), Home / End, căutarea rapidă după literă
+  (o literă sau un șir tastat repede), Esc pe listă. Scenariu `gest_real`: 5 fișiere, primul ales, apoi →, ←, End, Home, „t”, Esc;
+  după fiecare, `selectie`. (azi: → = ↓, ← = ↑; Home / End = primul / ultimul; o literă = primul nume cu ea; Esc = nimic ales)
+- **R19-3** Ctrl+Shift+C fără nimic ales (calea folderului curent?) și în Coș; Alt+Enter cu nimic ales (Proprietăți ale folderului)
+  și pe un element din Coș. Scenariu: aceleași taste, apoi clipboardul / fereastra deschisă (titlul). (azi: Ctrl+Shift+C fără
+  selecție / în Coș = `fara_efect`; Alt+Enter oriunde = mesajul central „Proprietăți”)
+- **R19-4** Backspace = Înapoi, Ctrl+Shift+N = Folder nou (cu caseta de nume), F4 și Ctrl+L = editarea adresei (textul selectat),
+  Ctrl+E și Ctrl+F = caseta Căutați, Ctrl+Y / Ctrl+D. Scenariu `gest_real`: fiecare tastă pe un folder de probă, apoi UIA
+  `FocusedElement` + folderul curent + `nume_fisiere`. (azi: toate implementate așa; trec `runde/19/proba_grav.py › tast`)
+- **R19-5** Redenumirea întreruptă: Tab în casetă, clic într-o altă fereastră, Enter cu numele gol, nume cu caractere interzise
+  (`\ / : * ? " < > |`). Scenariu `gest_real` + captura balonului de avertizare. (azi: Tab mută focusul afară și încheie
+  redenumirea cu textul scris; numele gol / interzis: cum le tratează `redenumeste`, neverificat față de real)
+- **R19-6** Pe telefon (Windows nu are; e convenția bibliotecii, I1): după „Nou › Folder” atins, caseta rămâne deschisă cât timp
+  degetul nu atinge altceva; tastatura virtuală apare la `focus()` dat după atingere — dovedit doar în Chromium headless
+  (`page.touchscreen`, CDP `Input.insertText`), nu pe un telefon adevărat (Chrome Android, Safari iOS). Scenariu: proba
+  `runde/19/proba_grav.py e2` pe un telefon real prin `adb` / Safari Web Inspector.
+- **R19-7** Tastatura într-un meniu deschis (Nou, Sortați, Vizualizați, meniul de clic dreapta): ↑ / ↓ / Enter / Esc / literele
+  subliniate; Shift+F10 și tasta Meniu pe un element ales. Scenariu `gest_real`: meniul Nou deschis cu clic, ↓, ↓, Enter; UIA
+  după fiecare (elementul evidențiat, ce s-a creat). (azi: cu meniul deschis, ↑ / ↓ mută selecția din LISTĂ, nu din meniu; Enter
+  deschide elementul ales din listă; Esc închide meniul; Shift+F10 = `tasta_f10` → `fara_efect`)
+<!-- RUNDA19-EXPLORER:END -->
+
+<!-- RUNDA22-WINDOWS:START (scris de constructorul rundei 22, 21.11.2026 — Windows: căutarea și tastatura din Start, bara, telefonul) -->
+## Runda 22 · Windows — ce n-are referință (simplu, fără pretenție de fidelitate)
+- **R22-1** **Panoul de rezultate al căutării din Start** (după „pai”, „calc”): aspectul, titlurile („Cea mai bună potrivire” / Best match?), gruparea aplicații / documente / web, panoul din dreapta. Sursa de azi: pagina Microsoft „Use a screen reader to explore and navigate the Start menu in Windows” spune doar că lista se actualizează la fiecare literă, că e grupată pe aplicații / documente / web, că Sus/Jos o parcurg și că Enter deschide. Scenariu: în sesiunea cu Vasile, tasta Windows, apoi „pai” → UIA pe „Meniul Start” + o captură decupată; la fel pentru „calc”. (azi: o listă simplă de aplicații, fără titluri; fără potrivire = mesajul central)
+- **R22-2** **Ce pornește din căutare**:
+  - Paint și Calculator nu apar în `uia_windows.json`. Numele vin din lecția v/m2-l08.
+  - Nu știm dacă Calculator e primul rezultat la „calc” și nici titlul ferestrei lor.
+  - Scenariu `gest_real`: „calc” + Enter, apoi UIA pe fereastra pornită (titlul, butoanele).
+  - Azi: fereastra generică R18-4, cu titlul aplicației și butonul ei în bară. Conținutul ei = mesajul central.
+- **R22-3** **Numele categoriei sub cutie, în Start › „Toate”**:
+  - E dedus din geometrie: cutia are 192 px, iar grila 2×2 de 68 px ocupă 146.
+  - Textul vine din numele UIA, partea dinaintea lui „ categorie cu elemente”.
+  - Scenariu: o captură decupată a vizualizării pe categorii.
+- **R22-4** **Pictograma Explorer de pe bară și indiciul de la trecerea mouse-ului.**
+  - UIA nu dă nici forma, nici textul indiciului, nici după cât timp apare (azi: 0,5 s).
+  - Azi: dosarul galben e o formă proprie, aceeași ca în `explorer.js`; setul Fluent local n-are dosarul.
+  - Indiciul arată numele din referință fără sufixul „fixat” / „- N ferestre deschise”, doar pentru butoanele din mijlocul barei.
+  - Scenariu: o captură decupată a barei + mouse-ul 2 s pe Explorer, cu UIA pe ToolTip.
+- **R22-5** **Ordinea completă a tastei Tab în Start** (după Fixate: „Afișați mai puține”, Recomandate, Toate, contul, Alimentare). Și: unde duce săgeata Jos din caseta goală.
+  - Pagina Microsoft spune doar „press the Tab key until you hear "Pinned"”, apoi „use the arrow keys”.
+  - Scenariu `gest_real`: tasta Windows, apoi Tab de 8 ori, citind focusul cu UIA după fiecare apăsare.
+  - Azi: Tab duce din casetă la prima dală fixată și înapoi. Săgețile mută focusul pe grilă, la cel mai apropiat element din direcția apăsată.
+<!-- RUNDA22-WINDOWS:END -->
+
+<!-- RUNDA20-WORD:START (scris de constructorul rundei 20, 21.11.2026 — GRAV K1 din runde/16/critic.md: Tab în ferestrele de fișiere; ce n-are referință) -->
+## Runda 20 · Word · Tab, Enter, Space și Esc în ferestrele de fișiere — de lămurit (un minut fiecare)
+
+Până la răspuns, simulatorul face ce scrie în paranteză.
+
+- [ ] **R20-1** Word, **F12** (Save As), apoi **Ctrl+F12** (Open), **Ctrl+S** pe document nou („Save this file”) și **Ctrl+W** pe
+  document modificat („Save your changes…”): `FocusedElement` (UI Automation) după fiecare Tab, de la File name până revine în
+  File name, și după 8 × Shift+Tab. Ce ar închide rândul: lista ordonată a controalelor, pe fiecare fereastră. (Simulatorul: Tab nu
+  iese niciodată din fereastră; ordinea = ordinea nodurilor din `uia_word.json`, prin cârligul comun `aplicatii.js › I.tabFereastra`
+  — din File name: Save as type, Autori, Etichete, Titlu, Save Thumbnail, Hide Folders, Tools, Save, Cancel, apoi bara de adrese,
+  căutarea, bara de unelte, butoanele barelor de derulare și capetele de coloană; lista „Vizualizare elemente” și panoul din stânga
+  NU sunt opriri, pentru că cârligul comun nu oprește pe List / Tree. `runde/20/proba_grav_dupa.json › K1_ocol_*`.)
+- [ ] **R20-2** Word, F12, Alt+T, Alt+↓ (lista Save as type deschisă), ↓ de două ori, apoi **Tab**: lista se închide? tipul din
+  casetă rămâne cel vechi sau devine rândul marcat? unde e focusul? (Simulatorul: lista se închide, tipul rămâne cel vechi, focusul
+  trece pe controlul următor.)
+- [ ] **R20-3** Word, document salvat și modificat, **Ctrl+W** („Save your changes…”), apoi **Esc**: documentul rămâne deschis și
+  nesalvat, ca la Cancel? Aceeași întrebare pentru Esc în „Save this file” (Ctrl+S pe document nou). Fereastra e desenată de Office,
+  nu e `#32770`, deci regula Windows IDCANCEL nu e dovedită pentru ea. (Simulatorul: Esc = clicul pe Cancel — documentul rămâne
+  deschis, `stare().dialog.apasat` = „Cancel”, evenimentul `tasta_esc` poartă `activat` = ținta lui Cancel.)
+- [ ] **R20-4** Word, Save As / „Save your changes…”: Tab până la **Cancel** (sau **Don't Save**), apoi **Enter**; Tab până la
+  Cancel, apoi **Space**: se apasă butonul cu focusul, nu Save? (Simulatorul: da — ca regula Windows „butonul cu focusul primește
+  Enter”, folosită deja de PowerPoint, critic 13 › T1. Pentru ferestrele Office desenate de Word, regula e [presupus].)
+<!-- RUNDA20-WORD:END -->

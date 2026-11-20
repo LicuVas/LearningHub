@@ -56,3 +56,46 @@ Aprobat → se mută în `abateri.md`; respins → se repară sau se scoate.
 ## Runda 15 · B-explorer — abateri de aprobat de Vasile (se numără până la aprobare)
 - **A15-1** Fâșia de desktop cu pictograma „Coș de reciclare” în stânga ferestrei Explorer, în aceeași rădăcină (`aplicatii/explorer.js:409`, în afara suprafețelor Explorer; `continut.desktop: false` o scoate). În Windows real Coșul stă pe desktop, nu în Explorer; fâșia ține locul desktopului până când Explorer se deschide în desktopul bibliotecii (banda Windows, runda 18). Fără ea, scenariul `explorer_restaurare_din_cos` (dublu clic pe `desktop:Coș de reciclare`) nu se poate juca.
 <!-- RUNDA15-EXPLORER:END -->
+
+<!-- RUNDA21-EXCEL:START (scris de constructorul rundei 21, 21.11.2026) -->
+## Runda 21 · Excel (contractul asistentului, cod comun)
+- [ ] **A21-1** **§6.3: ce face un pas care are și `tinta`, și `asteapta`?** (criticul 17, secțiunea D; `aplicatii.js:627-628`,
+  `api_biblioteca.md:255-257`.) Textul: pasul e făcut de un eveniment „cu `tinta` = ținta canonică a pasului …, cu `activat`
+  …, **sau** `asteapta(ev)` = true”; „Greșeală = orice alt eveniment”. Pentru pasul „scrie titlul graficului, apoi Enter”
+  (`tinta: 'grafic:1/titlu'`, `asteapta: ev => ev.actiune === 'titlu_grafic'`) sunt două citiri, fiecare cu un defect:
+  - **(1) literal, „sau”:** prima literă (ținta `grafic:1/titlu`) face pasul — prea devreme; `asteapta` nu mai poate restrânge
+    niciodată un pas care are și țintă;
+  - **(2) codul de azi:** cu `asteapta`, doar ea contează; literele scrise corect sunt greșeli → indiciul apare după a doua
+    literă (pe telefon și pe calculator, `runde/17/critic_probe/p2c.json › 5_ă`, `p2.json › pc.6_a`);
+  - (3) propunerea criticului 17: `asteapta` decide „făcut”, iar evenimentele cu ținta pasului care nu-l termină nu sunt
+    greșeli — nu e în text.
+  Runda 21 NU a atins `aplicatii.js` (textul nu spune ce rost are `asteapta` lângă `tinta`; e o alegere de contract). Azi
+  nicio lecție nu pornește un asistent cu `asteapta` (grep pe `lectii/`, `jocuri/`: 0). Ce îl închide: Vasile alege (1), (2)
+  sau (3); o rundă `acoperire` scrie alegerea în §6.3, apoi codul comun o urmează (regres pe asistent la toate aplicațiile, O9).
+<!-- RUNDA21-EXCEL:END -->
+
+<!-- RUNDA22-WINDOWS:START (scris de constructorul rundei 22, 21.11.2026) -->
+## Runda 22 · Windows
+- [ ] **A22-1** **CERERE către banda Explorer (r19) și orchestrator: un mod de montare a Explorer-ului într-o fereastră a desktopului Windows.**
+  - Fără el, clicul pe dosarul galben din bară (drumul din 10 lecții, W4) dă doar evenimentul §4 și mesajul central. Explorer-ul bibliotecii nu se deschide.
+  - Azi, `explorer.js` se deschide doar ca aplicație separată (`LH.aplicatii.deschide('explorer', …)`). Are doar `continut.desktop:false` și își desenează singur bara de titlu.
+  - Montat în rădăcina Windows, ar avea patru probleme:
+    - (a) dublează evenimentele: pointerdown / contextmenu / keydown ajung și la rădăcina Windows;
+    - (b) moare la fiecare redesenare a ferestrelor (`windows.js › deseneazaFerestre` rescrie stratul ferestrelor);
+    - (c) are două bare de titlu;
+    - (d) `LH.aplicatii.deschideSuprafata` ia prima aplicație vie.
+  - Ce cer: o opțiune, de exemplu `deschide('explorer', {loc: <corpul ferestrei>, incadrat: true})`, care:
+    - nu-și desenează bara de titlu și Coșul;
+    - își oprește evenimentele în rădăcina ei;
+    - expune `I.stare()` pentru titlul ferestrei („Acasă” / calea).
+  - Windows ar monta-o în fereastra lui și ar păstra-o la redesenare.
+  - Ce o închide: opțiunea + legarea în `windows.js` (banda Windows, după ce criticul confirmă E1/E2 la Explorer).
+- [ ] **A22-2** **Pe telefon (rădăcina sub 600 px), două adaptări pentru I1** (Windows real n-are ecran de 360 px, deci nu există referință):
+  - Start stă fix în stânga barei, în afara benzii de aplicații care se derulează;
+  - o fereastră normală se încadrează întreagă pe ecran (`x + lățime ≤ ecran`). Pe PC rămâne regula veche: fereastra poate ieși parțial.
+
+  De ce: altfel derularea benzii spre aplicația activă scoate Start-ul din vedere (prins de proba r18, partea 3), iar butoanele ferestrei ies din ecran (W5). Ce o închide: Vasile o acceptă.
+- [ ] **A22-3** **Paint și Calculator pornite din căutarea din Start deschid o fereastră generică goală**: bara de titlu cu Minimizare / Maximizare / Închidere, butonul în bară și mesajul central „În aplicația reală, „Paint” funcționează; aici nu e simulată”.
+  - Aplicațiile nu sunt în bibliotecă, dar drumul din v/m2-l08 cere: pornește → minimizează → readu din bară → maximizează → închide.
+  - Ce o închide: Paint în bibliotecă (contractul: „apoi Paint”) sau Vasile o acceptă.
+<!-- RUNDA22-WINDOWS:END -->

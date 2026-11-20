@@ -1919,6 +1919,51 @@
       /* o listă deschisă (Font Size, Save as type) ia săgețile, Enter și Esc înaintea casetei și a ferestrei */
       const rl = tastaLista(e);
       if (rl) return rl;
+      /* Tab / Shift+Tab într-o fereastră (Save As, Open, „Save this file”, „Save your changes…”, Font…) trec prin controalele
+         EI și nu ies din ea, oriunde ar fi focusul: cârligul comun aplicatii.js › I.tabFereastra (runda 14), chemat ca în
+         powerpoint.js (T1, critic 13). Ordinea = ordinea nodurilor din referință ([presupus] R14-1 / R20-1): din File name,
+         primul Tab ajunge pe Save as type (uia_word.json › dialog.FileSaveAs, nodul de imediat după). Lista deschisă a unei
+         casete (Save as type ▾) se închide fără să schimbe tipul ([presupus] R20-2). Word NU dă I.la.fereastra(): Alt + litera
+         are deja codul lui (mai jos, root keydown), iar cel comun ar mai da un eveniment pe aceeași tastă. Critic 16, GRAV K1 */
+      if (dialog && dialog.el && e.key === 'Tab' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        if (meniu) inchideMeniu();
+        if (!inCamp && dialog.el.contains(document.activeElement) && document.activeElement !== dialog.el) I.tintaTasta = L._tintaDin(I, document.activeElement);
+        return I.tabFereastra ? I.tabFereastra(dialog.el, e.shiftKey) : 'fara_efect';
+      }
+      /* Esc într-o fereastră = Cancel (IDCANCEL: learn.microsoft.com/en-us/windows/win32/dlgbox/dlgbox-programming-considerations,
+         sursa din api_biblioteca.md §4): același efect ca clicul pe Cancel — în „Save your changes…” documentul rămâne
+         deschis, cu dialog.apasat „Cancel” (scenarii_real/word-x-nesalvat-cancel.json, făcut cu clic); evenimentul poartă
+         `activat` = Cancel. Fără Cancel în fereastră: doar se închide. „Save your changes…” nu e #32770 → [presupus] R20-3 */
+      if (dialog && dialog.el && e.key === 'Escape') {
+        const cn = [...dialog.el.querySelectorAll('[data-lh-tip="Button"][data-lh-eticheta="Cancel"]')].find(x => L._vizibil(x));
+        const tc = cn && (cn.hasAttribute('data-lh-tinta') ? cn : cn.querySelector('[data-lh-tinta]'));
+        if (!inCamp && dialog.el.contains(document.activeElement) && document.activeElement !== dialog.el) I.tintaTasta = L._tintaDin(I, document.activeElement);
+        if (!tc) { inchideDialog(); return 'anulare'; }
+        const t = L._canon(tc);
+        I.activat = t || null;
+        const r = I.la.clic(t, { target: tc, clientX: NaN, clientY: NaN, shiftKey: false, ctrlKey: false, metaKey: false, altKey: false,
+          button: 0, detail: 0, preventDefault() {} }, 1);
+        if (dialog) inchideDialog();
+        return r || 'anulare';
+      }
+      /* Alt+↑ / Alt+← / Alt+→ / F5 în Save As / Open: tasta e scrisă chiar în eticheta butonului din referință
+         (uia_word.json › dialog.FileSaveAs / dialog.open: „Până la "Desktop" (Alt + săgeată în sus)”, „Înapoi (Alt + săgeată
+         la stânga)” activ:false, „Înainte (Alt + săgeată la dreapta)” activ:false, „Reîmprospătare "Documente" (F5)”) → apasă
+         butonul, ca clicul (mesajul central); butonul gri → fără efect. Critic 16, MINOR „Alt+↑ și F5 tac” */
+      const SEMN_TASTA = { ArrowUp: 'Alt + săgeată în sus', ArrowLeft: 'Alt + săgeată la stânga', ArrowRight: 'Alt + săgeată la dreapta' };
+      const semn = !dialog || !dialog.el || e.ctrlKey || e.metaKey ? null : e.altKey ? SEMN_TASTA[e.key] : (e.key === 'F5' && !e.shiftKey ? '(F5)' : null);
+      const bs = semn && [...dialog.el.querySelectorAll('[data-lh-tip="Button"][data-lh-eticheta]')].find(x => x.getAttribute('data-lh-eticheta').indexOf(semn) >= 0 && L._vizibil(x));
+      if (bs) {
+        e.preventDefault();
+        if (!inCamp && dialog.el.contains(document.activeElement) && document.activeElement !== dialog.el) I.tintaTasta = L._tintaDin(I, document.activeElement);
+        const tb = bs.hasAttribute('data-lh-tinta') ? bs : bs.querySelector('[data-lh-tinta]');
+        if (bs.getAttribute('aria-disabled') === 'true' || !tb) return 'fara_efect';
+        const t = L._canon(tb);
+        I.activat = t || null;
+        return I.la.clic(t, { target: tb, clientX: NaN, clientY: NaN, shiftKey: false, ctrlKey: false, metaKey: false, altKey: false,
+          button: 0, detail: 0, preventDefault() {} }, 1) || 'fara_efect';
+      }
       if (inCamp) {
         if (dialog && e.key === 'Escape') { inchideDialog(); return 'anulare'; }
         if (e.key === 'Enter' && e.target.closest && e.target.closest('[data-lh-id-mso="FontSize"]')) { e.preventDefault(); return marimeScrisa(e.target); }
@@ -1953,6 +1998,20 @@
       }
       if (dialog) {
         if (e.key === 'Escape') { inchideDialog(); return 'anulare'; }
+        /* Enter pe un buton cu focusul (ajuns acolo cu Tab) îl apasă pe ACELA; Space apasă butonul / bifează caseta cu focusul;
+           Enter în rest = butonul implicit (dlgbox-programming-considerations; ca powerpoint.js, T1). Fără asta, Tab până la
+           Cancel + Enter ar salva. Ținta = focusul din momentul tastei (§4). Critic 16, GRAV K1 */
+        const fx = document.activeElement && dialog.el.contains(document.activeElement) && document.activeElement !== dialog.el ? document.activeElement : null;
+        const cx = fx && fx.closest('[data-lh-tip]'), tcx = cx && dialog.el.contains(cx) ? cx.getAttribute('data-lh-tip') : '';
+        if (fx) I.tintaTasta = L._tintaDin(I, fx);
+        const tx = tcx && (cx.hasAttribute('data-lh-tinta') ? cx : cx.querySelector('[data-lh-tinta]'));
+        if (tx && ((e.key === 'Enter' && /^(Button|SplitButton)$/.test(tcx)) || (e.key === ' ' && /^(Button|SplitButton|CheckBox|RadioButton)$/.test(tcx)))) {
+          e.preventDefault();
+          const r = I.la.clic(L._canon(tx), { target: tx, clientX: NaN, clientY: NaN, shiftKey: false, ctrlKey: false, metaKey: false, altKey: false,
+            button: 0, detail: 0, preventDefault() {} }, 1);
+          actualizeaza();
+          return r || 'fara_efect';
+        }
         if (e.key === 'Enter') { e.preventDefault(); if (activatEnter()) I.activat = activatEnter(); return implicitDialog(); }
         return 'fara_efect';
       }
@@ -2060,7 +2119,9 @@
       if (!dialog || !dialog.el || !e.altKey || e.ctrlKey || e.metaKey || !/^Key[A-Z]$/.test(e.code || '')) return;
       const re = new RegExp('^alt\\+' + e.code.slice(3) + '$', 'i');
       const cand = [...dialog.el.querySelectorAll('*')].filter(x => x.__nod && re.test(x.__nod.ta || '') && L._vizibil(x));
-      const APASA = ['Button', 'SplitButton', 'CheckBox', 'RadioButton'];   // T3: Alt+E/A/M/O în zona PDF; N4: Alt+O = Open
+      /* T3: Alt+E/A/M/O în zona PDF; N4: Alt+O = Open; MenuItem: Alt+L = Tools (uia_word.json › dialog.FileSaveAs / dialog.open ›
+         MenuItem „Tools” tasta_acces „Alt+l”), ca clicul pe el — critic 16, MINOR „Alt+L fără eveniment” */
+      const APASA = ['Button', 'SplitButton', 'CheckBox', 'RadioButton', 'MenuItem'];
       const x = cand.find(c => APASA.indexOf(c.__nod.t) >= 0) || cand.find(c => c.__nod.t === 'ComboBox' || c.__nod.t === 'Edit');
       if (!x) return;
       e.preventDefault();

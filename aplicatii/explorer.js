@@ -402,6 +402,7 @@
         '<div class="lh-ap-e-dlg-b' + (vert ? ' lh-ap-e-vert' : '') + '">' + d.butoane.map(b => '<button class="lh-ap-e-db" ' + atr({ 'data-lh-tip': 'Button', 'data-lh-eticheta': b, 'data-lh-tinta': 'fereastra', 'data-lh-id': b }) + '>' + esc(b) + '</button>').join('') + '</div></div></div>';
     }
     let redesenez = false;
+    let josNr = 0, josLaAtingere = -1, atingereSus = 0;   // E2: pointerdown-uri numărate, ultima ridicare a unei atingeri
     function deseneaza() {
       const aveaFocus = root.contains(document.activeElement);
       redesenez = true;
@@ -416,7 +417,17 @@
         inp.focus({ preventScroll: true });
         const v = inp.value, e = eDir(M.edit) || !M.ext || !ext(v) ? v.length : v.lastIndexOf('.');
         try { inp.setSelectionRange(0, e); } catch (x) { /* */ }
-        inp.addEventListener('blur', () => { if (!redesenez && M.edit) { const p = M.edit; M.edit = null; redenumeste(p, inp.value); deseneaza(); } });
+        inp.addEventListener('blur', () => {
+          if (redesenez || !M.edit) return;
+          /* runda 19 (critic 15, GRAV E2): pe telefon comanda (Nou › Folder, Redenumire) rulează la pointerup, iar mousedown-ul
+             de compatibilitate al ACELEIAȘI atingeri vine după el și mută focusul pe rădăcină. Fără un pointerdown nou de la
+             atingere încoace, nu e „clic în altă parte”: caseta rămâne și focusul se întoarce în ea. */
+          if (josNr === josLaAtingere && Date.now() - atingereSus < 800) {
+            setTimeout(() => { if (inp.isConnected && M.edit && document.activeElement !== inp) inp.focus({ preventScroll: true }); }, 0);
+            return;
+          }
+          const p = M.edit; M.edit = null; redenumeste(p, inp.value); deseneaza();
+        });
         return;
       }
       const ad = root.querySelector('.lh-ap-e-adr-in');
@@ -632,7 +643,9 @@
     /* ---------------------------------------------------------------- gesturile (le emite aplicatii.js; aici doar efectul) */
     I.la = {};
     I.la.jos = (ev, t) => {
+      josNr++;
       if (!(ev.target && ev.target.closest && ev.target.closest('input'))) try { root.focus({ preventScroll: true }); } catch (x) { /* */ }
+      if (ev.target && ev.target.closest && ev.target.closest('.lh-ap-e-ren')) return null;   // în caseta de nume: cursorul / selecția textului, nu tragere
       const m = /^(lista):(.+)$/.exec(t || '');
       if (m) {
         const p = caleDin('lista', m[2]);
@@ -659,6 +672,8 @@
     };
     I.la.sus = (e, j, g) => {
       if (cadru) { cadru.remove(); cadru = null; }
+      if (e && e.pointerType && e.pointerType !== 'mouse') { atingereSus = Date.now(); josLaAtingere = josNr; }
+      if (M.edit && j && j.tinta0 && j.tinta0.closest && j.tinta0.closest('.lh-ap-e-ren')) return g ? 'fara_efect' : null;
       if (!g) return null;
       if (g === 'selectie') {
         const z = root.querySelector('.lh-ap-e-lista');
@@ -692,6 +707,8 @@
       t = t || '';
       const i = t.indexOf(':'), fel = i < 0 ? t : t.slice(0, i), v = i < 0 ? '' : t.slice(i + 1);
       let a = 'fara_efect';
+      /* clicul / atingerea ÎN caseta de nume mută doar cursorul: fără redesenare (ar pune înapoi numele vechi peste ce s-a scris) */
+      if (M.edit && ev && ev.target && ev.target.closest && ev.target.closest('.lh-ap-e-ren')) return 'fara_efect';
       if (M.edit && fel !== 'lista') { const p = M.edit; M.edit = null; redenumeste(p, (root.querySelector('.lh-ap-e-ren') || {}).value); }
       if (fel !== 'adresa' && M.editAdresa) M.editAdresa = false;
       if (fel !== 'cautare') M.cautareFocus = false;
@@ -833,7 +850,11 @@
         case 'tasta_f5': a = 'reimprospatare'; break;
         case 'tasta_f2': if (M.sel.length === 1 && M.cur !== COS) { M.edit = M.sel[0]; a = 'redenumire'; } else a = 'fara_efect'; break;
         case 'tasta_delete': a = e.shiftKey ? stergeDefinitiv() : (M.cur === COS ? I.nesimulat('Ștergere') : laCos()); break;
-        case 'tasta_enter': a = M.sel.length ? deschide(M.sel[0]) : 'fara_efect'; break;
+        /* Alt+Enter = Proprietăți (uia_explorer.json › explorer_meniu_fisier / _fundal › „Proprietăți”, scurtatura „Alt+Enter”),
+           nu deschidere; fereastra nu e simulată → mesajul central, ca din meniu (runda 19, critic 15 MINOR 10) */
+        case 'tasta_enter': a = e.altKey ? I.nesimulat('Proprietăți') : (M.sel.length ? deschide(M.sel[0]) : 'fara_efect'); break;
+        /* Ctrl+Shift+C = „Copiere ca o cale” (explorer_meniu_fisier, scurtatura „Ctrl+Shift+C”): ca din meniu, nu tace */
+        case 'ctrl_shift_c': a = M.sel.length && M.cur !== COS ? I.nesimulat('Copiere ca o cale') : 'fara_efect'; break;
         case 'tasta_backspace': if (M.inapoi.length) { M.inainte.push(M.cur); a = navigheaza(M.inapoi.pop(), false); } else a = 'fara_efect'; break;
         case 'alt_sageti':
           if (e.key === 'ArrowLeft' && M.inapoi.length) { M.inainte.push(M.cur); a = navigheaza(M.inapoi.pop(), false); }

@@ -1,0 +1,28 @@
+# Runda 21 — contra (înainte de hotărâre)
+
+## G17-1: grila desenată pe o fereastră (R0, C0) în jurul celulei active, când ea iese din grila normală
+
+**Planul:** grila normală rămâne exact cum e (rândurile 1…max(40, date+12), coloanele A…max(Z, date+6), plafon 3000 × 300, calculat doar din datele de pe grila normală). Când celula activă iese din ea (Ctrl+↓ până la A1048576, Ctrl+→ până la XFD7, Name Box), se desenează o fereastră de 150 de rânduri / 30 de coloane în jurul ei, cu numerele adevărate ale rândurilor și literele adevărate ale coloanelor; fereastra rămâne aceeași cât celula activă se mișcă în ea și se mută când iese. Toată geometria (`xCol`, `yRand`, `colLa`, `randLa`) primește originea ferestrei; graficele se desenează scăzând deplasarea ferestrei.
+
+- **Cel mai puternic argument PENTRU:** e singura variantă în care elevul vede ce vede în Excel: o foaie cu rânduri și celule, celula activă încadrată, cu numărul ei. Caseta de intrare stă din nou în celula activă, deci focusul, ținta tastelor și drumul înapoi (Ctrl+↑, Ctrl+Home, ↑) revin singure, fără reguli speciale. DOM-ul rămâne mic (150 × 26 de celule, nu 78.000). Pe grila normală nu se schimbă nimic (R0 = C0 = 0 dă exact formulele de azi), deci scenariile O4 și probele vechi nu au de ce să se miște.
+- **Cel mai puternic ÎMPOTRIVĂ:** geometria e folosită în ~30 de locuri; orice loc care presupune „rândul 0 e sus” (bara de derulare, graficele, îmbinările, chenarele, lățimea coloanei din fereastră) poate da poziții greșite în fereastră. Rotița nu poate urca mai sus de primul rând al ferestrei (în Excel poate urca oricât). Alternativa „A17-1 aprobat: celula nu pleacă din grila desenată” ar fi 3 rânduri de cod, dar ar schimba starea (`selectie` ≠ A1048576) și ar strica scenariile reale `excel-ctrl-jos-ultimul-rand` și `excel-ctrl-dreapta-ultima-coloana` (stare finală greșită = GRAV pe celălalt unghi).
+- **Adevărul incomod:** referința nu are ecranul lui Excel la A1048576 (câte rânduri deasupra, cât de lat e antetul cu 7 cifre, unde stă bara de derulare). Aleg ce face Excel la orice ↓ (celula adusă la marginea de jos a ferestrei, `vedeCelula`) și un antet cât să încapă numărul; asta e o alegere a mea, deci intră în `de_verificat.md`, nu în „fidel”.
+
+**Hotărârea:** fereastra. Locurile cu `NR - 1` / `NC - 1` care lucrează pe coloane / rânduri întregi (`celuleZone`, `borduri`, lățimea din fereastră) rămân neschimbate: pe grila normală sunt identice, iar în fereastră rămân mărginite (nu bucle de 1.048.576 de rânduri).
+
+## G17-2: alegerea celulei la atingerea scurtă, nu la apăsarea degetului
+
+**Planul:** în `excel.js › I.la.jos`, când apăsarea vine de la deget (`pointerType === 'touch'`) pe o celulă a grilei, nu se alege nimic (nici graficul nu se deselectează); se ține minte celula. Dacă degetul se ridică fără tragere, `aplicatii.js` cheamă `I.la.clic` (ca la orice clic), iar acolo se face exact ce făcea apăsarea (aceeași funcție, `josCelula`), cu evenimentul `clic / selectare_celula`. Dacă browserul preia derularea (`pointercancel`), nu s-a schimbat nimic, deci nu e nevoie de eveniment.
+
+- **PENTRU:** starea nu se mai schimbă fără eveniment (§4/§5); derularea cu degetul merge (ca în Excel pe ecran tactil, unde degetul tras derulează). Nu ating `aplicatii.js` (comun) — deci nici Word, PowerPoint, Explorer, Windows nu se pot schimba; `pointercancel` rămâne neascultat, dar nu mai lasă urme.
+- **ÎMPOTRIVĂ:** pe telefon dispare selecția prin tragerea degetului pe celule (azi ea „merge” doar pe jumătate: derulează și mută celula fără eveniment). Pe telefon zona se alege din Name Box sau din Insert (zona curentă), cum era deja după criticul 17 ([FARA_REFERINTA] 5). Cealaltă cale (cea propusă de critic: `touch-action:none` pe grilă + `pointercancel` în `aplicatii.js`) ar opri derularea grilei cu degetul pe telefon — mai rău, fiindcă pe 375 px tabelul nu încape.
+- **Adevărul incomod:** nu am captură a lui Excel pe ecran tactil; „degetul derulează, atingerea alege” e din contract (§4: niciun gest fără eveniment) și din supliment, nu din referință.
+
+**Hotărârea:** amânarea în `excel.js`; `aplicatii.js` neatins.
+
+## §6.3 (asistentul): textul NU e limpede pentru cazul găsit → `de_aprobat.md` A21-1, codul neatins
+- Textul (`api_biblioteca.md:255-257`): „Pasul curent e făcut când vine un eveniment al aplicației cu `tinta` = ținta canonică a pasului …, cu `activat` … = ținta canonică a pasului, **sau** `asteapta(ev)` = true. **Greșeală** = orice alt eveniment…”.
+- **Citirea 1 (literală, „sau”):** orice eveniment pe ținta pasului îl face, chiar dacă pasul are `asteapta`. La pasul „scrie titlul, apoi Enter” (`tinta: grafic:1/titlu`, `asteapta: actiune === 'titlu_grafic'`), PRIMA literă face pasul — prea devreme; `asteapta` n-ar mai putea niciodată să restrângă un pas care are și țintă.
+- **Citirea 2 (codul de azi, `aplicatii.js:627-628`):** când pasul are `asteapta`, doar ea contează; literele pe ținta pasului sunt greșeli → indiciul vine după a doua literă scrisă corect.
+- **Citirea 3 (propunerea criticului 17):** `asteapta` decide „făcut”, iar evenimentele cu ținta pasului care nu-l termină nu sunt greșeli. Nu e în text.
+- De ce nu e limpede: textul spune ce face pasul, dar nu spune ce rost are `asteapta` când pasul are și `tinta`; citirea literală face din `asteapta` o condiție care nu poate restrânge nimic, iar textul nu pomenește cazul. Alegerea e a contractului (Vasile / o rundă `acoperire` care scrie §6.3), nu a unei runde de reparație. Nicio lecție nu pornește azi un asistent cu `asteapta` (grep pe `lectii/`, `jocuri/`: 0), deci nimic nu se strică până la hotărâre.

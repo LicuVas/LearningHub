@@ -217,9 +217,14 @@
     W.addEventListener('lh-aplicatie', h);
     return () => W.removeEventListener('lh-aplicatie', h);
   };
-  /* mesajul central standard pentru o comandă afișată, nesimulată (R12, api §3: data-lh-nesimulat, role=status) */
+  /* mesajul central standard pentru o comandă afișată, nesimulată (R12, api §3: data-lh-nesimulat, role=status).
+     Runda 19 (critic 15, GRAV E1): o aplicație care își REDESENEAZĂ rădăcina (Explorer: root.innerHTML) scotea mesajul în
+     aceeași milisecundă. Mesajul rămâne sub rădăcină; cât trăiește, un observator pe rădăcină (doar childList) îl pune
+     înapoi când lotul de mutații care l-a scos a adus și noduri noi (= redesenare). Un m.remove() singur (expirarea, alt
+     mesaj, o curățare explicită) e respectat; la aplicațiile care nu rescriu rădăcina observatorul nu face nimic. */
   function nesimulat(I, eticheta) {
     I.root.querySelectorAll('[data-lh-nesimulat]:not([data-lh-tip])').forEach(x => x.remove());
+    if (I._moMesaj) { I._moMesaj.disconnect(); I._moMesaj = null; }
     const m = document.createElement('div');
     m.className = 'lh-ap-mesaj';
     m.setAttribute('data-lh-nesimulat', eticheta);
@@ -227,8 +232,20 @@
     const sablon = ((setari().mesaje || {}).nesimulat) || 'În aplicația reală, „{x}” funcționează; aici nu e simulată.';
     m.textContent = sablon.replace('{x}', eticheta);
     I.root.appendChild(m);
+    const durata = I.opt.scenariu ? 60000 : 5000, pana = Date.now() + durata;
+    if (typeof MutationObserver === 'function') {
+      const mo = new MutationObserver(lot => {
+        if (m.isConnected) return;
+        if (I._moMesaj !== mo || Date.now() >= pana || !I.root.isConnected) { mo.disconnect(); return; }
+        if (!lot.some(x => [...x.removedNodes].indexOf(m) >= 0) || !lot.some(x => x.addedNodes.length)) return;
+        if (I.root.querySelector('[data-lh-nesimulat]:not([data-lh-tip])')) return;   // alt mesaj i-a luat locul
+        I.root.appendChild(m);
+      });
+      mo.observe(I.root, { childList: true });
+      I._moMesaj = mo;
+    }
     clearTimeout(I._tMesaj);
-    I._tMesaj = setTimeout(() => m.remove(), I.opt.scenariu ? 60000 : 5000);
+    I._tMesaj = setTimeout(() => { if (I._moMesaj) { I._moMesaj.disconnect(); I._moMesaj = null; } m.remove(); }, durata);
     return 'nesimulat';
   }
 
