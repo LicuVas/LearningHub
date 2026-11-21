@@ -11,6 +11,9 @@
   'use strict';
   const L = window.LH && window.LH.aplicatii;
   if (!L) return;
+  /* magazia de fișiere și ferestrele Save As / Open (fisiere.js) — încărcate în fundal; Save As/Open se deschid doar din
+     acțiunea elevului, deci modulul e gata până atunci. Fără el, comenzile rămân mesajul central „nesimulat”. */
+  L.gata.then(() => L._script('fisiere.js')).catch(() => { /* */ });
 
   /* ============================================================ adrese */
   const MAXR = 1048576, MAXC = 16384;
@@ -260,7 +263,9 @@
     const clona = L._clona;
 
     /* ============================================================ modelul */
-    const M = { foi: [], fi: 0, nume: null, salvat: false, edit: null, clip: null, tabCol: null, zoom: 100, mesaj: null, mod: false };
+    const M = { foi: [], fi: 0, nume: null, salvat: false, edit: null, clip: null, tabCol: null, zoom: 100, mesaj: null, mod: false, dosar: null, avertisment: null };
+    /* magazia de fișiere (fisiere.js): creată la prima nevoie; dosar = folderul registrului salvat (null = nesalvat) */
+    let magaz = null;
     /* registrele deschise (X8, m1-l03): cel activ stă în M; alte = cele din spate; nr = ultimul BookN dat (com_r7c.json › registre_noi:
        Book2, Book3, Book4 — numerele nu se refolosesc); gol = Excel deschis fără niciun registru (m1-l03:59) */
     const REG = { alte: [], nr: 1, gol: false };
@@ -638,6 +643,7 @@
         pagina_backstage: backstage ? backstage.pagina : null, titlu_fereastra: titlu(),
         grafice: stareGrafice(), grafic_activ: !!M.gr, grafic_element_ales: M.gr ? (M.gr.parte === 'titlu' ? 'Chart Title' : 'Chart Area') : null,
         ...stareGraficPrim(),
+        fisiere: magazie() ? magazie().stare() : null, dosar_fisier: M.dosar, avertisment_fisier: M.avertisment,
         registru_activ: REG.gol ? null : numeRegistru(), registre: REG.alte.map(r => r.nume ? r.nume.replace(/\.[a-z0-9]{2,5}$/i, '') : r.book).concat(REG.gol ? [] : [numeRegistru()]) };
     };
     /* `dialog` (§5): fereastra deschisă; „Save your changes to this file?” = fereastra care ÎNTREABĂ, în forma din
@@ -2438,8 +2444,8 @@
        = închiderea registrului activ (rămâne cel din spate, altfel Excel deschis, gol). Cu modificări nesalvate Excel întreabă
        „Save your changes” — fereastra NU e în referința Excel: mesajul central standard (de_verificat R7-15) */
     const istoricNou = () => L._module.stare.istoric(() => false);
-    const registruActiv = () => ({ foi: M.foi, fi: M.fi, nume: M.nume, salvat: M.salvat, mod: M.mod, H, book: BOOK });
-    function incarcaRegistru(r) { M.foi = r.foi; M.fi = r.fi; M.nume = r.nume; M.salvat = r.salvat; M.mod = r.mod; H = r.H; BOOK = r.book; M.clip = null; }
+    const registruActiv = () => ({ foi: M.foi, fi: M.fi, nume: M.nume, salvat: M.salvat, mod: M.mod, H, book: BOOK, dosar: M.dosar, avertisment: M.avertisment });
+    function incarcaRegistru(r) { M.foi = r.foi; M.fi = r.fi; M.nume = r.nume; M.salvat = r.salvat; M.mod = r.mod; H = r.H; BOOK = r.book; M.clip = null; M.dosar = r.dosar || null; M.avertisment = r.avertisment || null; }
     function dupaRegistru() { if (backstage) inchideBackstage(); arataGol(); tabFoi.__sem = null; tabFoi.__nume = null; actualizeaza(); actualizeazaBare(); I.focus(); }
     function registruNou() {
       if (M.edit && !confirma()) return 'fara_efect';
@@ -2478,7 +2484,7 @@
     function raspunsInchidere(v) {
       if (v === 'Cancel' || v === 'Închidere') { inchideDialog(); return 'anulare'; }
       if (v === "Don't Save") { inchideDialog(); return inchideRegistruAcum('inchidere_fara_salvare'); }
-      if (v === 'Save') { const r = salveazaDinDialog(); return r === 'salvare' ? inchideRegistruAcum('salvare_si_inchidere') : r; }
+      if (v === 'Save') return salveazaDinDialog(() => inchideRegistruAcum('salvare_si_inchidere'));
       if (v === 'Open') return I.nesimulat('Choose a Location ▾');
       return I.nesimulat(v);
     }
@@ -2742,17 +2748,19 @@
       if (!dialog || !dialog.el) return;
       dialog.el.querySelectorAll('.lh-ap-nav-rand').forEach(x => { const on = x.getAttribute('data-lh-eticheta') === dialog.folder; x.toggleAttribute('data-lh-selectat', on); x.setAttribute('aria-selected', on ? 'true' : 'false'); });
     }
-    function salveazaDinDialog() {
+    /* Save din „Save this file” / „Save your changes”: scrie în magazie (fisiere.js); dacă numele există, întâi
+       „Confirm Save As”. dupaExtra (ex. închiderea registrului) rulează după salvare; returnează acțiunea. */
+    function salveazaDinDialog(dupaExtra) {
       const x = dialog && dialog.el.querySelector('[data-lh-tinta="camp:nume_fisier"] input');
       const v = String(x ? x.value : '').trim().replace(/[\\/:*?"<>|]/g, '');
       if (!v) return 'fara_efect';
-      M.nume = /\.[a-z0-9]{2,5}$/i.test(v) ? v : v + '.xlsx';
-      M.salvat = true;
-      M.mod = false;
-      inchideDialog();
-      if (backstage) inchideBackstage();
-      actualizeazaBare();
-      return 'salvare';
+      const nume = /\.[a-z0-9]{2,5}$/i.test(v) ? v : v + '.xlsx';
+      const dosar = (dialog && dialog.folder) || M.dosar || 'Documente';
+      let fin = null;
+      const dupa = () => { inchideDialog(); if (dupaExtra) fin = dupaExtra(); };
+      const r = scrieSalvare(dosar, nume, 'xlsx', dupa);
+      if (r === 'indisponibil') return I.nesimulat('Save');
+      return r === 'salvare' ? (fin || 'salvare') : r;
     }
     /* lățimea în caractere, cum o arată fereastra Column Width (64 px = 8,11: uia_excel.json › dialog.ColumnWidth › Edit) */
     const caractereDin = px => Math.max(0, (px - 5.33) / 7.234);
@@ -2948,11 +2956,103 @@
        Save As (dialog.FileSaveAs) */
     function salveaza() {
       if (M.edit && !confirma()) return 'fara_efect';
-      if (M.nume) { M.salvat = true; M.mod = false; actualizeazaBare(); return 'salvare'; }
+      if (M.nume) { fixeaza(M.dosar || 'Documente', M.nume, /\.csv$/i.test(M.nume) ? 'csv' : 'xlsx'); return 'salvare'; }
       if (backstage) inchideBackstage();
       if (deschideDialog(SALVARE_NOUA)) return 'salvare_ca';
       deschideBackstage('Save As');
       return 'pagina_backstage';
+    }
+
+    /* ---- fișiere (fisiere.js): magazia, Save As / Save / Open ---- */
+    function FIS() { return (L._module && L._module.fisiere) || null; }
+    function magazie() { if (!magaz) { const F0 = FIS(); if (F0) magaz = F0.nou(); } return magaz; }
+    /* ce scrie fiecare tip: xlsx = foile (ca obiect); csv = foaia ACTIVĂ, doar valorile (formula → rezultatul ei); pdf = foaia
+       activă din domeniul folosit, un rând pe linie (text, nu grilă) */
+    function continutPentru(tip) {
+      if (tip === 'xlsx') return clona({ foi: M.foi, fi: M.fi });
+      const F0 = F(), u = ultim(F0), rows = [];
+      const sv = (r, c0) => { try { return txt(valoare(F0, r, c0)); } catch (e) { return e && e.e ? e.e : '#VALUE!'; } };
+      for (let r = 0; r <= u.r; r++) { const row = []; for (let c0 = 0; c0 <= u.c; c0++) row.push(sv(r, c0)); rows.push(row); }
+      if (tip === 'csv') return FIS().csvDinGrila(rows);
+      return FIS().pdfDinLinii(rows.map(row => row.join('  ')), M.nume || F0.nume);
+    }
+    /* scrie în magazie și pune registrul în starea „salvat”. CSV: doar foaia activă, redenumită după fișier (ca în Excel);
+       PDF: registrul rămâne cel de dinainte (numele nu se schimbă) */
+    function fixeaza(dosar, nume, tip) {
+      const FS = magazie();
+      if (FS) FS.salveaza(dosar, nume, tip, continutPentru(tip));
+      if (tip === 'pdf') return 'salvare_pdf';
+      if (tip === 'csv') { const f = clona(F()); f.nume = nume.replace(/\.csv$/i, ''); M.foi = [f]; M.fi = 0; M.avertisment = 'POSSIBLE DATA LOSS'; }
+      else M.avertisment = null;
+      M.nume = nume; M.dosar = dosar; M.salvat = true; M.mod = false;
+      if (backstage) inchideBackstage();
+      actualizeaza();
+      actualizeazaBare();
+      return 'salvare';
+    }
+    /* numele existent → „Confirm Save As” [Yes][No]; Yes scrie, No lasă fereastra de salvare deschisă */
+    function scrieSalvare(dosar, nume, tip, dupa) {
+      const F0 = FIS(), FS = magazie();
+      if (!F0 || !FS) return 'indisponibil';
+      if (FS.exista(dosar, nume)) {
+        F0.confirma(root, { titlu: 'Confirm Save As', text: F0.MESAJ.inlocuire(nume), ro: F0.MESAJ.inlocuireRo, butoane: ['Yes', 'No'],
+          dupa: r => { if (r === 'Yes') { fixeaza(dosar, nume, tip); if (dupa) dupa(); } } });
+        return 'confirmare';
+      }
+      fixeaza(dosar, nume, tip);
+      if (dupa) dupa();
+      return 'salvare';
+    }
+    /* Save As (F12, backstage › Save As › Browse): fereastra din fisiere.js; nimic altceva decât alegerea elevului scrie */
+    function deschideSalvareCa() {
+      const F0 = FIS(), FS = magazie();
+      if (!F0 || !FS) return false;
+      inchideMeniu();
+      F0.salvareCa(root, {
+        magazie: FS, dosar: M.dosar || 'Documente', nume: M.nume || (BOOK + '.xlsx'), tip: 'xlsx',
+        nrFoi: () => M.foi.length,
+        salveaza: (dosar, nume, tip) => { fixeaza(dosar, nume, tip); },
+        nesimulat: v => I.nesimulat(v),
+        inchis: () => I.focus()
+      });
+      return true;
+    }
+    /* Open (backstage › Open › Browse): fișierul ales devine registrul activ; registrul deschis până acum rămâne în spate */
+    function deschideDeschidere() {
+      const F0 = FIS(), FS = magazie();
+      if (!F0 || !FS) return false;
+      inchideMeniu();
+      F0.deschidere(root, {
+        magazie: FS, dosar: M.dosar || 'Documente', nesimulat: v => I.nesimulat(v),
+        deschis: (dosar, e) => deschisDinMagazie(dosar, e), inchis: () => I.focus()
+      });
+      return true;
+    }
+    function deschisDinMagazie(dosar, e) {
+      const F0 = FIS();
+      let foi, fi;
+      if (e.tip === 'xlsx') {
+        const c = clona(e.cont);
+        if (!c || !Array.isArray(c.foi) || !c.foi.length) return false;
+        foi = c.foi; fi = Math.min(c.fi || 0, c.foi.length - 1);
+      } else if (e.tip === 'csv') {
+        const f = foaieNoua(e.n.replace(/\.csv$/i, ''));
+        F0.citesteCsv(e.cont).forEach((row, r) => row.forEach((s, c0) => {
+          if (s === '') return;
+          f.cel[adr(r, c0)] = { v: /^-?\d+(\.\d+)?$/.test(s) ? Number(s) : s };
+        }));
+        foi = [f]; fi = 0;
+      } else {
+        /* PDF: Excel îl deschide ca text brut; primul rând (%PDF-…) apare în A1 (lecția m1-l03, „Open”) */
+        const f = foaieNoua(e.n.replace(/\.pdf$/i, ''));
+        f.cel.A1 = { v: String(e.cont || '').split('\n')[0] };
+        foi = [f]; fi = 0;
+      }
+      if (!REG.gol) REG.alte.push(registruActiv());
+      REG.gol = false;
+      incarcaRegistru({ foi, fi, nume: e.n, salvat: true, mod: false, H: istoricNou(), book: e.n.replace(/\.[a-z0-9]{2,5}$/i, ''), dosar, avertisment: null });
+      dupaRegistru();
+      return true;
     }
 
     /* ============================================================ comenzile panglicii (după idMso) */
@@ -3554,10 +3654,11 @@
         if (n2.id === 'FileTabButton' || v === 'Back') { inchideBackstage(); return 'inapoi'; }
         if (v === 'Blank workbook' && backstage && backstage.pagina === 'New') return registruNou();
         if (v === 'Close' && elx.closest('[data-lh-suprafata="backstage.nav"]')) { inchideBackstage(); return inchideRegistru(); }
-        if (v === 'Browse' && backstage && backstage.pagina === 'Save As') return deschideDialog('dialog.FileSaveAs') ? 'salvare_ca' : I.nesimulat(v);
+        if (v === 'Browse' && backstage && backstage.pagina === 'Save As') return deschideSalvareCa() ? 'salvare_ca' : I.nesimulat(v);
+        if (v === 'Browse' && backstage && backstage.pagina === 'Open') return deschideDeschidere() ? 'deschidere' : I.nesimulat(v);
         if (elx.closest('[data-lh-suprafata="backstage.nav"]') && n2.t === 'ListItem') {
           if (n2.a === 0) return 'indisponibil';
-          if (v === 'Save') { if (M.nume) { M.salvat = true; M.mod = false; inchideBackstage(); return 'salvare'; } return arataPaginaBackstage('Save As') ? 'pagina_backstage' : I.nesimulat(v); }
+          if (v === 'Save') { if (M.nume) return salveaza(); return arataPaginaBackstage('Save As') ? 'pagina_backstage' : I.nesimulat(v); }
           return arataPaginaBackstage(v) ? 'pagina_backstage' : I.nesimulat(v);
         }
         return I.nesimulat(v);
@@ -3737,7 +3838,7 @@
         if (ctrl && g === 'ctrl_o') { e.preventDefault(); return deschideBackstage('Open'); }
         return 'fara_efect';
       }
-      if (g === 'tasta_f12') { e.preventDefault(); if (M.edit && !confirma()) return 'fara_efect'; return deschideDialog('dialog.FileSaveAs') ? 'salvare_ca' : I.nesimulat('Save As'); }
+      if (g === 'tasta_f12') { e.preventDefault(); if (M.edit && !confirma()) return 'fara_efect'; return deschideSalvareCa() ? 'salvare_ca' : I.nesimulat('Save As'); }
       /* ------------------------------------------------ în editare */
       if (M.edit) {
         const ed = M.edit;
