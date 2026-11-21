@@ -20,7 +20,23 @@
 
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const ext = n => { const i = n.lastIndexOf('.'); return i > 0 ? n.slice(i + 1) : ''; };
-  const norm = c => (c === 'PC' ? 'Acest PC' : c);
+  /* calea din lecție (C:/Users/Ana/Documents/…, cu Documents în engleză) ↔ Documente/… din bibliotecă (pe ecran: Documente) */
+  const DOC_CALE = 'C:\\Users\\Ana\\Documents';
+  const DOC_PREF = 'C:/Users/Ana/Documents/';
+  const laBiblioteca = c => (typeof c === 'string' && c.indexOf(DOC_PREF) === 0) ? 'Documente/' + c.slice(DOC_PREF.length) : c;
+  const norm = c => (c === 'PC' ? 'Acest PC' : laBiblioteca(c));
+  /* Q.fs (lista de fișiere a lecției) → conținutul Documente/ al bibliotecii: căi relative la Documente, cu dimensiune și dată */
+  function documente(fs) {
+    const arbore = [], detalii = {};
+    (fs || []).forEach(e => {
+      const cale = Array.isArray(e) ? e[0] : e;
+      if (typeof cale !== 'string' || cale.indexOf(DOC_PREF) !== 0) return;
+      const rel = cale.slice(DOC_PREF.length);
+      arbore.push(rel);
+      if (Array.isArray(e)) detalii[rel] = [e[1], e[2]];
+    });
+    return arbore.length ? { cale: DOC_CALE, arbore, detalii } : null;
+  }
   const pauza = ms => new Promise(r => setTimeout(r, ms));
 
   let css_ok = false;
@@ -140,7 +156,10 @@
       }, 150);
 
       /* start:'PC' = Acest PC (altfel biblioteca pornește în folderul ei Documente/Exercitii); Q.start se ajunge prin clicuri */
-      L.deschide('explorer', { loc: host, continut: { start: 'PC', setari: { extensii_vizibile: !!Q.extensii } }, focus: false })
+      const cont = { start: 'PC', setari: { extensii_vizibile: !!Q.extensii } };
+      const doc = documente(Q.fs);
+      if (doc) cont.documente = doc;
+      L.deschide('explorer', { loc: host, continut: cont, focus: false })
         .then(async inst => {
           st.inst = inst;
           const root = host.querySelector('[data-lh-aplicatie="explorer"]') || host;

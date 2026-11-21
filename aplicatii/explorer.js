@@ -87,7 +87,8 @@
 .lh-ap-explorer button:not([aria-disabled="true"]):hover,.lh-ap-e-nod:hover,.lh-ap-e-mr:hover{background:var(--e-hover)}
 .lh-ap-e-adr{position:relative;flex:1;min-width:60px;height:32px;margin-top:8px;border:1px solid var(--e-linie);border-radius:4px;background:var(--e-fond)}
 .lh-ap-e-adr-edit{position:absolute;inset:0;z-index:0}
-.lh-ap-e-crumbs{position:absolute;left:0;top:0;bottom:0;right:0;display:flex;align-items:center;padding-left:13px;overflow:hidden;z-index:1;pointer-events:none}
+.lh-ap-e-crumbs{position:absolute;left:0;top:0;bottom:0;right:22px;display:flex;align-items:center;padding-left:13px;overflow:hidden;z-index:1;pointer-events:none}
+/* gutter-ul din dreapta (22px) ramane zona goala: un clic acolo deschide caseta de cale, ca in Windows; folderul curent e derulat in vedere (scrollLeft in deseneaza) */
 .lh-ap-e-crumbs>*{pointer-events:auto}
 .lh-ap-e-cr{height:24px;display:flex;align-items:center;gap:4px;padding:0 4px 0 9px;white-space:nowrap;border-radius:4px}
 .lh-ap-e-cr0{width:51px;padding:0;justify-content:flex-start}
@@ -208,6 +209,9 @@
     Object.keys(UNIT).forEach(l => { const u = UNIT[l]; pune(l + '/', u.arbore || [], u.continut, u.detalii); });
     if (c.sursa_lipirii) pune(PARINTE + c.sursa_lipirii.folder + '/', c.sursa_lipirii.arbore, c.sursa_lipirii.continut);
     (c.foldere_alaturate || []).forEach(x => pune(PARINTE + x.folder + '/', x.arbore, x.continut));
+    /* c.documente = { cale, arbore, detalii }: fișierele și folderele din Documente (căi relative la Documente, folderele cu /),
+       ex. arbore: ['Geografie/', 'Geografie/harta.png']; cale = calea Windows a lui Documente, afișată în bara de adresă */
+    if (c.documente) pune(PARINTE, c.documente.arbore, c.documente.continut, c.documente.detalii);
     const srt = c.sortare || {};
     const M = { F, cur: c.start === 'PC' ? PC : W, sel: [], ancora: null, clip: null, taiat: false, cos: [], meniu: null, dlg: null, dialog: null, edit: null,
       ext: !!set.extensii_vizibile, ascunse: false, casete: false, compact: false, panouNav: true,
@@ -238,7 +242,10 @@
     };
     const afis = p => { if (esteU(p)) return etichU(p); const n = num(p); return eDir(p) || M.ext || !ext(n) ? n : baza(n); };
     /* bara de adresă ca text (cum o scrie Windows, cu \): Acest PC · E:\Excursie · Documente\Clasa a V-a */
-    const cuBara = p => p === PC ? PC : p === COS ? 'Coș de reciclare' : esteU(p) ? litU(p) + '\\' : p.replace(/\/$/, '').replace(/\//g, '\\');
+    const dc = c.documente && c.documente.cale;
+    const cuBara = p => p === PC ? PC : p === COS ? 'Coș de reciclare' : esteU(p) ? litU(p) + '\\'
+      : (dc && p.indexOf(PARINTE) === 0) ? dc + (p.length > PARINTE.length ? '\\' + p.slice(PARINTE.length).replace(/\/$/, '').replace(/\//g, '\\') : '')
+      : p.replace(/\/$/, '').replace(/\//g, '\\');
     const nmSeg = p => esteU(p) ? etichU(p) : num(p);
     const tipText = p => {
       if (esteU(p)) return stickU(p) ? 'Unitate amovibilă' : 'Disc local';
@@ -448,6 +455,7 @@
       const lst = root.querySelector('.lh-ap-e-cont'), sc = lst ? lst.scrollTop : 0, sl = lst ? lst.scrollLeft : 0;
       root.innerHTML = (desktop ? '<div class="lh-ap-e-desk"><div class="lh-ap-e-desk-ic" ' + atr({ 'data-lh-tinta': 'desktop', 'data-lh-id': 'Coș de reciclare', 'data-lh-selectat': M.deskSel }) + '>' + ic('cos') + '<span>Coș de reciclare</span></div></div>' : '') +
         '<div class="lh-ap-e-win" data-lh-suprafata="fereastra" aria-label="' + esc(fol() + ' - Explorer') + '">' + htmlFereastra() + htmlMeniu() + htmlDialog() + '</div>';
+      const cr = root.querySelector('.lh-ap-e-crumbs'); if (cr) cr.scrollLeft = cr.scrollWidth;
       const l2 = root.querySelector('.lh-ap-e-cont');
       if (l2) { l2.scrollTop = sc; l2.scrollLeft = sl; }
       redesenez = false;
@@ -840,7 +848,8 @@
           break;
         case 'adresa':
           if (v === D.adresa.prima.e) a = navigheaza(PC);
-          else if (v) a = navigheaza(v);
+          else if (v && v !== M.cur) a = navigheaza(v);
+          /* clic pe folderul unde ești (ultimul segment) sau pe partea goală: deschide caseta de cale, nu „nu face nimic” */
           else { M.editAdresa = true; M.adrTxt = null; a = 'editare_adresa'; }
           break;
         case 'cautare': M.cautareFocus = true; a = 'cautare'; break;
