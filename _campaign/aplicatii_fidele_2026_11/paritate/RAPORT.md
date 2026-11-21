@@ -1,4 +1,4 @@
-# Inventarul de paritate — raport (21.11.2026, 18:32-19:50)
+# Inventarul de paritate — raport (21.11.2026, 18:32-19:30)
 
 **Cererea:** „da, fă lista funcțiilor din lecțiile de pe proba” (contract: `contract.md`).
 **Pagina pentru profesor:** https://claude.ai/artifact/EQEhqF6rWp1F1gW8sGeC4b (privată), sau local `paritate_local.html`.
