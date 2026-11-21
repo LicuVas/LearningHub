@@ -275,6 +275,8 @@
     /* culoare = culoarea filei (Tab Color, runda 29: '#RRGGBB' sau null) */
     function foaieNoua(nume) { return { nume, cel: {}, fmt: {}, merge: [], lat: {}, latSet: {}, bord: {}, culoare: null, sel: { activa: { r: 0, c: 0 }, zone: [{ r0: 0, c0: 0, r1: 0, c1: 0 }] } }; }
     const F = () => M.foi[M.fi];
+    /* închiderile și deschiderile de registru din sesiune (stare(): inchideri, deschideri) */
+    let nInchideri = 0, nDeschideri = 0;
     function puneStart(f, celule, format, latimi) {
       /* latimi (CONȚINUT, opțional): { A: 120, C: 90 } = lățimea coloanei în px la 100 % */
       Object.entries(latimi || {}).forEach(([k, px]) => { const c0 = colIdx(k); if (c0 >= 0 && c0 < MAXC && isFinite(+px) && +px >= 0) { f.lat[c0] = +px; f.latSet[c0] = true; } });
@@ -605,8 +607,9 @@
       const s = F().sel;
       return { activa: adr(s.activa.r, s.activa.c), zona: s.zone.map(zonaText).join(',') };
     }
-    I.stare = () => {
-      const f = F(), cel = {}, fmt = {};
+    /* celulele unei foi (valoare + text), ca în `celule`; `activa` = foaia pe ecran, singura cu celula în editare */
+    function celuleDe(f, activa) {
+      const cel = {};
       Object.keys(f.cel).forEach(a => {
         const p = pa(a), x = f.cel[a];
         let v = valoare(f, p.r, p.c);
@@ -617,8 +620,12 @@
       /* celulele vărsate (E5): valoarea și textul, fără formulă (com_r8.json › 2_D3_formula2 = "") */
       toateVarsate(f).forEach(([a, r, c0]) => { const v = valoare(f, r, c0); cel[a] = { valoare: eErr(v) ? v.e : v, text: inLatime(v, fmtDe(f, a).format_numar, unitati(f, r, c0)) }; });
       /* celula în editare: pe ecran e textul tastat (§3 „ecranul = starea”), deci și aici; `editare` spune că nu e încă primit */
-      if (M.edit) cel[M.edit.a] = { valoare: M.edit.text, text: M.edit.text, editare: true };
-      if (M.edit && M.edit.text === '') delete cel[M.edit.a];
+      if (activa && M.edit) cel[M.edit.a] = { valoare: M.edit.text, text: M.edit.text, editare: true };
+      if (activa && M.edit && M.edit.text === '') delete cel[M.edit.a];
+      return cel;
+    }
+    I.stare = () => {
+      const f = F(), cel = celuleDe(f, true), fmt = {};
       Object.keys(f.fmt).forEach(a => {
         const o = {}, x = f.fmt[a];
         ['bold', 'italic', 'underline'].forEach(k => { if (x[k]) o[k] = true; });
@@ -640,6 +647,7 @@
       Object.keys(INALT).forEach(r => { inaltimi[String(+r + 1)] = INALT[r]; });
       return { celule: cel, format_celule: fmt, latimi_coloane: latimi, inaltimi_randuri: inaltimi, selectie: selectieStare(), nume_fisier: M.nume, fereastra_mesaj: M.mesaj,
         ramane_in_editare: !!M.edit, foi: M.foi.map(x => x.nume), foaie_activa: F().nume, culori_file: culoriFile(), dialog: dialogStare(),
+        modificat: !!M.mod, foi_celule: Object.fromEntries(M.foi.map(x => [x.nume, celuleDe(x, x === f)])), inchideri: nInchideri, deschideri: nDeschideri,
         pagina_backstage: backstage ? backstage.pagina : null, titlu_fereastra: titlu(),
         grafice: stareGrafice(), grafic_activ: !!M.gr, grafic_element_ales: M.gr ? (M.gr.parte === 'titlu' ? 'Chart Title' : 'Chart Area') : null,
         ...stareGraficPrim(),
@@ -2470,6 +2478,7 @@
       return inchideRegistruAcum('inchidere_registru');
     }
     function inchideRegistruAcum(actiune) {
+      nInchideri += 1;
       inchideMeniu();
       if (dialog) inchideDialog();
       if (REG.alte.length) incarcaRegistru(REG.alte.pop());
@@ -3050,6 +3059,7 @@
       }
       if (!REG.gol) REG.alte.push(registruActiv());
       REG.gol = false;
+      nDeschideri += 1;
       incarcaRegistru({ foi, fi, nume: e.n, salvat: true, mod: false, H: istoricNou(), book: e.n.replace(/\.[a-z0-9]{2,5}$/i, ''), dosar, avertisment: null });
       dupaRegistru();
       return true;
