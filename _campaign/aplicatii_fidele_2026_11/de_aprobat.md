@@ -136,3 +136,16 @@ Aprobat → se mută în `abateri.md`; respins → se repară sau se scoate.
   - De ce: altfel starea se strică („a/b” mută fișierul într-un folder inexistent).
   - Ce o închide: captura balonului (R23-2) sau Vasile acceptă.
 <!-- RUNDA23-EXPLORER:END -->
+
+<!-- RUNDA26-ACOPERIRE-OFFICE:START (scris de constructorul rundei `acoperire` Office, 21.11.2026) -->
+## Runda 26 · acoperire Office (Word + Excel)
+- [ ] **A26O-1** **Autocompletarea și separatorul se citesc în două momente** (`excel-autocompletare-tab`, `excel-separator-virgula` + perechile noi `…-esc-esc`).
+  - De ce: cât mesajul e pe ecran, Excel e în modul de editare și nu răspunde prin COM; realul citea celulele abia după Esc + Esc, simulatorul fără ele (R25-2). Am ales varianta în care scenariul face ce face elevul din lecție: vede mesajul (momentul 1: mesajul + `ramane_in_editare`), apoi Esc închide mesajul și Esc renunță la formulă (momentul 2: celulele; `jocuri/_fixtura-excel/index.html:92` „Esc renunță”).
+  - Ce se schimbă: scenariul vechi nu mai citește `celule`; perechea nouă le citește după pașii Esc, Esc. Amândouă au real nou, jucat pe Excel real.
+  - Ce o închide: Vasile acceptă împărțirea (sau cere altă formă).
+- [ ] **A26O-2** **Clicul din `word-clic-pune-cursorul` cade pe granița „me|re”** (`de_la = pana_la = 10`, ținta `pozitie:10`), nu la mijlocul în pixeli al cuvântului.
+  - De ce: mijlocul în pixeli cădea la 0,5 px de centrul lui „e”, deci realul (9) și O4 (10) depindeau de rotunjiri (R24-1). Pe graniță, ambele părți dau 10. Lecția (`vii/m1-l02:165`) cere doar „un clic în text, acolo unde îl vrei”.
+  - Ce o închide: Vasile acceptă.
+- [ ] **A26O-3** **Eticheta din meniu e „This Device...” (trei puncte)**, cum o arată Word real în UI Automation; lecțiile scriu „This Device…” (un semn). Scenariul `word-imagine-inserare` folosește eticheta reală.
+  - Ce o închide: dacă simulatorul nu găsește rândul după etichetă, e treaba bibliotecii (O4 îl arată ca neexecutabil), nu a scenariului.
+<!-- RUNDA26-ACOPERIRE-OFFICE:END -->

@@ -808,6 +808,23 @@ TABEL_SORT = {"A1": "Nume", "B1": "Clasa", "C1": "Punctaj", "A2": "Ana", "B2": "
               "A6": "Elena", "B6": "VIII A", "C6": 95, "A7": "Florin", "B7": "VIII B", "C7": 60}
 D_CEL = ("celule = {adresă: {valoare, text afișat, formula dacă are}} pentru celulele nevide; selectie = {activa, zona} "
          "(adrese fără $)")
+
+
+def sortare_doua_niveluri(ws):
+    """Fereastra Sort cu două niveluri (Sort by Clasa, A to Z; Add Level; Then by Punctaj, Largest to Smallest; My data
+    has headers), prin obiectul ei: Worksheet.Sort, un SortField pe nivel (SortOn 0 = Cell Values, Order 1 = xlAscending
+    / 2 = xlDescending). Corectat în runda `acoperire` Office, 21.11.2026 (R25-1): vechiul Range.Sort cu argumente numite
+    dădea Punctaj crescător."""
+    s = ws.Sort
+    s.SortFields.Clear()
+    s.SortFields.Add(ws.Range("B2:B7"), 0, 1)
+    s.SortFields.Add(ws.Range("C2:C7"), 0, 2)
+    s.SetRange(ws.Range("A1:C7"))
+    s.Header = 1
+    s.Apply()
+    s.SortFields.Clear()
+    return ("Worksheet.Sort: SortFields.Add(Clasa, Cell Values, A to Z) + SortFields.Add(Punctaj, Cell Values, Largest to "
+            "Smallest), SetRange A1:C7, Header = xlYes, Apply")
 D_MESAJ = ("fereastra_mesaj = fereastra apărută după ultimul pas {titlu, texte, butoane} (null dacă n-a apărut); "
            "ramane_in_editare = Excel a rămas în modul de editare (true/false); la final Esc în mesaj și Esc în celulă, apoi "
            "se citesc celulele")
@@ -863,8 +880,9 @@ SCEN_R7 = [   # ordinea contează: Ctrl+N primul (numele BookN depinde de câte 
               {"gest": "clic", "tinta": "meniu:Largest to Smallest"}, {"gest": "clic", "tinta": "fereastra:OK"}],
      "stare_citita": ["celule"],
      "descriere": "Tabelul Nume / Clasa / Punctaj (A1:C7, cu antet); Data › Sort: Sort by Clasa (A to Z), Add Level, Then by "
-                  "Punctaj, Largest to Smallest, OK. Prin model: Range.Sort cu două chei (Key1 = B, Key2 = C descendent, "
-                  "Header = xlYes). " + D_CEL, "lectii": ["viii/m2-l10"], "sursa_gest": "lectii/viii/m2-l10/index.html:63"},
+                  "Punctaj, Largest to Smallest, OK. Prin model: Worksheet.Sort cu două niveluri, ca fereastra Sort "
+                  "(SortFields: Clasa, Cell Values, A to Z; Punctaj, Cell Values, Largest to Smallest; Header = xlYes). "
+                  + D_CEL, "lectii": ["viii/m2-l10"], "sursa_gest": "lectii/viii/m2-l10/index.html:63"},
     {"id": "excel-numere-afisare", "mod": "gest_real", "start": {"selectie": "A1"},
      "pasi": [{"gest": "tasteaza", "text": "=1/30000"}, {"gest": "taste", "taste": "Tab"},
               {"gest": "tasteaza", "text": "=1/7000000"}, {"gest": "taste", "taste": "Tab"},
@@ -890,7 +908,9 @@ SCEN_R7 = [   # ordinea contează: Ctrl+N primul (numele BookN depinde de câte 
                   "decât cea standard.", "lectii": ["viii/m1-l06"], "sursa_gest": "de_verificat.md R7-10"},
 ]
 # scenariile vechi pe care le rulează acum acest generator (cu ferestrele care întreabă lăsate să apară)
-VECHI_R7 = ["excel-autocompletare-tab", "excel-separator-virgula", "excel-salvare-ca"]
+VECHI_R7 = ["excel-salvare-ca"]
+# excel-autocompletare-tab și excel-separator-virgula: preluate în runda `acoperire` Office (21.11.2026) de
+# acoperire_office_r26.py, care le citește în două momente (mesajul / după Esc + Esc; R25-2)
 SALVARE_CA_PASI = [{"gest": "clic", "tinta": "mso:FileTabButton", "real": "uia:FileTabButton"},
                    {"gest": "clic", "tinta": "backstage:Save As", "real": "uia:nav:Save As"},
                    {"gest": "clic", "tinta": "backstage:Browse", "real": "uia:Browse"},
@@ -1109,9 +1129,9 @@ def clasa_excel_r7():
             r = p.get("real", "")
             self.canale_r7.add("model_obiect")
             if r == "com:sort2":
-                ws = self.ws
-                ws.Range("A1:C7").Sort(Key1=ws.Range("B1"), Order1=1, Key2=ws.Range("C1"), Order2=2, Header=1)
-                return "Range.Sort(Key1 = Clasa ascendent, Key2 = Punctaj descendent, Header = xlYes)"
+                # runda `acoperire` Office (21.11.2026, R25-1): Range.Sort(Key1=…, Order2=2, …) cu argumente numite
+                # dădea Punctaj CRESCĂTOR; nivelurile ferestrei Sort = Worksheet.Sort.SortFields, câte unul pe nivel
+                return sortare_doua_niveluri(self.ws)
             if r.startswith("com:autofit:"):
                 self.ws.Columns(r.split(":")[-1]).AutoFit()
                 return "Columns.AutoFit"
