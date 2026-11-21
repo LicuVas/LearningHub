@@ -28,7 +28,8 @@
   - Word: `aplicatii/word.js`, `aplicatii/date/word.json`, `aplicatii/_unelte/genereaza_word.py`, `aplicatii/profiluri/word*.json`;
   - Excel: `aplicatii/excel.js`, `aplicatii/date/excel.json`, `aplicatii/_unelte/genereaza_excel.py`, `aplicatii/profiluri/excel365.json`;
   - dosarul rundei tale: `D/runde/<N>/`.
-- **Fișierele COMUNE:** `aplicatii/aplicatii.js`, `panglica.js`, `stare.js`, `aplicatii.css`, `poligon.html`, `setari.json`, `versiune.json`, `api_biblioteca.md`.
+- **Fișierele COMUNE:** `aplicatii/aplicatii.js`, `panglica.js`, `stare.js`, `aplicatii.css`, `poligon.html`, `setari.json`, `versiune.json`.
+- **`D/api_biblioteca.md` e în ZONA ÎNGHEȚATĂ** (repere.lock; adăugat 21.11.2026 04:10, după ce trei benzi ale ciclului C l-au editat și au rupt lacătul măsurării comune): banda NU îl editează. Textul propus (secțiunea + rândul exact) îl scrie în `D/runde/N/api_propunere.md`; îl aplică o rundă `acoperire`, care reîngheață (`ingheata.py --acoperire`).
   - Le atingi doar dacă reparația nu se poate face altfel.
   - Doar cu unealta Edit, pe bucăți mici, niciodată Write pe tot fișierul și niciodată sed. Edit refuză dacă fișierul s-a schimbat de la ultima citire: atunci îl citești din nou.
   - Orice schimbare e păzită pe aplicație, ca să nu schimbe nimic la celelalte aplicații.
