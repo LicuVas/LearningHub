@@ -1259,6 +1259,7 @@
     }
     function panouLateral(cheie) {
       animAles = null;
+      filaAnim = false;
       if (panouLat) { const era = panouLat.cheie; panouLat.el.remove(); panouLat = null; if (era === cheie) return 'inchidere_panou'; }
       const s = SUP[cheie];
       if (!s) return I.nesimulat(cheie);
@@ -1323,6 +1324,20 @@
        amândouă gri (captura cu două animații). Numele formelor în afară de „Title 1” / „Subtitle 2” și categoria efectelor în afară
        de Entrance = [presupus] R12-8. */
     let animAles = null;
+    /* focul e în Animation Pane (un rând ales cu clic în panou); clicul pe diapozitiv îl scoate. Delete cu focul aici șterge
+       DOAR animația din secvență, nu forma (ca în PowerPoint real) */
+    let filaAnim = false;
+    function stergeAnimatie() {
+      const i = animIdx();
+      if (!D() || i < 0) return 'fara_efect';
+      schimba('stergere_animatie', () => { D().animatii.splice(i, 1); });
+      const n = D().animatii.length;
+      animAles = n ? Math.min(i, n - 1) : null;
+      if (n) sel = { d: M.activ, s: D().animatii[animAles].s, edit: false };
+      randuriAnimatii();
+      deseneaza();
+      return 'stergere_animatie';
+    }
     const NUME_FORMA = { titlu: 'Title', subtitlu: 'Subtitle', continut: 'Content Placeholder', text: 'Text Placeholder', caseta: 'TextBox', imagine: 'Picture', tabel: 'Table' };
     const numeForma = (f, s) => (f.tip === 'forma' ? f.forma : NUME_FORMA[f.tip] || 'Shape') + ' ' + (s + 1);
     function categorieEfect(ef) {
@@ -1399,7 +1414,7 @@
       if (/^(Close|Închidere)$/.test(v)) return panouLateral(panouLat.cheie);
       if (elx.getAttribute('aria-disabled') === 'true') return 'indisponibil';
       if (panouLat.cheie === 'panou.AnimationCustom') {
-        if (elx.__anim != null) { animAles = elx.__anim; const a = D().animatii[animAles]; if (a) { sel = { d: M.activ, s: a.s, edit: false }; deseneaza(); } return 'alegere_animatie'; }
+        if (elx.__anim != null) { animAles = elx.__anim; filaAnim = true; const a = D().animatii[animAles]; if (a) { sel = { d: M.activ, s: a.s, edit: false }; deseneaza(); } return 'alegere_animatie'; }
         if (v === 'Move Up') return mutaAnimatie(-1);
         if (v === 'Move Down') return mutaAnimatie(1);
         if (v === 'Play All' || v === 'Play From') return 'previzualizare';
@@ -1819,6 +1834,7 @@
     function sterge(inapoi) {
       if (notaActiva && D()) { if (!D().note) return 'fara_efect'; schimba('note', () => { D().note = D().note.slice(0, -1); }); return 'stergere_note'; }
       const f = formaSel();
+      if (filaAnim && panouLat && panouLat.cheie === 'panou.AnimationCustom') return stergeAnimatie();
       if (!sel) return M.panou === 'miniaturi' ? stergeDiapozitiv() : 'fara_efect';
       if (!sel.edit) {   // caseta aleasă ca obiect: Delete o șterge (o casetă de aspect goală rămâne — R11-8, [NEVERIFICAT])
         schimba('stergere_forma', () => { M.dia[sel.d].forme.splice(sel.s, 1); M.dia[sel.d].animatii = M.dia[sel.d].animatii.filter(x => x.s !== sel.s).map(x => (x.s > sel.s ? { s: x.s - 1, efect: x.efect } : x)); sel = null; });
@@ -1840,6 +1856,8 @@
       if (meniu && !meniu.contains(tg) && !(tg.closest && tg.closest('[data-lh-id-mso="SlideLayoutGallery"],[data-lh-id-mso="TableInsertGallery"],[data-lh-id-mso="SlideNewGallery"]'))) inchideMeniu();
       ancora = null;
       if (M.expunere || dialog || backstage) return null;
+      /* clicul în afara panoului (pe diapozitiv) mută focul de pe Animation Pane pe diapozitiv */
+      if (!(panouLat && panouLat.el.contains(tg))) filaAnim = false;
       const deTinut = () => setTimeout(() => { if (!dialog && !backstage) I.focus(); }, 0);
       if (unealta) {
         const u = unealta;

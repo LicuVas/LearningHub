@@ -1860,7 +1860,7 @@
     function sorteazaZona(f, q, antet, niv) {
       const r0 = antet ? q.r0 + 1 : q.r0, randuri = [];
       for (let r = r0; r <= q.r1; r++) {
-        const o = { k: niv.map(n => valoare(f, r, n.c)), cel: [], fmt: [] };
+        const o = { r, k: niv.map(n => valoare(f, r, n.c)), cel: [], fmt: [] };
         for (let c0 = q.c0; c0 <= q.c1; c0++) { o.cel.push(f.cel[adr(r, c0)]); o.fmt.push(f.fmt[adr(r, c0)]); }
         randuri.push(o);
       }
@@ -1869,7 +1869,10 @@
       schimba('sortare', () => {
         randuri.forEach((o, i) => o.cel.forEach((x, k) => {
           const ad = adr(r0 + i, q.c0 + k);
-          if (x) f.cel[ad] = x; else delete f.cel[ad];
+          /* formulele se mută ca la copiere: referințele relative se deplasează cu rândul (=A3*10 mutat din rândul 3 în 1 devine =A1*10);
+             altfel formula ar arăta spre celula greșită după sortare */
+          if (x && x.f && r0 + i !== o.r) f.cel[ad] = Object.assign(clona(x), { f: mutaFormula(x.f, r0 + i - o.r, 0) });
+          else if (x) f.cel[ad] = x; else delete f.cel[ad];
           if (o.fmt[k]) f.fmt[ad] = o.fmt[k]; else delete f.fmt[ad];
         }));
         f.sortare = niv.map(n => ({ c: n.c, desc: !!n.desc }));

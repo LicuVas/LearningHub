@@ -509,10 +509,19 @@
       M.clip = M.sel.slice(); M.taiat = !!taie;
       return taie ? 'decupare' : 'copiere';
     }
+    /* Windows (engleză): „The destination folder is a subfolder of the source folder.” — folderul nu se mută și nu se copiază
+       în el însuși sau într-un subfolder al lui; nimic nu se schimbă. Prin mesajul central (I.nesimulat), cu textul Windows. */
+    function subfolder() {
+      I.nesimulat('Mutare sau copiere');
+      const m = I.root.querySelector('[data-lh-nesimulat]:not([data-lh-tip])');
+      if (m) m.textContent = 'The destination folder is a subfolder of the source folder.';
+      return 'nesimulat';
+    }
     function lipeste() {
       if (!M.clip || M.cur === COS) return 'fara_efect';
       const d = M.cur, surse = M.clip.filter(p => M.F.has(p));
       if (!surse.length) return 'fara_efect';
+      if (surse.some(p => eDir(p) && (d === p || d.indexOf(p) === 0))) return subfolder();
       memoreaza(M.taiat ? 'Mutare' : 'Copiere');
       const noi = [];
       const pas = k => {
@@ -751,7 +760,8 @@
         else if (f === 'arbore') dst = tg.getAttribute('data-e-cale') || null;
         else if (f === 'desktop') { const a = laCos(); deseneaza(); return a; }
       }
-      if (!dst || M.sel.indexOf(dst) >= 0 || M.sel.some(p => eDir(p) && dst.indexOf(p) === 0)) { deseneaza(); return 'fara_efect'; }
+      if (!dst || M.sel.indexOf(dst) >= 0) { deseneaza(); return 'fara_efect'; }
+      if (M.sel.some(p => eDir(p) && dst.indexOf(p) === 0)) { deseneaza(); return subfolder(); }
       const clip = M.clip, taiat = M.taiat, cur = M.cur;
       M.clip = M.sel.slice(); M.taiat = !(e.ctrlKey); M.cur = dst;
       const a = lipeste();

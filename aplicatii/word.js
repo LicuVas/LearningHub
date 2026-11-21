@@ -449,6 +449,7 @@
       if (!areSel()) return 'fara_efect';
       const a = selMin(), b = Math.min(selMax(), maxCaret());
       M.clip = { text: textIntre(a, b), f: fmtIntre(a, b) };
+      griComenzi();
       return 'copiere';
     }
     function decupeaza() {
@@ -992,8 +993,7 @@
         const sp = zb.querySelector('.lh-ap-text');
         if (sp) sp.textContent = t;
       }
-      const sl = root.querySelector('[data-lh-tip="Slider"] [data-lh-tip="Thumb"]');
-      if (sl) sl.style.left = Math.round(47 + (M.zoom <= 100 ? (M.zoom - 100) / 90 * 47 : (M.zoom - 100) / 400 * 47)) + 'px';
+      const sl = root.querySelector('[data-lh-tip="Slider"] [data-lh-tip="Thumb"]');      if (sl) sl.style.left = Math.round(47 + (M.zoom <= 100 ? (M.zoom - 100) / 90 * 47 : (M.zoom - 100) / 400 * 47)) + 'px';
       /* butonul titlului: „<document>  -  Word”; fără document „Word” (scenarii_real/word-ctrl-w-nu-salva.json ›
          titlu_fereastra) — eticheta declarată = textul de pe ecran (§3) */
       if (BTN_TITLU) {
@@ -1003,6 +1003,7 @@
         if (sp) sp.textContent = nume;
       }
       griFaraDocument();
+      griComenzi();
     }
     /* Word fără document: comenzile panglicii sunt gri și fără efect; filele și File rămân active (Word real prin COM,
        runde/5/critic_probe/com_r5.json › activ_fara_document: Bold, Italic, FontSize, Paste, FileSave, FileSaveAs, FilePrint,
@@ -1028,6 +1029,18 @@
         if (fara && !i.disabled) { i.disabled = true; i.__griFara = true; }
         else if (!fara && i.__griFara) { i.disabled = false; i.__griFara = false; }
       });
+    }
+    /* Cut / Copy sunt active doar cu selecție (copiaza/decupeaza nu fac nimic altfel); Paste doar cu clipboard-ul aplicației
+       plin (lipeste). Starea din referință (Cut/Copy a=0 pe panglică) rămâne gri pe veci: aici se recalculează. Fără document
+       decide griFaraDocument, deci nu se atinge. Se apelează din actualizeazaPanglica, din copiaza și din meniuContextual. */
+    function griComenzi() {
+      if (!M.deschis) return;
+      const pune = (sel, on) => root.querySelectorAll(sel).forEach(x => {
+        x.classList.toggle('lh-ap-gri', !on);
+        if (on) x.removeAttribute('aria-disabled'); else x.setAttribute('aria-disabled', 'true');
+      });
+      pune('[data-lh-id-mso="Cut"], [data-lh-id-mso="Copy"], [data-lh-tip="MenuItem"][data-lh-eticheta="Cut"], [data-lh-tip="MenuItem"][data-lh-eticheta="Copy"]', areSel());
+      pune('[data-lh-id-mso="Paste"], [data-lh-eticheta="Paste"]', !!M.clip);
     }
     function actualizeaza() {
       deseneazaDoc();
@@ -1696,6 +1709,7 @@
       s.contextual = true;
       root.appendChild(s);
       strat = s;
+      griComenzi();
       return 'meniu_contextual';
     }
 
