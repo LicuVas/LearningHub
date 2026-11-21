@@ -20,6 +20,17 @@
   const par = p => { const q = p.replace(/\/$/, ''); const i = q.lastIndexOf('/'); return i < 0 ? '' : q.slice(0, i + 1); };
   const num = p => { const q = p.replace(/\/$/, ''); return q.slice(q.lastIndexOf('/') + 1); };
   const cu = p => num(p) + (eDir(p) ? '/' : '');
+  /* Acest PC (This PC) și unitățile. Implicit: C: (disc local) și E: (stick USB, „STICK (E:)”, ca în lecția m2-l09 / lectii/_sim/explorer-citire.js).
+     Unitate = { nume, stick?, arbore (relativ la rădăcina ei), detalii: { 'cale/relativa': ['dd.mm.yyyy hh:mm', 'N KB'] } }; c.unitati o înlocuiește. */
+  const PC = 'Acest PC';
+  const UNITATI_IMPLICITE = {
+    'C:': { nume: 'Disc local', arbore: ['Windows/', 'Windows/Media/'] },
+    'E:': { nume: 'STICK', stick: true,
+      arbore: ['Scoala/', 'Scoala/TIC/', 'Scoala/TIC/afis.png', 'Scoala/TIC/afis.docx', 'Scoala/TIC/orar.txt', 'Scoala/Muzica/', 'Scoala/Muzica/colind.mp3', 'Scoala/Muzica/colind.txt', 'Excursie/', 'Excursie/munte.jpg', 'Excursie/drumul.mp4'],
+      detalii: { 'Scoala/TIC/afis.png': ['12.11.2026 10:15', '245 KB'], 'Scoala/TIC/afis.docx': ['12.11.2026 10:20', '18 KB'], 'Scoala/TIC/orar.txt': ['10.11.2026 08:05', '1 KB'],
+        'Scoala/Muzica/colind.mp3': ['09.11.2026 17:40', '3.850 KB'], 'Scoala/Muzica/colind.txt': ['09.11.2026 17:42', '2 KB'],
+        'Excursie/munte.jpg': ['18.10.2026 12:31', '2.140 KB'], 'Excursie/drumul.mp4': ['18.10.2026 12:50', '48.320 KB'] } } };
+  const esteU = p => /^[A-Z]:\/$/.test(p);
 
   /* forme simple, desenate aici (nu sunt resurse Microsoft): ce lipsește din setul Fluent al proiectului */
   const FORME = {
@@ -33,6 +44,7 @@
     Închidere: '<path d="M5.5 5.5l9 9M14.5 5.5l-9 9" stroke="currentColor"/>',
     pc: '<rect x="3" y="4" width="14" height="9" rx="1" fill="#cfe3f7" stroke="currentColor" stroke-width=".9"/><path d="M7 16h6M10 13v3" stroke="currentColor"/>',
     disc: '<rect x="3" y="7.5" width="14" height="5.5" rx="1" fill="#e6e6e6" stroke="currentColor" stroke-width=".9"/><circle cx="14" cy="10.25" r=".9" fill="#2a8c2a"/>',
+    stick: '<rect x="3" y="8" width="14" height="5" rx="1" fill="#6C7A86" stroke="currentColor" stroke-width=".9"/><path d="M5 15.5h10" stroke="currentColor"/>',
     casa: '<path d="M3.5 9.5 10 4l6.5 5.5V16H12v-4H8v4H3.5z" fill="none" stroke="currentColor" stroke-width=".9"/>',
     jos: '<path d="M6 8l4 4 4-4" fill="none" stroke="currentColor"/>',
     dreapta: '<path d="M8 6l4 4-4 4" fill="none" stroke="currentColor"/>',
@@ -163,39 +175,45 @@
     const D = I.date, root = I.root, scenariu = !!(I.opt && I.opt.scenariu);
     root.classList.add('lh-ap-explorer');
     c = c || {};
+    const UNIT = c.unitati || UNITATI_IMPLICITE;
+    const litU = p => p.slice(0, 2);
+    const stickU = p => !!((UNIT[litU(p)] || {}).stick);
+    const etichU = p => ((UNIT[litU(p)] || {}).nume || 'Disc local') + ' (' + litU(p) + ')';
+    const unitatiCale = () => Object.keys(UNIT).map(l => l + '/');
     const set = c.setari || {};
     const ic = (k, cls) => {
       const f = (D.icoane || {})[k];
       const inner = f ? f.map(d => '<path d="' + d + '" fill="currentColor"/>').join('') : (FORME[k] || '');
       return '<svg class="lh-ap-e-ic' + (cls ? ' ' + cls : '') + '" viewBox="0 0 20 20" aria-hidden="true">' + inner + '</svg>';
     };
-    const icFisier = p => eDir(p) ? ic('dosar') : /^(png|jpe?g|bmp|gif)$/i.test(ext(num(p))) ? ic('imagine') : /^txt$/i.test(ext(num(p))) ? ic('text') : ic('document');
+    const icFisier = p => esteU(p) ? ic(stickU(p) ? 'stick' : 'disc') : eDir(p) ? ic('dosar') : /^(png|jpe?g|bmp|gif)$/i.test(ext(num(p))) ? ic('imagine') : /^txt$/i.test(ext(num(p))) ? ic('text') : ic('document');
 
     /* ---------------------------------------------------------------- modelul: sistemul de fișiere virtual */
     const F = new Map();
     const PARINTE = (c.parinte || 'Documente') + '/';
     const W = PARINTE + (c.folder || 'Exercitii') + '/';
-    const pune = (dir, arb, cont) => {
+    const pune = (dir, arb, cont, det) => {
       F.set(dir, {});
       (arb || []).forEach(n => {
         const p = dir + n;
         const parti = p.split('/');
         for (let k = 1; k < parti.length - (eDir(p) ? 1 : 0); k++) { const d = parti.slice(0, k).join('/') + '/'; if (!F.has(d)) F.set(d, {}); }
-        F.set(p, { continut: cont && cont[n] });
+        F.set(p, Object.assign({ continut: cont && cont[n] }, det && det[n] ? { data: det[n][0], marime: det[n][1] } : {}));
       });
     };
     F.set(PARINTE, {});
     /* fără `arbore` (pagina nu dă conținut: poligonul gol, oracolele O5/O9) = un folder de lucru mic, ca în lecțiile de clasa a V-a;
        `arbore: []` = folder gol (scenariul explorer_folder_nou) */
     pune(W, c.arbore || (c.folder ? [] : ['Desene/', 'Proiect/', 'harta.png', 'notite.txt', 'tema.docx']), c.continut);
+    Object.keys(UNIT).forEach(l => { const u = UNIT[l]; pune(l + '/', u.arbore || [], u.continut, u.detalii); });
     if (c.sursa_lipirii) pune(PARINTE + c.sursa_lipirii.folder + '/', c.sursa_lipirii.arbore, c.sursa_lipirii.continut);
     (c.foldere_alaturate || []).forEach(x => pune(PARINTE + x.folder + '/', x.arbore, x.continut));
     const srt = c.sortare || {};
-    const M = { F, cur: W, sel: [], ancora: null, clip: null, taiat: false, cos: [], meniu: null, dlg: null, dialog: null, edit: null,
+    const M = { F, cur: c.start === 'PC' ? PC : W, sel: [], ancora: null, clip: null, taiat: false, cos: [], meniu: null, dlg: null, dialog: null, edit: null,
       ext: !!set.extensii_vizibile, ascunse: false, casete: false, compact: false, panouNav: true,
       panouDreapta: set.panou_examinare === false ? null : 'examinare', vedere: 'Detalii',
       sortare: { col: srt.coloana || 'Nume', desc: srt.directie === 'descrescator' }, istoric: [], refacere: [], inapoi: [], inainte: [],
-      cautare: '', editAdresa: false, deskSel: false };
+      cautare: '', editAdresa: false, adrTxt: null, deskSel: false };
     /* runda 23 (A22-1, cererea benzii Windows): montat într-o fereastră străină (opt.incadrat), Explorer-ul nu-și desenează bara de
        titlu (rândul filelor + Minimizare / Maximizare / Închidere) și nici desktopul cu Coșul: le are gazda. Umple corpul gazdei. */
     const incadrat = !!(I.opt && I.opt.incadrat);
@@ -204,6 +222,7 @@
 
     const copii = d => {
       if (d === COS) return M.cos.map(e => e.p);
+      if (d === PC) return unitatiCale().filter(p => M.F.has(p));
       const k = [...M.F.keys()].filter(p => p !== d && par(p) === d);
       const cmp = (a, b) => {
         let r = 0;
@@ -217,8 +236,12 @@
       const q = M.cautare.trim().toLowerCase();
       return copii(d).filter(p => !q || num(p).toLowerCase().indexOf(q) >= 0);
     };
-    const afis = p => { const n = num(p); return eDir(p) || M.ext || !ext(n) ? n : baza(n); };
+    const afis = p => { if (esteU(p)) return etichU(p); const n = num(p); return eDir(p) || M.ext || !ext(n) ? n : baza(n); };
+    /* bara de adresă ca text (cum o scrie Windows, cu \): Acest PC · E:\Excursie · Documente\Clasa a V-a */
+    const cuBara = p => p === PC ? PC : p === COS ? 'Coș de reciclare' : esteU(p) ? litU(p) + '\\' : p.replace(/\/$/, '').replace(/\//g, '\\');
+    const nmSeg = p => esteU(p) ? etichU(p) : num(p);
     const tipText = p => {
+      if (esteU(p)) return stickU(p) ? 'Unitate amovibilă' : 'Disc local';
       const t = (D.zona_continut || {}).tipuri || {};
       if (eDir(p)) return t['/'] || '';
       const x = ext(num(p)).toLowerCase();
@@ -235,13 +258,17 @@
 
     I.stare = () => {
       const k = copii(W);
-      const vaz = M.cur === W ? vizibile(W) : k;
       return {
-        nume_fisiere: k.map(cu), ordine_afisata: vaz.map(cu),
+        nume_fisiere: k.map(cu), ordine_afisata: vizibile(M.cur).map(cu),
         in_cos: M.cos.filter(e => par(e.p) === W).map(e => cu(e.p)),
         continut_fisiere: Object.fromEntries(k.filter(p => M.F.get(p).continut !== undefined).map(p => [num(p), M.F.get(p).continut])),
         dialog: M.dialog ? JSON.parse(JSON.stringify(M.dialog)) : null,
         cale_curenta: M.cur, selectie: M.sel.map(cu),
+        /* starea barei de adresă și a listei, așa cum se văd: calea cu \, caseta (clicată / scrisă), numele afișate, selecția cu numele afișat */
+        cale_afisata: cuBara(M.cur),
+        bara_adresa: { clicata: !!M.editAdresa, scris: M.editAdresa ? (M.adrTxt != null ? M.adrTxt : cuBara(M.cur)) : null },
+        elemente_afisate: vizibile(M.cur).map(afis), selectie_afisata: M.sel.map(afis),
+        extensii_vizibile: !!M.ext, elemente_ascunse: !!M.ascunse,
         /* A22-1: titlul ferestrei, pentru bara de titlu a gazdei — „<folder> - Explorer” (uia_explorer.json › explorer_fereastra ›
            ferestre[0].arbore.nume = „sesiune - Explorer”); doar la montare, ca starea din poligon / O4 să rămână aceeași */
         ...(incadrat ? { titlu: fol() + ' - Explorer' } : {})
@@ -251,7 +278,7 @@
 
     /* ---------------------------------------------------------------- desenul */
     const atr = o => Object.keys(o).filter(k => o[k] != null && o[k] !== false).map(k => o[k] === true ? k : k + '="' + esc(o[k]) + '"').join(' ');
-    const fol = () => M.cur === COS ? 'Coș de reciclare' : num(M.cur);
+    const fol = () => M.cur === COS ? 'Coș de reciclare' : M.cur === PC ? PC : esteU(M.cur) ? etichU(M.cur) : num(M.cur);
     const sablon = (s, f, p) => String(s || '').replace('{folder}', f).replace('{parinte}', p);
     function htmlFereastra() {
       const fb = D.fereastra.butoane || [];
@@ -259,7 +286,8 @@
       const tb = fb.filter(b => b.t === 'Button');
       const wR = D.fereastra.w;
       const fl = D.file, nav = D.navigare.butoane, cb = D.bara_comenzi;
-      const folder = fol(), parinte = M.cur === COS ? 'Desktop' : (num(par(M.cur)) || 'Acest PC');
+      const pa = par(M.cur), folder = fol();
+      const parinte = M.cur === COS || M.cur === PC ? 'Desktop' : esteU(M.cur) ? PC : pa ? nmSeg(pa) : PC;
       const sel = M.sel.length > 0, poateLipi = !!M.clip && M.cur !== COS;
       const activ = { Decupare: sel, Copiere: sel, Lipire: poateLipi, Redenumire: M.sel.length === 1 && M.cur !== COS, Partajați: sel, Ștergere: sel };
       const navId = { backButton: 'inapoi', forwardButton: 'inainte', upButton: 'sus', refreshButton: 'reimprospatare' };
@@ -268,7 +296,7 @@
       if (sist) h += '<div class="lh-ap-e-sistem" ' + atr({ 'data-lh-tip': 'MenuItem', 'data-lh-eticheta': sist.e, 'aria-label': sist.e }) + '></div>';
       h += '<div class="lh-ap-e-file" data-lh-suprafata="file_fereastra" role="tablist">' +
         '<div class="lh-ap-e-fila" role="tab" data-lh-selectat ' + atr({ 'data-lh-tip': fl.fila.t, 'data-lh-eticheta': folder, 'data-lh-tinta': 'fila', 'data-lh-id': folder }) + '>' +
-        ic(M.cur === COS ? 'cos' : 'fila') + '<span class="lh-ap-e-ft">' + esc(folder) + '</span>' +
+        ic(M.cur === COS ? 'cos' : M.cur === PC ? 'pc' : 'fila') +'<span class="lh-ap-e-ft">' + esc(folder) + '</span>' +
         '<button class="lh-ap-e-fila-x" ' + atr({ 'data-lh-tip': fl.inchide.t, 'data-lh-id-mso': fl.inchide.id, 'aria-label': fl.inchide.e, 'data-lh-eticheta': fl.inchide.e, 'data-lh-tinta': 'bara_titlu', 'data-lh-id': fl.inchide.e }) + '>' + ic('Închidere') + '</button></div>' +
         '<button class="lh-ap-e-adauga" ' + atr({ 'data-lh-tip': fl.adauga.t, 'data-lh-id-mso': fl.adauga.id, 'aria-label': fl.adauga.e, 'data-lh-eticheta': fl.adauga.e, 'data-lh-tinta': 'bara_titlu', 'data-lh-id': fl.adauga.e }) + '>' +
         '<svg class="lh-ap-e-ic" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 4.5v11M4.5 10h11" stroke="currentColor"/></svg></button></div>';
@@ -282,9 +310,9 @@
       const A = D.adresa;
       h += '</div><div class="lh-ap-e-adr" data-lh-suprafata="bara_adresa"><div class="lh-ap-e-adr-edit" ' + atr({ 'data-lh-tip': A.edit.t, 'data-lh-eticheta': A.edit.e, 'aria-label': A.edit.e, 'data-lh-tinta': 'adresa' }) + '></div><div class="lh-ap-e-crumbs">' +
         '<button class="lh-ap-e-cr lh-ap-e-cr0" ' + atr({ 'data-lh-tip': A.prima.t, 'data-lh-id-mso': A.prima.id, 'aria-label': A.prima.e, 'data-lh-eticheta': A.prima.e, 'data-lh-tinta': 'adresa', 'data-lh-id': '' + A.prima.e }) + '>' + ic(M.cur === COS ? 'cos' : 'pc') + '<span aria-hidden="true">' + ic('dreapta') + '</span></button>';
-      const seg = M.cur === COS ? [COS] : M.cur.split('/').filter(Boolean).map((s, k, a) => a.slice(0, k + 1).join('/') + '/');
-      seg.forEach(p => { h += '<button class="lh-ap-e-cr" ' + atr({ 'data-lh-tip': 'SplitButton', 'data-lh-eticheta': num(p), 'data-lh-tinta': 'adresa', 'data-lh-id': p }) + '><span>' + esc(num(p)) + '</span><span aria-hidden="true">' + ic('dreapta') + '</span></button>'; });
-      h += '</div>' + (M.editAdresa ? '<input class="lh-ap-e-adr-in" aria-label="' + esc(A.edit.e) + '" value="' + esc(M.cur.replace(/\/$/, '').replace(/\//g, '\\')) + '">' : '') + '</div>';
+      const seg = M.cur === COS ? [COS] : M.cur === PC ? [] : M.cur.split('/').filter(Boolean).map((s, k, a) => a.slice(0, k + 1).join('/') + '/');
+      seg.forEach(p => { h += '<button class="lh-ap-e-cr" ' + atr({ 'data-lh-tip': 'SplitButton', 'data-lh-eticheta': nmSeg(p), 'data-lh-tinta': 'adresa', 'data-lh-id': p }) + '><span>' + esc(nmSeg(p)) + '</span><span aria-hidden="true">' + ic('dreapta') + '</span></button>'; });
+      h += '</div>' + (M.editAdresa ? '<input class="lh-ap-e-adr-in" aria-label="' + esc(A.edit.e) + '" value="' + esc(M.adrTxt != null ? M.adrTxt : cuBara(M.cur)) + '">' : '') + '</div>';
       const C = D.cautare.edit, ce = sablon(C.sablon || C.e, folder, parinte);
       h += '<div class="lh-ap-e-caut" data-lh-suprafata="cautare"><div ' + atr({ 'data-lh-tip': C.t, 'data-lh-eticheta': ce, 'data-lh-tinta': 'cautare' }) + '><input class="lh-ap-e-caut-in" aria-label="' + esc(ce.trim()) + '" placeholder="' + esc(ce.trim()) + '" value="' + esc(M.cautare) + '"></div></div></div>';
       h += '<div class="lh-ap-e-sep"></div><div class="lh-ap-e-cmdw"><div class="lh-ap-e-cmd" data-lh-suprafata="bara_comenzi">';
@@ -306,7 +334,7 @@
       const P = D.panou_navigare, el = P.elemente || [];
       const fix = el.filter(e => !e.ascuns && e.nivel === 1 && e.in_afara_ecranului && !/^Rețea$/.test(e.e));   // Acasă, Galerie (deasupra derulării în captură)
       const pc = el.find(e => e.e && !e.ascuns && e.nivel === 1 && e.extins);
-      const disc = pc ? el.filter(e => e.nivel === 2 && !e.ascuns) : [];
+      const disc = pc ? unitatiCale() : [];
       const retea = el.find(e => e.e === 'Rețea');
       const ales = M.cur === COS ? null : M.cur;
       const nod = (eticheta, tinta, nivel, icon, aleseste, cale) => {
@@ -321,8 +349,8 @@
       h += nod(num(PARINTE), num(PARINTE), 1, ic('dosar'), ales === PARINTE, PARINTE);
       copii(PARINTE).filter(eDir).forEach(p => { h += nod(num(p), num(p), 2, ic('dosar'), ales === p, p); });
       h += '<div class="lh-ap-e-nod-sep"></div>';
-      if (pc) h += nod(pc.e, pc.e, 1, ic('pc'));
-      disc.forEach(e => { h += nod(e.e, e.e, 2, ic('disc')); });
+      if (pc) h += nod(pc.e, pc.e, 1, ic('pc'), ales === PC, PC);
+      disc.forEach(d => { const et = etichU(d); h += nod(et, et, 2, ic(stickU(d) ? 'stick' : 'disc'), ales === d, d); });
       if (retea) h += nod(retea.e, retea.e, 1, ic('Rețea'));
       return h + '</div>';
     }
@@ -344,13 +372,13 @@
       lp.forEach(p => {
         const fel = M.cur === COS ? 'cos' : 'lista', nm = num(p);
         const ales = M.sel.indexOf(p) >= 0, taiat = M.taiat && M.clip && M.clip.indexOf(p) >= 0;
-        const eti = afis(p);
+        const eti = afis(p), drv = esteU(p) || M.cur === PC;
         let nume;
         if (M.edit === p) nume = '<input class="lh-ap-e-ren" value="' + esc(eti) + '" aria-label="Nume">';
         else nume = '<span>' + esc(eti) + '</span>';
         h += '<div class="lh-ap-e-rand' + (taiat ? ' lh-ap-e-taiat' : '') + '" role="listitem" ' + atr({ 'data-lh-tip': 'ListItem', 'data-lh-eticheta': eti, 'data-lh-tinta': fel, 'data-lh-id': nm, 'data-lh-selectat': ales }) + '>' +
           '<span class="lh-ap-e-nume" data-e-nume>' + (M.casete ? '<span aria-hidden="true">' + (ales ? ic('bifa') : '<svg class="lh-ap-e-ic" viewBox="0 0 20 20" aria-hidden="true"><rect x="4" y="4" width="12" height="12" fill="none" stroke="currentColor"/></svg>') + '</span>' : '') + icFisier(p) + nume + '</span>' +
-          '<span class="lh-ap-e-c1">' + esc((M.F.get(p) || {}).data || Z.data_exemplu || '') + '</span><span class="lh-ap-e-c2">' + esc(tipText(p)) + '</span><span class="lh-ap-e-c3">' + (eDir(p) ? '' : esc(Z.dimensiune_exemplu || '')) + '</span></div>';
+          '<span class="lh-ap-e-c1">' + (drv ? '' : esc((M.F.get(p) || {}).data || Z.data_exemplu || '')) + '</span><span class="lh-ap-e-c2">' + esc(tipText(p)) + '</span><span class="lh-ap-e-c3">' + (eDir(p) || drv ? '' : esc((M.F.get(p) || {}).marime || Z.dimensiune_exemplu || '')) + '</span></div>';
       });
       return h + '</div></div>';
     }
@@ -363,7 +391,7 @@
     }
     function htmlStare() {
       const S = D.bara_stare, n = vizibile(M.cur).length;
-      const cuv = S.numar.cuvant_plural || '';
+      const cuv = M.cur === PC ? 'unități' : (S.numar.cuvant_plural || '');
       const txt = n + ' ' + cuv;   // forma la singular nu e în referință (R15-5): „1 elemente” rămâne cum ar scrie șablonul
       let h = '<div class="lh-ap-e-stare" data-lh-suprafata="bara_stare" aria-label="' + esc(S.eticheta || '') + '"><span class="lh-ap-e-nr" ' + atr({ 'data-lh-tip': S.numar.t, 'data-lh-id-mso': S.numar.id, 'data-lh-eticheta': txt }) + '>' + esc(txt) + '</span><div class="lh-ap-e-moduri" role="radiogroup">';
       (S.moduri || []).forEach(m => {
@@ -487,17 +515,19 @@
       if (!tg || !tg.classList || !tg.classList.contains('lh-ap-e-caut-in') || M.cautare === tg.value) return;
       M.cautare = tg.value; M.cautareFocus = true; deseneazaLista();
     });
+    /* ce scrie elevul în caseta de adresă (calea), păstrat până la Enter / Esc: starea „bara_adresa.scris” */
+    root.addEventListener('input', e => { const tg = e.target; if (tg && tg.classList && tg.classList.contains('lh-ap-e-adr-in')) M.adrTxt = tg.value; });
 
     /* ---------------------------------------------------------------- operațiile */
     const dialog = (cheie, titlu, intrebare, butoane, fa) => { M.dlg = { cheie, titlu, intrebare, butoane, fa }; M.dialog = { titlu, intrebare, butoane: butoane.slice(), apasat: null }; M.meniu = null; };
     function navigheaza(p, istoric) {
-      if (!p || (p !== COS && !M.F.has(p))) return 'fara_efect';
+      if (!p || (p !== COS && p !== PC && !M.F.has(p))) return 'fara_efect';
       if (istoric !== false && p !== M.cur) { M.inapoi.push(M.cur); M.inainte.length = 0; }
-      M.cur = p; M.sel = []; M.ancora = null; M.meniu = null; M.cautare = ''; M.edit = null; M.editAdresa = false;
+      M.cur = p; M.sel = []; M.ancora = null; M.meniu = null; M.cautare = ''; M.edit = null; M.editAdresa = false; M.adrTxt = null;
       return 'navigare';
     }
     function folderNou() {
-      if (M.cur === COS) return 'fara_efect';
+      if (M.cur === COS || M.cur === PC) return 'fara_efect';
       memoreaza('Nou');
       const n = liber(M.cur, 'Folder nou', true);
       M.F.set(M.cur + n + '/', {});
@@ -518,7 +548,7 @@
       return 'nesimulat';
     }
     function lipeste() {
-      if (!M.clip || M.cur === COS) return 'fara_efect';
+      if (!M.clip || M.cur === COS || M.cur === PC) return 'fara_efect';
       const d = M.cur, surse = M.clip.filter(p => M.F.has(p));
       if (!surse.length) return 'fara_efect';
       if (surse.some(p => eDir(p) && (d === p || d.indexOf(p) === 0))) return subfolder();
@@ -577,6 +607,7 @@
       return 'redenumire';
     }
     function laCos() {
+      if (M.cur === PC) return 'fara_efect';   // unitățile nu se mută în Coș
       if (!M.sel.length || M.cur === COS) return 'fara_efect';
       memoreaza('Ștergere');
       M.sel.forEach(p => { if (!M.F.has(p)) return; const v = subarbore(p).map(q => [q, M.F.get(q)]); v.forEach(x => M.F.delete(x[0])); M.cos.push({ p, v }); });
@@ -629,6 +660,7 @@
     }
     const caleDin = (fel, v) => {
       if (fel === 'cos') { const e = M.cos.find(x => num(x.p) === v); return e ? e.p : null; }
+      if (M.cur === PC) return M.F.has(v + '/') ? v + '/' : null;
       const p = M.cur + v;
       return M.F.has(p + '/') ? p + '/' : (M.F.has(p) ? p : null);
     };
@@ -648,6 +680,7 @@
       return [r.left, r.bottom + 2];
     }
     function comanda(nume, ev) {
+      if (M.cur === PC && /^(Decupare|Copiere|Lipire|Redenumire|Ștergere)$/.test(nume)) return 'fara_efect';
       switch (nume) {
         case 'Nou': { const [x, y] = subButon('Nou'); deschideMeniu('meniu_nou', x, y); return 'deschide_meniu'; }
         case 'Sortați': { const [x, y] = subButon('Sortați'); deschideMeniu('meniu_sortare', x, y); return 'deschide_meniu'; }
@@ -801,13 +834,14 @@
         case 'nav':
           if (v === 'inapoi' && M.inapoi.length) { M.inainte.push(M.cur); a = navigheaza(M.inapoi.pop(), false); }
           else if (v === 'inainte' && M.inainte.length) { M.inapoi.push(M.cur); a = navigheaza(M.inainte.pop(), false); }
+          else if (v === 'sus' && esteU(M.cur)) a = navigheaza(PC);
           else if (v === 'sus') a = M.cur === COS ? 'fara_efect' : (par(M.cur) ? navigheaza(par(M.cur)) : I.nesimulat(ev && ev.target && ev.target.closest('[data-lh-eticheta]') ? ev.target.closest('[data-lh-eticheta]').getAttribute('data-lh-eticheta') : 'sus'));
           else if (v === 'reimprospatare') a = 'reimprospatare';
           break;
         case 'adresa':
-          if (v && v !== D.adresa.prima.e) a = navigheaza(v);
-          else if (v) a = I.nesimulat(v);
-          else { M.editAdresa = true; a = 'editare_adresa'; }
+          if (v === D.adresa.prima.e) a = navigheaza(PC);
+          else if (v) a = navigheaza(v);
+          else { M.editAdresa = true; M.adrTxt = null; a = 'editare_adresa'; }
           break;
         case 'cautare': M.cautareFocus = true; a = 'cautare'; break;
         case 'bara_comenzi': case 'meniu_derulant':
@@ -870,7 +904,8 @@
           if (e.key === 'Enter') {
             e.preventDefault();
             const v = tg.value.trim().replace(/\\/g, '/').replace(/\/?$/, '/');
-            const p = [...M.F.keys()].find(q => eDir(q) && (q === v || q.toLowerCase().endsWith('/' + v.toLowerCase()) || q.toLowerCase() === v.toLowerCase()));
+            /* Windows: „Acest PC” = rădăcina; altfel potrivire exactă (E:\Excursie), apoi după sfârșitul căii (regula veche) */
+            const p = /^(acest pc|this pc)\/$/i.test(v) ? PC : ([...M.F.keys()].find(q => eDir(q) && q === v) || [...M.F.keys()].find(q => eDir(q) && (q.toLowerCase().endsWith('/' + v.toLowerCase()) || q.toLowerCase() === v.toLowerCase())));
             M.editAdresa = false;
             const a = p ? navigheaza(p) : 'fara_efect';
             deseneaza(); return a;
@@ -915,8 +950,8 @@
         case 'ctrl_d': a = laCos(); break;
         case 'ctrl_shift_n': a = folderNou(); break;
         case 'ctrl_e': case 'ctrl_f': M.cautareFocus = true; a = 'cautare'; break;
-        case 'ctrl_l': M.editAdresa = true; a = 'editare_adresa'; break;
-        case 'tasta_f4': M.editAdresa = true; a = 'editare_adresa'; break;
+        case 'ctrl_l': M.editAdresa = true; M.adrTxt = null; a = 'editare_adresa'; break;
+        case 'tasta_f4': M.editAdresa = true; M.adrTxt = null; a = 'editare_adresa'; break;
         case 'tasta_f5': a = 'reimprospatare'; break;
         case 'tasta_f2': if (M.sel.length === 1 && M.cur !== COS) { M.edit = M.sel[0]; a = 'redenumire'; } else a = 'fara_efect'; break;
         case 'tasta_delete': a = e.shiftKey ? stergeDefinitiv() : (M.cur === COS ? I.nesimulat('Ștergere') : laCos()); break;
