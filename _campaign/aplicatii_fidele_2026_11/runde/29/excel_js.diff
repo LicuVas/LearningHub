@@ -1,0 +1,509 @@
+--- C:/00/Projects/LearningHub_fidel/_campaign/aplicatii_fidele_2026_11/runde/29/inainte/excel.js	2026-11-21 07:05:00.810059400 +0200
++++ C:/00/Projects/LearningHub_fidel/aplicatii/excel.js	2026-11-21 07:37:49.538135000 +0200
+@@ -267,7 +267,8 @@
+     /* lat = lățimile coloanelor (px la 100 %; lipsă = 64, uia_excel.json › zona_document), latSet = puse de elev / lecție */
+     /* bord = bordurile, ca MUCHII comune între celule (Excel real: No Border pe B2 șterge și B1.jos, A2.dreapta — com_r7c.json ›
+        none_border): 'h,r,c' = linia de SUS a celulei (r, c), 'v,r,c' = linia din STÂNGA ei; valoarea: subtire | groasa | dubla */
+-    function foaieNoua(nume) { return { nume, cel: {}, fmt: {}, merge: [], lat: {}, latSet: {}, bord: {}, sel: { activa: { r: 0, c: 0 }, zone: [{ r0: 0, c0: 0, r1: 0, c1: 0 }] } }; }
++    /* culoare = culoarea filei (Tab Color, runda 29: '#RRGGBB' sau null) */
++    function foaieNoua(nume) { return { nume, cel: {}, fmt: {}, merge: [], lat: {}, latSet: {}, bord: {}, culoare: null, sel: { activa: { r: 0, c: 0 }, zone: [{ r0: 0, c0: 0, r1: 0, c1: 0 }] } }; }
+     const F = () => M.foi[M.fi];
+     function puneStart(f, celule, format, latimi) {
+       /* latimi (CONȚINUT, opțional): { A: 120, C: 90 } = lățimea coloanei în px la 100 % */
+@@ -289,7 +290,7 @@
+     }
+     /* parametrii de CONȚINUT (lecția alege foaia, nu interfața): celule, selectie, format (formatul `start` al scenariilor),
+        plus foi: [{nume, celule, format}] și nume (registrul deja salvat) */
+-    if (Array.isArray(c.foi) && c.foi.length) c.foi.forEach((x, i) => { const f = foaieNoua(String(x.nume || 'Sheet' + (i + 1))); puneStart(f, x.celule, x.format, x.latimi); M.foi.push(f); });
++    if (Array.isArray(c.foi) && c.foi.length) c.foi.forEach((x, i) => { const f = foaieNoua(String(x.nume || 'Sheet' + (i + 1))); puneStart(f, x.celule, x.format, x.latimi); if (/^#?[0-9a-f]{6}$/i.test(String(x.culoare || ''))) f.culoare = '#' + String(x.culoare).replace('#', '').toUpperCase(); M.foi.push(f); });
+     else { const tab = ((Z.file_foi || {}).c || []).find(x => x.t === 'TabItem'); M.foi.push(foaieNoua(tab ? tab.e : 'Sheet1')); puneStart(M.foi[0], c.celule, c.format, c.latimi); }
+     if (c.selectie) {
+       const parti = String(c.selectie).split(',').map(zonaDin).filter(Boolean);
+@@ -303,6 +304,38 @@
+     /* ferestrele de salvare ale Office (X8, m1-l03): Ctrl+S pe registru nou și întrebarea de la închidere */
+     const SALVARE_NOUA = 'dialog.save_this_file', INTREBARE_INCHIDERE = 'dialog.save_your_changes_to_this_file';
+     let BOOK = (Z.registru || {}).e || 'Book1';
++    /* runda 29 (G25-1): întrebarea la ștergerea unei foi cu date și refuzul la singura foaie. NU sunt în uia_excel.json:
++       DLG_STERGE e desenată după captura lecției viii/m1-l03 › img/confirma-stergerea.webp (titlul verde „Microsoft Excel”,
++       triunghiul de avertizare, textul pe două rânduri, Delete — butonul cu focusul — și Cancel jos-dreapta; locurile = pixelii
++       capturii, fereastra centrată la 1366×768); DLG_REFUZ are textul mesajului Excel, fără captură [DEDUS]. Forma arborelui
++       = a ferestrelor „Microsoft Excel” din referință (dialog.eroare_formula). Capturile reale: de_verificat R29-1, R29-2 */
++    /* DLG_NUME (unghiul stare_finala_erori): redenumirea cu numele altei foi (m1-l03:226-229: „Încearcă în fereastră și citește
++       mesajul”; răspunsul lecției: „Că numele e deja luat de altă foaie”) — textul mesajului Excel 365, fără captură [DEDUS: R29-7] */
++    const DLG_STERGE = 'dialog.sterge_foaia', DLG_REFUZ = 'dialog.foaie_unica', DLG_NUME = 'dialog.nume_foaie_existent';
++    const TEXT_NUME = 'That name is already taken. Try a different one.';
++    const TEXT_STERGE = 'Microsoft Excel will permanently delete this sheet.\nDo you want to continue?';
++    const TEXT_REFUZ = 'A workbook must contain at least one visible worksheet.\n\nTo hide, delete, or move the selected sheet(s), you must first insert a new sheet or unhide a sheet that is already hidden.';
++    function mesajExcel(r, text, rt, butoane) {
++      const ix = r[0] + 7, iy = r[1] + 30, iw = r[2] - 14, ih = r[3] - 38;
++      return { t: 'Window', e: 'Microsoft Excel', r, c: [
++        { t: 'Pane', e: '', r: [ix, iy, iw, ih], c: [{ t: 'Window', e: 'Microsoft Excel', r: [ix, iy, iw, ih], c: [
++          { t: 'Text', e: 'Microsoft Excel', r: [r[0] + 31, r[1] + 38, 160, 28] },
++          { t: 'Image', e: 'Warning Icon', r: [r[0] + 40, r[1] + 98, 34, 34] },
++          { t: 'Text', e: text, r: rt }].concat(butoane) }] },
++        { t: 'TitleBar', e: '', r: [ix, r[1] + 2, iw, 28], c: [{ t: 'Button', e: 'Închidere', r: [r[0] + r[2] - 42, r[1], 35, 30] }] }] };
++    }
++    if (!SUP[DLG_STERGE]) {
++      SUP[DLG_STERGE] = mesajExcel([455, 270, 456, 214], TEXT_STERGE, [545, 366, 330, 42],
++        [{ t: 'Button', e: 'Delete', ta: 'ALT+D', r: [714, 435, 79, 27] }, { t: 'Button', e: 'Cancel', r: [805, 435, 79, 27] }]);
++      SUP[DLG_REFUZ] = mesajExcel([418, 262, 530, 236], TEXT_REFUZ, [508, 360, 400, 80],
++        [{ t: 'Button', e: 'OK', r: [839, 448, 79, 27] }]);
++      SUP[DLG_NUME] = mesajExcel([470, 290, 426, 180], TEXT_NUME, [555, 392, 310, 22],
++        [{ t: 'Button', e: 'OK', r: [787, 432, 79, 27] }]);
++      [DLG_STERGE, DLG_REFUZ, DLG_NUME].forEach(k => { date.dialoguri[k] = { titlu: 'Microsoft Excel', file: [{ s: k, fila: null }] }; });
++    }
++    const MESAJ_FOAIE = { [DLG_STERGE]: TEXT_STERGE, [DLG_REFUZ]: TEXT_REFUZ, [DLG_NUME]: TEXT_NUME };
++    /* triunghiul de avertizare al ferestrelor de mai sus (desen propriu, nu o resursă Microsoft — I7) */
++    const SVG_AVERT = '<svg viewBox="0 0 34 34" width="34" height="34" aria-hidden="true"><path d="M17 3.5 31.5 30h-29z" fill="#fcd77e" stroke="#c98a1b" stroke-width="1.6" stroke-linejoin="round"/><path d="M15.6 12h2.8l-.5 10h-1.8z" fill="#3b3b3b"/><circle cx="17" cy="25.3" r="1.6" fill="#3b3b3b"/></svg>';
+ 
+     /* ---- valorile (recalculare la cerere, cu ciclu → 0) */
+     let cache = null, matC = null, vcache = null;
+@@ -601,7 +634,7 @@
+       Object.keys(f.lat || {}).forEach(k => { latimi[colNume(+k)] = f.lat[k]; });
+       Object.keys(INALT).forEach(r => { inaltimi[String(+r + 1)] = INALT[r]; });
+       return { celule: cel, format_celule: fmt, latimi_coloane: latimi, inaltimi_randuri: inaltimi, selectie: selectieStare(), nume_fisier: M.nume, fereastra_mesaj: M.mesaj,
+-        ramane_in_editare: !!M.edit, foi: M.foi.map(x => x.nume), foaie_activa: F().nume, dialog: dialogStare(),
++        ramane_in_editare: !!M.edit, foi: M.foi.map(x => x.nume), foaie_activa: F().nume, culori_file: culoriFile(), dialog: dialogStare(),
+         pagina_backstage: backstage ? backstage.pagina : null, titlu_fereastra: titlu(),
+         grafice: stareGrafice(), grafic_activ: !!M.gr, grafic_element_ales: M.gr ? (M.gr.parte === 'titlu' ? 'Chart Title' : 'Chart Area') : null,
+         ...stareGraficPrim(),
+@@ -613,8 +646,12 @@
+     function dialogStare() {
+       if (!dialog) return null;
+       if (dialog.baza === INTREBARE_INCHIDERE) return { titlu: '', intrebare: (date.dialoguri[dialog.baza] || {}).titlu || '', butoane: butoaneJos(dialog.baza), apasat: null };
++      /* runda 29: întrebarea ștergerii foii și refuzul la singura foaie = ferestre „Microsoft Excel” care întreabă / anunță */
++      if (MESAJ_FOAIE[dialog.baza]) return { titlu: 'Microsoft Excel', intrebare: MESAJ_FOAIE[dialog.baza], butoane: butoaneJos(dialog.baza), apasat: null };
+       return { titlu: (date.dialoguri[dialog.baza] || {}).titlu || '' };
+     }
++    /* `culori_file` (runda 29): {foaie: '#RRGGBB'} doar pentru filele colorate (Tab Color); {} = nicio filă colorată */
++    function culoriFile() { const o = {}; M.foi.forEach(f => { if (f.culoare) o[f.nume] = f.culoare; }); return o; }
+     function butoaneJos(baza) {
+       const b = [];
+       (function u(n, inTitlu) { if (!n) return; if (n.t === 'Button' && !inTitlu && n.r) b.push(n); (n.c || []).forEach(c => u(c, inTitlu || n.t === 'TitleBar')); })(SUP[baza], false);
+@@ -1350,13 +1387,22 @@
+       ap('MergeCenter', !!fm.imbinat);
+     }
+     /* ---- filele foilor (Book1 › Tab: Scroll Left/Right gri, filele, Add Sheet — poziții din referință) */
++    /* culoarea filei (runda 29; m1-l03:204 + img/file-colorate.webp: „Când nu e activă, fila e plină de culoare”; activă = albă,
++       cu dunga de jos în culoarea ei). Stil în linie: aplicatii.css e comun. Literele: negre pe culori deschise, albe pe închise */
++    function stilFila(t, fo, on) {
++      if (!fo || !fo.culoare) { t.style.background = ''; t.style.color = ''; t.style.boxShadow = ''; return; }
++      const h = fo.culoare, lum = (0.299 * parseInt(h.slice(1, 3), 16) + 0.587 * parseInt(h.slice(3, 5), 16) + 0.114 * parseInt(h.slice(5, 7), 16)) / 255;
++      t.style.background = on ? '' : h;
++      t.style.color = on ? '' : (lum < 0.5 ? '#fff' : '#000');
++      t.style.boxShadow = on ? 'inset 0 -2px 0 ' + h : 'none';
++    }
+     function foileFile() {
+-      const sem = M.foi.map(x => x.nume).join('|') + '#' + M.fi, semN = M.foi.map(x => x.nume).join('|');
++      const sem = M.foi.map(x => x.nume + ':' + (x.culoare || '')).join('|') + '#' + M.fi, semN = M.foi.map(x => x.nume + ':' + (x.culoare || '')).join('|');
+       if (tabFoi.__sem === sem) return;
+       /* la schimbarea foii active doar marcajul: elementele rămân, ca dublul clic să nimerească fila */
+       if (tabFoi.__nume === semN && !redenumire) {
+         tabFoi.__sem = sem;
+-        tabFoi.querySelectorAll('[data-lh-tinta="fila_foii"]').forEach(t => { const on = t.getAttribute('data-lh-id') === M.foi[M.fi].nume; t.classList.toggle('activ', on); t.setAttribute('aria-selected', on ? 'true' : 'false'); });
++        tabFoi.querySelectorAll('[data-lh-tinta="fila_foii"]').forEach(t => { const on = t.getAttribute('data-lh-id') === M.foi[M.fi].nume; t.classList.toggle('activ', on); t.setAttribute('aria-selected', on ? 'true' : 'false'); stilFila(t, M.foi.find(x => x.nume === t.getAttribute('data-lh-id')), on); });
+         return;
+       }
+       tabFoi.__sem = sem;
+@@ -1380,6 +1426,7 @@
+         e.innerHTML = '<span class="lh-ap-text">' + esc(fo.nume) + '</span>';
+         e.classList.toggle('activ', i === M.fi);
+         Object.assign(e.style, { left: x + 'px', top: '0px', width: w + 'px', height: tab0.r[3] + 'px' });
++        stilFila(e, fo, i === M.fi);
+         x += w + 1;
+         tabFoi.appendChild(e);
+       });
+@@ -2170,6 +2217,220 @@
+       actualizeaza();
+       return 'fila_foii';
+     }
++    /* ============================================================ foile: ștergere, mutare, copiere, culoare (runda 29, G25-1)
++       Lecția viii/m1-l03:238-:244, :266, :312 (+ capturile din Excel real img/confirma-stergerea.webp, mutare-sau-copiere.webp,
++       file-colorate.webp, file-dupa-copie.webp) și referința uia_excel.json › meniu_contextual.fila_foii, dialog.SheetMoveOrCopy:
++       - Delete: foaia goală dispare direct (:243, :321); cu date, Excel întreabă întâi (DLG_STERGE: Delete / Cancel, :238);
++         singura foaie e refuzată (DLG_REFUZ, :266). Cele două ferestre NU sunt în referință (de_verificat R29-1, R29-2);
++       - ștergerea nu se anulează (:239, :312): istoricul Ctrl+Z se golește; la fel la mutare și copiere, ca instantaneele
++         istoricului să nu readucă ordinea veche (contra.md; de_verificat R29-3);
++       - Move or Copy: lista Before sheet = foile registrului + „(move to end)”; OK mută; Create a copy face „Nume (2)”, activă;
++       - tragerea filei mută foaia, Ctrl + tragere o copiază (:240, :244); Tab Color › o culoare (:202, :220). */
++    const foaieGoala = f => !Object.keys(f.cel).length && !Object.keys(f.fmt).length && !(f.merge || []).length && !Object.keys(f.bord || {}).length && !Object.keys(f.latSet || {}).length && !(f.grafice || []).length;
++    function dupaFoi() {
++      H = istoricNou(); M.clip = null; M.mod = true; M.salvat = false;
++      if (M.gr) { M.gr = null; M.grTitlu = null; }
++      invalid(); tabFoi.__sem = null; tabFoi.__nume = null; actualizeaza(); actualizeazaBare(); I.focus();
++    }
++    function deschideMesajFoaie(baza) {
++      if (!deschideDialog(baza)) return false;
++      const texte = [], butoane = [];
++      dialog.el.querySelectorAll('[data-lh-tip="Text"],[data-lh-tip="Button"]').forEach(x => {
++        if (x.closest('[data-lh-tip="TitleBar"]')) return;
++        (x.getAttribute('data-lh-tip') === 'Button' ? butoane : texte).push(x.getAttribute('data-lh-eticheta') || '');
++      });
++      M.mesaj = { titlu: 'Microsoft Excel', texte, butoane };
++      return true;
++    }
++    function stergeFoaia(i) {
++      if (REG.gol || i < 0 || i >= M.foi.length) return 'fara_efect';
++      if (M.edit && !confirma()) return 'fara_efect';
++      inchideMeniu();
++      if (M.foi.length === 1) return deschideMesajFoaie(DLG_REFUZ) ? 'refuz_stergere' : I.nesimulat('Delete');
++      if (!foaieGoala(M.foi[i])) { if (!deschideMesajFoaie(DLG_STERGE)) return I.nesimulat('Delete'); dialog.foaie = i; return 'intrebare_stergere'; }
++      return stergeAcum(i);
++    }
++    /* foaia activă după ștergere: cea din dreapta ei, iar la ultima, cea din stânga [DEDUS: de_verificat R29-3] */
++    function stergeAcum(i) {
++      if (dialog && dialog.baza === DLG_STERGE) inchideDialog();
++      if (i == null || i < 0 || i >= M.foi.length || M.foi.length < 2) return 'fara_efect';
++      M.foi.splice(i, 1);
++      if (M.fi > i) M.fi -= 1; else if (M.fi === i) M.fi = Math.min(i, M.foi.length - 1);
++      dupaFoi();
++      return 'stergere_foaie';
++    }
++    /* numele copiei: „Septembrie” → „Septembrie (2)”, iar copia copiei → „Septembrie (3)” (m1-l03:244, img/file-dupa-copie.webp) */
++    function numeCopie(nume) {
++      const b = String(nume).replace(/ \(\d+\)$/, '');
++      let k = 2;
++      while (M.foi.some(x => x.nume.toLowerCase() === (b + ' (' + k + ')').toLowerCase())) k++;
++      return (b.slice(0, 31 - String(k).length - 3)) + ' (' + k + ')';
++    }
++    /* mută (copie = false) sau copiază foaia i ÎNAINTEA poziției k din ordinea de acum (k = M.foi.length → la sfârșit); foaia
++       mutată / copia devine activă (img/file-dupa-copie.webp: „copia Septembrie (2), activă”) */
++    function mutaFoaia(i, k, copie) {
++      if (REG.gol || i < 0 || i >= M.foi.length || k < 0 || k > M.foi.length) return 'fara_efect';
++      if (M.edit && !confirma()) return 'fara_efect';
++      if (copie) {
++        const f = clona(M.foi[i]);
++        f.nume = numeCopie(M.foi[i].nume);
++        M.foi.splice(k, 0, f); M.fi = k;
++        dupaFoi();
++        return 'copiere_foaie';
++      }
++      if (k === i || k === i + 1) { if (M.fi !== i) { M.fi = i; actualizeaza(); } return 'fara_efect'; }
++      const f = M.foi.splice(i, 1)[0], j = k > i ? k - 1 : k;
++      M.foi.splice(j, 0, f); M.fi = j;
++      dupaFoi();
++      return 'mutare_foaie';
++    }
++    /* ---- Move or Copy (uia_excel.json › dialog.SheetMoveOrCopy): rândurile listei Before sheet = foile registrului + „(move to
++       end)”, cu pasul de 24 px al referinței (ListItem [1022,583,288,24] și [1022,607,…]); pe un registru cu Sheet1 lista rămâne
++       exact cea din referință. Rândul ales la deschidere = foaia activă [DEDUS: de_verificat R29-4] */
++    function etichetaRand(x, n) {
++      if (x.getAttribute('data-lh-eticheta') === n) return;
++      [x, ...x.querySelectorAll('[data-lh-eticheta]')].forEach(y => {
++        y.setAttribute('data-lh-eticheta', n);
++        if (y.hasAttribute('aria-label')) y.setAttribute('aria-label', n);
++        if (/^fereastra:/.test(y.getAttribute('data-lh-tinta') || '')) y.setAttribute('data-lh-tinta', 'fereastra:' + n);
++      });
++      /* rândul are textul lui (eticheta ListItem-ului) și, dedesubt, nodul Text al referinței: amândouă primesc numele nou */
++      const sps = [...x.querySelectorAll('.lh-ap-text')];
++      if (sps.length) sps.forEach(sp => { sp.textContent = n; }); else x.textContent = n;
++      const t = x.querySelector('[data-lh-tip="Text"]');
++      if (t) { t.style.width = 'auto'; t.style.whiteSpace = 'nowrap'; }
++    }
++    function randuriMutare() {
++      const lst = dialog && dialog.el && dialog.el.querySelector('[data-lh-tip="List"]');
++      return lst ? [...lst.children].filter(x => x.getAttribute('data-lh-tip') === 'ListItem') : [];
++    }
++    function pregatesteMutare(s) {
++      const lst = s.querySelector('[data-lh-tip="List"]');
++      const its = lst ? [...lst.children].filter(x => x.getAttribute('data-lh-tip') === 'ListItem') : [];
++      if (!its.length) return;
++      const nume = M.foi.map(x => x.nume).concat(['(move to end)']);
++      const t0 = parseFloat(its[0].style.top) || 0, pas = its[1] ? (parseFloat(its[1].style.top) - t0) || 24 : 24;
++      nume.forEach((n, i) => {
++        let x = its[i];
++        if (!x) { x = its[0].cloneNode(true); x.style.top = (t0 + pas * i) + 'px'; lst.appendChild(x); }
++        etichetaRand(x, n);
++      });
++      its.slice(nume.length).forEach(x => x.remove());
++      dialog.mc = { sursa: M.fi, inainte: M.fi, copie: false };
++      marcheazaMutare();
++    }
++    function marcheazaMutare() {
++      randuriMutare().forEach((x, i) => {
++        const on = !!dialog.mc && i === dialog.mc.inainte;
++        x.toggleAttribute('data-lh-selectat', on);
++        x.style.background = on ? '#cce8ff' : '';
++        x.style.outline = on ? '1px solid #000' : '';
++        x.style.outlineOffset = on ? '-1px' : '';
++      });
++    }
++    function alegeInMutare(li) {
++      const i = randuriMutare().indexOf(li);
++      if (i < 0 || !dialog.mc) return 'fara_efect';
++      dialog.mc.inainte = i;
++      marcheazaMutare();
++      return 'alegere';
++    }
++    function aplicaMutare() {
++      const mc = dialog.mc;
++      inchideDialog();
++      return mutaFoaia(mc.sursa, mc.inainte, mc.copie);
++    }
++    /* ---- Tab Color: paleta = galeria de culori a Office din referință (uia_excel.json › lista.CellFillColorPicker: Theme Colors,
++       Standard Colors, More Colors…), deschisă ca submeniu lângă rândul Tab Color, cu „No Color” în loc de „No Fill” [DEDUS:
++       de_verificat R29-5]. Culorile: Standard Colors = valorile din powerpoint.js › STANDARD (Green #00B050, Red #FF0000,
++       Yellow #FFFF00 — aceleași ca în testele lecției m1-l03:223, :292, :308); tema Office și nuanțele Lighter / Darker =
++       [presupus], ca la powerpoint.js (de_verificat R12-3) */
++    const CUL_STD = { 'Dark Red': '#C00000', Red: '#FF0000', Orange: '#FFC000', Yellow: '#FFFF00', 'Light Green': '#92D050',
++      Green: '#00B050', 'Light Blue': '#00B0F0', Blue: '#0070C0', 'Dark Blue': '#002060', Purple: '#7030A0' };
++    const CUL_TEMA = { 'White, Background 1': '#FFFFFF', 'Black, Text 1': '#000000', 'Light Gray, Background 2': '#E7E6E6',
++      'Blue-Gray, Text 2': '#44546A', 'Blue, Accent 1': '#4472C4', 'Orange, Accent 2': '#ED7D31', 'Gray, Accent 3': '#A5A5A5',
++      'Gold, Accent 4': '#FFC000', 'Blue, Accent 5': '#5B9BD5', 'Green, Accent 6': '#70AD47' };
++    function hexCuloare(v) {
++      if (CUL_STD[v]) return CUL_STD[v];
++      if (CUL_TEMA[v]) return CUL_TEMA[v];
++      const m = /^(.+?),\s*(Lighter|Darker)\s+(\d+)%$/.exec(String(v || ''));
++      if (!m || !CUL_TEMA[m[1]]) return null;
++      const h0 = CUL_TEMA[m[1]], k = +m[3] / 100;
++      return '#' + [1, 3, 5].map(j => { const c = parseInt(h0.slice(j, j + 2), 16); return Math.round(m[2] === 'Darker' ? c * (1 - k) : c + (255 - c) * k).toString(16).padStart(2, '0'); }).join('').toUpperCase();
++    }
++    function submeniuCuloare(rand) {
++      const cheie = 'lista.CellFillColorPicker';
++      if (!meniu || !SUP[cheie]) { inchideMeniu(); return I.nesimulat('Tab Color'); }
++      const vechi = meniu.querySelector('[data-lh-submeniu]');
++      if (vechi) vechi.remove();
++      const m = desen(cheie);
++      m.setAttribute('data-lh-suprafata', 'lista.TabColor');
++      m.setAttribute('data-lh-submeniu', '');
++      m.setAttribute('role', 'menu');
++      m.classList.add('lh-ap-x-meniu', 'lh-ap-x-ref');
++      m.querySelectorAll('[data-lh-eticheta="No Fill"]').forEach(x => etichetaRand(x, 'No Color'));
++      m.querySelectorAll('[data-lh-eticheta="No Color"]').forEach(x => { if (x.getAttribute('data-lh-tinta') === 'meniu:No Fill') x.setAttribute('data-lh-tinta', 'meniu:No Color'); });
++      m.querySelectorAll('[data-lh-tip="ListItem"]').forEach(x => {
++        const h = hexCuloare(x.getAttribute('data-lh-eticheta'));
++        if (!h) return;
++        Object.assign(x.style, { backgroundColor: h, backgroundClip: 'content-box', padding: '5px 7px', boxSizing: 'border-box' });
++        x.querySelectorAll('.lh-ap-text').forEach(sp => { sp.style.display = 'none'; });
++        if (!x.hasAttribute('title')) x.setAttribute('title', x.getAttribute('data-lh-eticheta'));
++      });
++      const P = meniu.getBoundingClientRect(), q = rand.getBoundingClientRect(), R = root.getBoundingClientRect(), w = SUP[cheie].r[2], h = SUP[cheie].r[3];
++      const st = q.right + w > R.right - 2 ? Math.max(R.left, q.left - w) : q.right, su = Math.max(R.top, Math.min(q.top, R.bottom - h - 2));
++      m.style.left = (st - P.left - meniu.clientLeft) + 'px';
++      m.style.top = (su - P.top - meniu.clientTop) + 'px';
++      meniu.appendChild(m);
++      marcheazaRand(null);
++      return 'submeniu';
++    }
++    function coloreazaFila(v) {
++      const f = F();
++      if (v === 'No Color') { if (!f.culoare) return 'fara_efect'; schimba('foaie', () => { f.culoare = null; }); actualizeaza(); return 'culoare_fila'; }
++      const h = hexCuloare(v);
++      if (!h) return I.nesimulat(v);
++      if (f.culoare === h) return 'fara_efect';
++      schimba('foaie', () => { f.culoare = h; });
++      actualizeaza();
++      return 'culoare_fila';
++    }
++    /* ---- Home › Cells › Delete ▾ (SplitButton Delete › More Options, TableDeleteRowsAndColumnsMenu_Dropdown): lista NU e în
++       referință (de_verificat R29-6); rândurile = cele din Excel 365 (Delete Cells…, Delete Sheet Rows, Delete Sheet Columns,
++       Delete Sheet). Delete Sheet = același drum ca meniul filei; Delete Cells… = fereastra din referință; restul = mesajul central */
++    const LISTA_STERGERE = ['Delete Cells...', 'Delete Sheet Rows', 'Delete Sheet Columns', 'Delete Sheet'];
++    function listaStergere(anc) {
++      inchideMeniu();
++      const m = el('div', 'lh-ap-n lh-ap-t-Menu lh-ap-x-meniu lh-ap-x-ref', { 'data-lh-tip': 'Menu', 'data-lh-eticheta': 'Delete', 'data-lh-suprafata': 'lista.TableDeleteRowsAndColumnsMenu', role: 'menu' });
++      const w = 182, hr = 28;
++      LISTA_STERGERE.forEach((v, i) => {
++        const x = el('div', 'lh-ap-n lh-ap-t-MenuItem', { 'data-lh-tip': 'MenuItem', 'data-lh-eticheta': v, role: 'menuitem', 'data-lh-tinta': 'meniu:' + v });
++        x.innerHTML = '<span class="lh-ap-text">' + esc(v) + '</span>';
++        Object.assign(x.style, { position: 'absolute', left: '2px', top: (2 + hr * i) + 'px', width: (w - 4) + 'px', height: hr + 'px', paddingLeft: '36px', boxSizing: 'border-box', display: 'flex', alignItems: 'center' });
++        m.appendChild(x);
++      });
++      const R = root.getBoundingClientRect(), b = (anc.closest('[data-lh-tip="SplitButton"]') || anc).getBoundingClientRect(), h = 4 + hr * LISTA_STERGERE.length;
++      Object.assign(m.style, { position: 'absolute', width: w + 'px', height: h + 'px' });
++      m.style.left = Math.max(0, Math.min(b.left - R.left, R.width - w - 2)) + 'px';
++      m.style.top = Math.max(0, Math.min(b.bottom - R.top, R.height - h - 2)) + 'px';
++      root.appendChild(m);
++      meniu = m;
++      return 'meniu_derulant';
++    }
++    /* ---- tragerea filei (m1-l03:240, :244): locul = înaintea filei peste a cărei jumătate stângă e mouse-ul, altfel la sfârșit;
++       în timpul tragerii, un triunghi negru arată locul; Ctrl ținut la eliberare = copie */
++    function locFila(x) {
++      const ts = [...tabFoi.querySelectorAll('[data-lh-tinta="fila_foii"]')];
++      for (let k = 0; k < ts.length; k++) { const b = ts[k].getBoundingClientRect(); if (x < b.left + b.width / 2) return { k, x: b.left }; }
++      const u = ts[ts.length - 1];
++      return { k: ts.length, x: u ? u.getBoundingClientRect().right : 0 };
++    }
++    function marcajFila(x) {
++      let mk = tabFoi.querySelector('.lh-ap-x-ff-loc');
++      if (x == null) { if (mk) mk.remove(); return; }
++      if (!mk) { mk = el('div', 'lh-ap-x-ff-loc', { 'aria-hidden': 'true' }); Object.assign(mk.style, { position: 'absolute', top: '0px', width: '0px', height: '0px', borderLeft: '5px solid transparent', borderRight: '5px solid transparent', borderTop: '6px solid #000', pointerEvents: 'none', zIndex: 3 }); tabFoi.appendChild(mk); }
++      mk.style.left = (locFila(x).x - tabFoi.getBoundingClientRect().left - 5) + 'px';
++    }
+     /* ---- registrele (X8, m1-l03:58-59, :110): Ctrl+N / File › New › Blank workbook = BookN nou, gol, cu Sheet1; Ctrl+W / File › Close
+        = închiderea registrului activ (rămâne cel din spate, altfel Excel deschis, gol). Cu modificări nesalvate Excel întreabă
+        „Save your changes” — fereastra NU e în referința Excel: mesajul central standard (de_verificat R7-15) */
+@@ -2246,11 +2507,20 @@
+       redenumire = null;
+       const v = String(R0.inp.value || '').trim();
+       R0.inp.remove();
+-      const bun = v && v.length <= 31 && !/[\\/?*[\]:]/.test(v) && !/^'|'$/.test(v) && !M.foi.some((x, k) => k !== R0.i && x.nume.toLowerCase() === v.toLowerCase());
++      const luat = M.foi.some((x, k) => k !== R0.i && x.nume.toLowerCase() === v.toLowerCase());
++      const bun = v && v.length <= 31 && !/[\\/?*[\]:]/.test(v) && !/^'|'$/.test(v) && !luat;
+       if (ok && bun && v !== R0.vechi && M.foi[R0.i]) { M.foi[R0.i].nume = v; M.mod = true; M.salvat = false; }
+       tabFoi.__sem = null; tabFoi.__nume = null;
+       foileFile();
++      /* runda 29 (stare_finala_erori): numele altei foi → mesajul Excel; fila nu se redenumește, iar după OK revine în redenumire */
++      if (ok && v && luat && M.foi[R0.i] && deschideMesajFoaie(DLG_NUME)) { dialog.redenumire = { nume: M.foi[R0.i].nume, text: v }; return 'nume_existent'; }
+       I.focus();
++      return ok ? 'redenumire_foaie' : 'anulare';
++    }
++    function reiaRedenumire(rd) {
++      if (pornesteRedenumire(rd.nume) !== 'redenumire' || !redenumire) return;
++      redenumire.inp.value = rd.text;
++      try { redenumire.inp.select(); } catch (e) { /* */ }
+     }
+ 
+     /* ============================================================ meniuri, ferestre, Backstage */
+@@ -2386,7 +2656,10 @@
+     /* o fereastră deschisă PESTE alta (eroarea „All sort criteria…” peste Sort) o ține minte în `sub`; închiderea ei o readuce */
+     function inchideDialog() {
+       if (!dialog) return;
+-      if (/^dialog\.eroare_formula/.test(dialog.baza)) M.mesaj = null;
++      if (/^dialog\.eroare_formula/.test(dialog.baza) || MESAJ_FOAIE[dialog.baza]) M.mesaj = null;
++      /* după „That name is already taken” (OK, ✕, Enter sau Esc) fila revine în redenumire, cu textul tastat ales [DEDUS: R29-7] */
++      const rd = dialog.baza === DLG_NUME ? dialog.redenumire : null;
++      if (rd) setTimeout(() => { if (!dialog && !redenumire) reiaRedenumire(rd); }, 0);
+       /* critic runda 8, GRAV E4: după „We found a typo…” închisă fără Yes (No / Esc / Închidere), celula trece în modul Edit
+          (uia_excel.json › acoperire_r7.fapte.e_sum_lipit.mod_dupa_inchidere „Cell Mode Edit”): săgețile mută cursorul în
+          formulă. Celelalte două ferestre de eroare rămân cum erau (de_verificat R8-14). */
+@@ -2422,6 +2695,18 @@
+       if (dialog.baza === 'dialog.SortDialog') pregatesteSort(s);
+       if (dialog.baza === 'dialog.SortWarning') pregatesteAvertizare(s);
+       if (dialog.baza === 'dialog.ChartChangeType') pregatesteTipGrafic(s);
++      if (dialog.baza === 'dialog.SheetMoveOrCopy') pregatesteMutare(s);
++      if (MESAJ_FOAIE[dialog.baza]) {
++        /* img/confirma-stergerea.webp: titlul „Microsoft Excel” verde, mare; mesajul pe rânduri (\n) */
++        s.querySelectorAll('[data-lh-tip="Image"][data-lh-eticheta="Warning Icon"]').forEach(x => { x.innerHTML = SVG_AVERT; });
++        s.querySelectorAll('[data-lh-tip="Text"]').forEach((x, i) => {
++          [x, ...x.querySelectorAll('.lh-ap-text')].forEach(y => { y.style.whiteSpace = 'pre-line'; y.style.overflow = 'visible'; y.style.textOverflow = 'clip'; });
++          if (i === 0) Object.assign(x.style, { color: '#107c41', fontSize: '20px', fontWeight: '600', lineHeight: '28px' });
++        });
++        /* pe telefon (rădăcina mai îngustă decât fereastra, ex. 375 < 456 px) fereastra se micșorează întreagă, ca Delete /
++           Cancel să rămână pe ecran (proba/telefon.py: Cancel ieșea la x 350-429) */
++        if (R.width && R.width < r[2] + 4) { s.style.transformOrigin = '0 0'; s.style.transform = 'scale(' + ((R.width - 4) / r[2]).toFixed(3) + ')'; s.style.left = '2px'; }
++      }
+       const lc = s.querySelector('[data-lh-tinta="camp:latime_coloana"] input');
+       if (lc) {
+         const c0 = F().sel.zone[F().sel.zone.length - 1].c0;
+@@ -2490,7 +2775,8 @@
+        închide. Enter / Space trec prin ACELAȘI drum ca clicul și pun `activat` = ținta butonului (§4), iar ținta evenimentului
+        = focusul din momentul tastei (cârligul I.tintaTasta din aplicatii.js). */
+     const FOCUS0 = { 'dialog.SortDialog': 'OK', 'dialog.SortDialog_eroare_nivel_gol': 'OK', 'dialog.eroare_formula': 'Yes',
+-      'dialog.eroare_formula_2': 'OK', 'dialog.eroare_formula_3': 'OK' };
++      'dialog.eroare_formula_2': 'OK', 'dialog.eroare_formula_3': 'OK', 'dialog.sterge_foaia': 'Delete', 'dialog.foaie_unica': 'OK',
++      'dialog.nume_foaie_existent': 'OK' };
+     const IMPLICIT = ['OK', 'Save', 'Sort...', 'Yes', 'Insert'];
+     const esteButon = x => !!x && /^(Button|CheckBox|RadioButton)$/.test(x.getAttribute('data-lh-tip') || '');
+     function controaleDialog() {
+@@ -2615,6 +2901,9 @@
+       if (/^dialog\.eroare_formula/.test(dialog.baza)) return raspunsEroare(dialog.baza === 'dialog.eroare_formula' ? 'Yes' : 'OK');
+       if (dialog.baza === 'dialog.SortDialog_eroare_nivel_gol') { inchideDialog(); return 'inchidere'; }
+       if (dialog.baza === 'dialog.ChartChangeType') return aplicaTipGrafic();
++      if (dialog.baza === 'dialog.SheetMoveOrCopy' && dialog.mc) return aplicaMutare();
++      if (dialog.baza === DLG_STERGE) return stergeAcum(dialog.foaie);
++      if (dialog.baza === DLG_REFUZ || dialog.baza === DLG_NUME) { inchideDialog(); return 'inchidere'; }
+       const b = dialog.baza.replace(/^dialog\./, '');
+       inchideDialog();
+       return I.nesimulat((date.dialoguri['dialog.' + b] || {}).titlu || b);
+@@ -2692,6 +2981,7 @@
+         case 'Redo': return reface();
+         case 'CellFillColorPicker': return umpleCuloare('FFFF00');
+         case 'BordersGallery_Dropdown': return SUP['lista.Borders'] ? listaRef('lista.Borders', elx) : meniuBorduri(elx);
++        case 'TableDeleteRowsAndColumnsMenu_Dropdown': return listaStergere(elx);
+         case 'AutoSumMenu_Dropdown': return listaRef('lista.AutoSum', elx) || I.nesimulat('AutoSum');
+         case 'ChartTypeColumnInsertGallery': return listaRef('lista.ChartTypeColumnInsertGallery', elx) || I.nesimulat(nume);
+         case 'ChartTypeLineInsertGallery': return listaRef('lista.ChartTypeLineInsertGallery', elx) || I.nesimulat(nume);
+@@ -3111,6 +3401,8 @@
+       atingere = null;
+       const gx = !dialog && !backstage && /^grafic(:|$)/.test(tinta || '') && tg.closest ? tg.closest('.lh-ap-x-grafic') : null;
+       if (gx) return josGrafic(e, tinta, gx);
++      /* runda 29: apăsarea pe o filă poate deveni tragerea ei (mutare / copiere); fără mișcare rămâne clicul de alegere */
++      if (!dialog && !backstage && !REG.gol && !redenumire && /^fila_foii:/.test(tinta || '')) { ancora = { fila: tinta.slice(10) }; return 'tragere'; }
+       if (amanat(e, tinta, tg)) { atingere = tinta; ancora = null; return null; }
+       return josGrila(e, tinta, tg);
+     };
+@@ -3164,6 +3456,7 @@
+     I.la.misca = (e, j) => {
+       if (!ancora) return;
+       if (ancora.grafic != null) { mutaGrafic(e); return; }
++      if (ancora.fila != null) { marcajFila(e.clientX); return; }
+       if (ancora.latime != null) {
+         const f = F(), w = Math.max(0, Math.round(ancora.w0 + (e.clientX - ancora.x0) / z()));
+         if (f.lat[ancora.latime] !== w) { f.lat[ancora.latime] = w; ancora.schimbat = true; deseneazaGrila(); }
+@@ -3207,8 +3500,10 @@
+       const an = ancora;
+       ancora = null;
+       M.trageInfo = null;
++      if (an && an.fila != null) marcajFila(null);
+       if (!g) return null;
+       if (an && an.grafic != null) return susGrafic(an);
++      if (an && an.fila != null) { const i = M.foi.findIndex(x => x.nume === an.fila); return i < 0 ? 'fara_efect' : mutaFoaia(i, locFila(e.clientX).k, !!(e.ctrlKey || e.metaKey)); }
+       if (g === 'umplere_tragere' && an && an.umplere) { const p = celulaLa(e.clientX, e.clientY); return umple(p.r, p.c); }
+       if (an && an.latime != null) {
+         if (!an.schimbat) return 'fara_efect';
+@@ -3278,6 +3573,14 @@
+         if (fel === 'fereastra' && v === 'Open') return I.nesimulat('Choose a Location ▾');
+         if (fel === 'camp' && v === 'tip_fisier') return I.nesimulat('Save as type ▾');
+       }
++      /* runda 29 (G25-1): întrebarea ștergerii (Delete / Cancel / ✕), refuzul (OK / ✕), Move or Copy (rândul listei, Create a copy) */
++      if (fel === 'fereastra' && dialog && dialog.baza === DLG_STERGE) { if (v === 'Delete') return stergeAcum(dialog.foaie); inchideDialog(); return 'anulare'; }
++      if (fel === 'fereastra' && dialog && (dialog.baza === DLG_REFUZ || dialog.baza === DLG_NUME)) { inchideDialog(); return v === 'OK' ? 'inchidere' : 'anulare'; }
++      if (fel === 'fereastra' && dialog && dialog.baza === 'dialog.SheetMoveOrCopy' && dialog.mc) {
++        const li = elx.closest('[data-lh-tip="ListItem"]');
++        if (li && dialog.el.contains(li)) return alegeInMutare(li);
++        if (v === 'Create a copy') { dialog.mc.copie = !dialog.mc.copie; bifeaza(elx.closest('[data-lh-tip="CheckBox"]') || elx, dialog.mc.copie, false); return 'bifare'; }
++      }
+       if (fel === 'fereastra' && dialog && dialog.baza === 'dialog.ChartChangeType' && elx.getAttribute('data-lh-tip') === 'ListItem') return clicTipGrafic(elx, v);
+       if (fel === 'fereastra' && dialog) {
+         if (/^(OK|Insert)$/.test(v)) return implicitDialog();
+@@ -3290,7 +3593,12 @@
+         const idm = elx.getAttribute('data-lh-id-mso'), supEl = elx.closest('[data-lh-suprafata]'), lista = supEl ? supEl.getAttribute('data-lh-suprafata') : meniu.getAttribute('data-lh-suprafata');
+         /* X10 (runda 17): Add Chart Element › Data Labels ▸ deschide submeniul (lista rămâne); rândul lui pune etichetele */
+         if (lista === 'lista.AddChartElementMenu' && v === 'Data Labels') return submeniuEtichete(elx);
++        if (lista === 'meniu_contextual.fila_foii' && v === 'Tab Color') return submeniuCuloare(elx);
+         inchideMeniu();
++        /* runda 29 (G25-1): culoarea filei, Home › Delete ▾, Delete din meniul filei */
++        if (lista === 'lista.TabColor') return coloreazaFila(v);
++        if (lista === 'lista.TableDeleteRowsAndColumnsMenu') return v === 'Delete Sheet' ? stergeFoaia(M.fi) : v === 'Delete Cells...' ? (deschideDialog('dialog.CellsDelete') ? 'fereastra' : I.nesimulat(v)) : I.nesimulat(v);
++        if (lista === 'meniu_contextual.fila_foii' && v === 'Delete') return stergeFoaia(M.fi);
+         if (lista === 'lista.ChartTypeLineInsertGallery') return GR_TIP[v] ? insereazaGrafic(v) : I.nesimulat(v);
+         if (/^lista\.AddChartElementMenu#Data Labels/.test(lista || '')) return v === 'More Data Label Options...' ? I.nesimulat(v) : puneEtichete(v);
+         if (lista === 'lista.AddChartElementMenu') return I.nesimulat(v);
+@@ -3405,7 +3713,7 @@
+       const k = e.key;
+       if (inCamp) {
+         if (redenumire && e.target === redenumire.inp) {
+-          if (k === 'Enter') { e.preventDefault(); terminaRedenumire(true); return 'redenumire_foaie'; }
++          if (k === 'Enter') { e.preventDefault(); return terminaRedenumire(true) || 'redenumire_foaie'; }
+           if (k === 'Escape') { e.preventDefault(); terminaRedenumire(false); return 'anulare'; }
+           return null;
+         }
+@@ -3514,7 +3822,14 @@
+       }
+       if (k === 'Home') { e.preventDefault(); if (ctrl) alege(0, 0, e.shiftKey); else alege(a.r, 0, e.shiftKey); return 'mutare'; }
+       if (k === 'End') { e.preventDefault(); if (ctrl) { const u = ultim(f); alege(u.r, u.c, e.shiftKey); return 'mutare'; } return 'fara_efect'; }
+-      if (k === 'PageDown' || k === 'PageUp') { e.preventDefault(); const n = Math.max(1, Math.floor(corp.clientHeight / HR()) - 1); alege(a.r + (k === 'PageDown' ? n : -n), a.c, e.shiftKey); return 'mutare'; }
++      /* runda 29 (R25-7; m1-l03:197, :230): Ctrl+PageDown / Ctrl+PageUp = foaia din dreapta / din stânga; la capăt rămâi pe loc */
++      if ((k === 'PageDown' || k === 'PageUp') && ctrl && !e.shiftKey && !e.altKey) {
++        e.preventDefault();
++        const j = M.fi + (k === 'PageDown' ? 1 : -1);
++        if (j < 0 || j >= M.foi.length) return 'fara_efect';
++        return alegeFoaia(M.foi[j].nume) === 'fila_foii' ? (k === 'PageDown' ? 'foaie_urmatoare' : 'foaie_anterioara') : 'fara_efect';
++      }
++      if (k === 'PageDown' || k === 'PageUp') { e.preventDefault(); const n =Math.max(1, Math.floor(corp.clientHeight / HR()) - 1); alege(a.r + (k === 'PageDown' ? n : -n), a.c, e.shiftKey); return 'mutare'; }
+       if (ctrl) {
+         switch (g) {
+           case 'ctrl_b': return comutaFormat('bold');
+@@ -3697,7 +4012,9 @@
+       altSingur = false;
+       e.preventDefault();
+       if (kt.activ) { ktIesi(); I.tastaFaraClic('iesire_taste_acces'); return; }
+-      if (dialog || backstage) return;
++      /* MINOR 1 critic 25: Alt singur într-o fereastră / în Backstage = tot un gest cu eveniment (în Excel subliniază literele de
++         acces ale ferestrei); literele panglicii nu apar peste fereastră */
++      if (dialog || backstage) { I.tastaFaraClic('arata_taste_acces'); return; }
+       kt.activ = true;
+       ktArata();
+       I.tastaFaraClic('arata_taste_acces');

@@ -1,0 +1,127 @@
+--- C:/00/Projects/LearningHub_fidel/_campaign/aplicatii_fidele_2026_11/runde/28/inainte/aplicatii.js	2026-11-21 07:05:06.185730400 +0200
++++ C:/00/Projects/LearningHub_fidel/aplicatii/aplicatii.js	2026-11-21 07:25:31.517001100 +0200
+@@ -118,7 +118,7 @@
+         loc.appendChild(root);
+         const I = { app: nume, root, opt, profil: Object.assign({ id: profilId }, profil), date, setari: setari(),
+           zonaTinta: 'document', ultimaActiune: null };
+-        I.emite = (gest, actiune, tinta, inainte) => emite(I, gest, actiune, tinta, inainte);
++        I.emite = (gest, actiune, tinta, inainte, extra) => emite(I, gest, actiune, tinta, inainte, extra);   // runda 30 (A26-2): + extra (activat)
+         I.nesimulat = (eticheta, tinta) => nesimulat(I, eticheta, tinta);
+         M.creeaza(I, opt.continut || {}, L);
+         leagaGesturi(I);
+@@ -184,8 +184,8 @@
+   };
+   L.stare = function (nume) { const I = viu(nume); return I ? clona(I.stare()) : null; };
+   L.pxPePunct = function (nume) { const I = viu(nume); return I && I.pxPePunct ? I.pxPePunct() : 1; };
+-  L.deschideSuprafata = function (cheie) {
+-    const nume = Object.keys(INST).find(n => viu(n));
++  L.deschideSuprafata = function (cheie, ceruta) {
++    const nume = ceruta && viu(ceruta) ? ceruta : Object.keys(INST).find(n => viu(n));   // runda 30 (A23-1 P2): aplicația cerută (montată)
+     const I = nume && INST[nume];
+     if (!I || !I.deschideSuprafata) return Promise.reject(new Error('nicio aplicație deschisă'));
+     return Promise.resolve(I.deschideSuprafata(cheie));
+@@ -266,12 +266,34 @@
+   /* runda 26 (critic 22, K1): tasta Windows + literă = gestul ei (`win_e`, `win_shift_s`), nu Ctrl + literă, DOAR în aplicația
+      care declară tasta cu sigla a ei (`I.tastaWindows`, azi Windows) și nu pe Mac (acolo Cmd ține locul lui Ctrl). În rest, la fel. */
+   const MAC = /Mac|iPhone|iPad|iPod/.test(((W.navigator || {}).userAgentData || {}).platform || (W.navigator || {}).platform || '');
++  /* runda 30 (critic 26, N2): cu tasta Windows ținută, ORICE altă tastă (Spațiu, cifre, punct, virgulă, Tab, săgeți, F-uri…), nu doar
++     literele, e gestul `win_<tastă>`; numele vine din e.code (locul tastei, nu așezarea tastaturii). Shift / Ctrl / Alt nu sunt gesturi. */
++  const WIN_COD = { Space: 'spatiu', Period: 'punct', NumpadDecimal: 'punct', Comma: 'virgula', Minus: 'minus', NumpadSubtract: 'minus',
++    Equal: 'plus', NumpadAdd: 'plus', Semicolon: 'punct_virgula', Slash: 'slash', NumpadDivide: 'slash', Backslash: 'backslash',
++    IntlBackslash: 'backslash', Quote: 'apostrof', Backquote: 'accent', BracketLeft: 'paranteza_stanga', BracketRight: 'paranteza_dreapta',
++    NumpadMultiply: 'inmultit', Tab: 'tab', Enter: 'enter', NumpadEnter: 'enter', Escape: 'esc', Backspace: 'backspace', Delete: 'delete',
++    Insert: 'insert', Home: 'home', End: 'end', PageUp: 'pagina_sus', PageDown: 'pagina_jos', ArrowUp: 'sus', ArrowDown: 'jos',
++    ArrowLeft: 'stanga', ArrowRight: 'dreapta', PrintScreen: 'printscreen', Pause: 'pauza', ContextMenu: 'meniu' };
++  function tastaWin(e) {
++    const c = e.code || '', k = e.key || '';
++    if (/^(Shift|Control|Alt|AltGraph|Meta|OS|CapsLock|NumLock|ScrollLock|Fn|FnLock|Hyper|Super|Symbol)$/.test(k)) return null;
++    const d = /^(?:Digit|Numpad)(\d)$/.exec(c) || /^(\d)$/.exec(k);
++    if (d) return d[1];
++    if (/^F\d{1,2}$/.test(c)) return c.toLowerCase();
++    if (WIN_COD[c]) return WIN_COD[c];
++    if (k === ' ') return 'spatiu';
++    return WIN_COD[k] || null;          // fără e.code (tastaturi virtuale): după numele tastei (Tab, Enter, ArrowUp…)
++  }
+   function gestTasta(e) {
+     const k = e.key, c = e.ctrlKey || (e.metaKey && k !== 'Meta');
+-    if (e.metaKey && !e.ctrlKey && !e.altKey && k !== 'Meta' && !MAC) {
++    if ((e.metaKey || k === 'Meta' || k === 'OS') && !e.ctrlKey && !e.altKey && !MAC) {
+       const rad = e.currentTarget, I = rad && rad.getAttribute ? INST[rad.getAttribute('data-lh-aplicatie')] : null;
+-      const l = I && I.root === rad && I.tastaWindows ? litera(e) : null;
+-      if (l) return (e.shiftKey ? 'win_shift_' : 'win_') + l;
++      if (I && I.root === rad && I.tastaWindows) {
++        /* runda 30 (A26-2): tasta Windows singură nu e un gest la APĂSARE: aplicația care o declară (I.tastaWindowsLaRidicare,
++           azi Windows) o emite la RIDICARE, dacă între timp n-a venit altă tastă (Windows + E nu mai deschide Start pentru o clipă) */
++        if (k === 'Meta' || k === 'OS') { if (I.tastaWindowsLaRidicare) return null; }
++        else { const l = litera(e) || tastaWin(e); if (l) return (e.shiftKey ? 'win_shift_' : 'win_') + l; }
++      }
+     }
+     if (/^Arrow/.test(k)) return e.altKey ? 'alt_sageti' : 'sageti';
+     if (/^F\d{1,2}$/.test(k)) return 'tasta_' + k.toLowerCase();
+@@ -326,6 +348,9 @@
+       }
+     }
+     r.addEventListener('pointerdown', e => {
++      /* runda 30 (A23-1 P1): ținta e într-o altă aplicație a bibliotecii, montată în aceasta (opt.incadrat) → clicul e al ei */
++      const ra = e.target && e.target.closest && e.target.closest('[data-lh-aplicatie]');
++      if (ra && ra !== r) { jos = null; return; }
+       if (e.button !== 0) { jos = null; return; }
+       /* încheierea compunerii (laAtingere, pe window, înaintea acestui ascultător) redesenează documentul: elementul atins
+          nu mai e în pagină → se ia elementul nou din același punct, ca atingerea să mute cursorul acolo (critic runda 2, N3 b) */
+@@ -629,6 +654,16 @@
+   /* tastele de acces care doar ARATĂ literele sau așteaptă a doua literă nu schimbă nimic (ca săgețile): nu sunt greșeli;
+      activarea unei comenzi prin tastă rămâne greșeală dacă nu e ținta pasului */
+   const NAVIGARE_TA = new Set(['arata_taste_acces', 'prefix_tasta_acces']);
++  /* Runda 28 (critic 24, MINOR 4 / 5; critic 26, „Găsit pe drum”) — indiciul vine după greșeli adevărate, nu pe drumul bun:
++     REFUZ = ce a spus aplicația când gestul n-a avut efectul cerut (comanda nesimulată, „… already exists”, numele cu semne
++     interzise, Sort fără coloană): un astfel de eveniment nu face pasul, chiar dacă ținta lui e ținta pasului. Clicul pe un
++     buton gri (`indisponibil`) face pasul ca înainte: O9 (înghețat) ia ca pas Bold-ul gri al PowerPoint-ului la pornire;
++     EDITARE_CAMP = tastele pe care §4 le lasă câmpului de text (tastarea, Backspace / Delete, Ctrl+A/C/V/X/Z/Y): cu focusul
++     într-un câmp al interfeței (File name, căutarea din Start, Name Box, adresa — nu documentul: `data-lh-intrare-document`)
++     nu sunt greșeli. Un pas cu `asteapta` hotărăște singur, ca înainte. */
++  const REFUZ = new Set(['nesimulat', 'nume_interzis', 'eroare_sortare']);
++  const EDITARE_CAMP = new Set(['tastare', 'tasta_backspace', 'tasta_delete', 'ctrl_a', 'ctrl_c', 'ctrl_v', 'ctrl_x', 'ctrl_z', 'ctrl_y']);
++  const aceeasiStare = ev => { try { return JSON.stringify(ev.inainte || null) === JSON.stringify(ev.dupa || {}); } catch (e) { return false; } };
+   L.asistent = function (nume, cfg) {
+     cfg = cfg || {};
+     const pasi = cfg.pasi || [];
+@@ -655,6 +690,19 @@
+     };
+     const porneste = () => { clearTimeout(ceas); if (!pas() || oprit) return; ceas = setTimeout(arata, dupaSecunde * 1000); };
+     const canonPas = p => { const el = L.element(nume, p.tinta); return el ? canon(el) : null; };
++    /* focusul e într-un câmp de text al interfeței: un câmp obișnuit (eCamp: File name, adresa, Name Box, redenumirea), sau
++       câmpul ascuns care primește tastele pentru o casetă din afara zonei de lucru (caseta din Start: ținta = caseta, nu
++       zona). Câmpul ascuns al DOCUMENTULUI (ținta în `[data-lh-zona]` sau `fereastra_app:`) nu e câmp: tastarea acolo
++       schimbă documentul și rămâne greșeală dacă pasul nu e ea */
++    const inCamp = ev => {
++      const f = document.activeElement, r = root();
++      if (!r || !f || !r.contains(f) || !f.matches('input,textarea,[contenteditable="true"]')) return false;
++      if (eCamp(f)) return true;
++      if (/^fereastra_app:/.test(ev.tinta || '')) return false;
++      let t = null;
++      try { t = L.element(nume, ev.tinta); } catch (e) { t = null; }
++      return !!t && !t.closest('[data-lh-zona]');
++    };
+     const off = L.asculta(ev => {
+       if (oprit || desprins()) return;
+       const p = pas();
+@@ -664,13 +712,18 @@
+          nimic: nu bifează pasul, nici când pleacă de PE ținta pasului (Tab peste Save ≠ Save), și nu e greșeală (§6.3).
+          Critic 20, B (rc20.json › M6); runda 24 */
+       const doarFocus = ev.actiune === 'mutare_focus';
++      const refuz = REFUZ.has(ev.actiune);
+       if (typeof p.asteapta === 'function') { try { bun = !!p.asteapta(ev); } catch (e) { bun = false; } }
+-      else bun = !doarFocus && (ev.tinta === p.tinta || (!!canonPas(p) && ev.tinta === canonPas(p)) || (!!ev.activat && ev.activat === p.tinta));
++      else bun = !doarFocus && !refuz && (ev.tinta === p.tinta || (!!canonPas(p) && ev.tinta === canonPas(p)) || (!!ev.activat && ev.activat === p.tinta));
+       if (bun) { L.ascunde(); k++; gres = 0; porneste(); return; }
+       /* T4 (critic 13): Esc care doar iese din modul tastelor de acces (tasta_esc / iesire_taste_acces) nu schimbă nimic,
+          ca navigarea: nu e greșeală */
+       if (doarFocus || NEGRESELI.has(ev.gest) || (ev.gest === 'tasta_acces' && NAVIGARE_TA.has(ev.actiune)) ||
+         (ev.gest === 'tasta_esc' && ev.actiune === 'iesire_taste_acces')) return;
++      /* runda 28: Alt+↓ / Alt+↑ care doar deschide sau închide lista unei casete (starea nu se schimbă) e navigare, ca săgețile;
++         Alt+săgeată care schimbă starea (Explorer: Alt+↑ / Alt+← mută folderul) rămâne greșeală */
++      if (ev.gest === 'alt_sageti' && aceeasiStare(ev)) return;
++      if (EDITARE_CAMP.has(ev.gest) && inCamp(ev)) return;
+       gres++;
+       if (gres >= dupaGreseli) arata();
+     });

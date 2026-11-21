@@ -15,7 +15,16 @@ N = 29. Regulile sunt în `D/runde/_paralel/REGULI_CRITIC.md`: citește-le înt�
   Ce vezi la Excel din cauza lor notezi cu ora, fără să atribui rundei 29.
 
 ## Ce spune constructorul (de judecat, nu de crezut)
-(se completează la finalul benzii)
+- **`29/proba_grav.py`:** 18 verificări cu gesturi reale; pe codul de la pornire (`LH_VECHI=1`) pică 17, acum 0. A lucrat doar în `excel.js`; fișiere comune: niciunul; `date/excel.json` neschimbat.
+- **G25-1 ÎNCHIS:**
+  - ștergerea foii: cu date întreabă (Delete / Cancel), goală dispare direct, singura e refuzată;
+  - Home › Delete ▾ › Delete Sheet; Move or Copy cu lista foilor și Create a copy („Septembrie (2)”); tragerea filei (cu Ctrl o copiază); Tab Color › Green (`culori_file`);
+  - Ctrl+Z după ștergere nu aduce foaia înapoi;
+  - ferestrele de confirmare / refuz și paleta sunt desenate după captura lecției sau deduse (R29-1…R29-4). Judecă dacă se potrivesc cu `confirma-stergerea.webp` / `mutare-sau-copiere.webp`.
+- **Ctrl+PageDown / PageUp:** foaia vecină, pe loc la capete. **Alt într-o fereastră:** `arata_taste_acces`.
+- **Unghiul:** redenumirea cu numele altei foi (m1-l03:226) revenea tăcut; acum „That name is already taken. Try a different one.”, iar după OK fila revine în redenumire. Pe telefon, întrebarea de ștergere ieșea din ecran (456 px pe 375); acum 371 px.
+- **Rămase:** „=SUM(A1:A3” / „=A1+” + Enter dau mesajul central (fără referință, R29-8); numele gol / cu caracter nepermis revine tăcut (R29-7); atingerea pe filă și tragerea cu degetul nedovedite (hamul nu nimerește fila nici pe codul vechi).
+- **Regresul:** probele 25, 21, 17, 10, 9, 6 dau 0; O4 `excel-*` 64/66, 0 diferențe (cele 2 = tragerile fără real). **Proba 8 dă 1** (K2: asistentul nu trece la pasul 2 după Enter pe OK) și pică la fel cu `excel.js` de la pornire (`29/proba/k2_izolat.py`), deci constructorul o pune pe seama `aplicatii.js` schimbat de alte benzi (r28 `L.asistent`, r30). Verifică și spune din ce bandă vine.
 
 ## Sarcina
 1. **A. G25-1.** Joci gesturile criticului 25 (`25/critic.md:70-77`, registrul din `incearca` m1-l03:247-248) și exercițiile lecției (`:220`, `:247`, `:255`, `:266`, atelierul `:288`), apoi un gest vecin. Scrii ÎNCHIS sau DESCHIS, cu proba ta.

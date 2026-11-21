@@ -19,7 +19,20 @@ N = 28. Regulile sunt în `D/runde/_paralel/REGULI_CRITIC.md`: citește-le înt�
   Regresul lor la Word îl notezi, fără să-l atribui rundei 28.
 
 ## Ce spune constructorul (de judecat, nu de crezut)
-(se completează la finalul benzii)
+- **`28/proba_grav.py`:** 17 verificări picate din 36 la pornire, acum 0. „Înainte” servește `word.js` și `aplicatii.js` vechi lângă fișierele de azi ale celorlalte benzi; la Windows amestecul strică verificarea Enter, deci „înainte”-ul Windows e din prima lui rulare (log suprascris).
+- **O4 `word-*`: 10 → 8**, fără rânduri noi; `word-decupare-lipire` dă tot 0.
+  - meniul Pictures ▾: „This Device...”, „Stock Images...”, „Online Pictures...”, sub titlul „Insert Picture From”, ca în Word real; KeyTips Alt, N, P, D deschid Insert Picture;
+  - spațiul automat la lipire („Ana are mere. mere”), doar în profilul `word365`.
+- **Asistentul (`L.asistent` și constantele de lângă el, azi ~`:657-726`):**
+  - salvarea refuzată („already exists”, nume interzis) nu mai face pasul;
+  - Alt+↓ care doar deschide / închide o listă nu e greșeală;
+  - tastarea într-un câmp al interfeței (File name, caseta din Start) nu e greșeală; tastarea în document și clicul în gol tot sunt;
+  - clicul pe un buton gri tot face pasul (O9 PowerPoint E și G îl folosesc; A28-2).
+  - Regresul: două greșeli adevărate tot cheamă indiciul pe 5 aplicații; drumul K2 („Windows, pai, Enter”) merge fără indiciu; O9 13 → 13, aceleași cazuri; probele 24 / 20 / 16 dau 0 (20: 2 → 0).
+- **MINOR 2 / MINOR 1 (critic 24):** lista Save as type se micșorează cu fereastra la 125 %; Font / Font Size la ±2 px.
+- **Unghiul:** Ctrl+Backspace / Ctrl+Delete șterg un cuvânt (ștergeau o literă), Ctrl+↑ / ↓ mută pe paragraf (mutau un rând), după pagina Microsoft „Keyboard shortcuts in Word”.
+- **De aprobat / de verificat:** A28-1 (tastarea în câmp nu e greșeală), A28-2 (clicul pe buton gri face pasul); R28-1…R28-4 (spațiul la lipire în alte poziții și Word 2007, titlul „Insert Picture From”, granițele cuvântului / paragrafului, PgDn în document scurt).
+- **Nefăcut:** PgUp / PgDn derulează fără să mute cursorul (R28-4); MINOR 3, 6, 7 din critic 24; O8 nemăsurat.
 
 ## Sarcina
 1. **A. GRAV vechi:** niciunul deschis.

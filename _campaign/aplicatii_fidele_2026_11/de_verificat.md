@@ -836,3 +836,60 @@ Până la răspuns, simulatorul face ce scrie în paranteză.
 - [ ] **R26O-4** Word 2007 (`word2007-*`) și PowerPoint (`powerpoint-*`): neatinse în runda asta (Word 2007 nu e pe PC; PowerPoint nu se pornește până la repornire).
 - [ ] **R26O-5** Word, **Ctrl+X / Ctrl+V** pe calculatorul lui Vasile (sau al laboratorului): „Aduceți apă. Plecăm luni.”, selectezi „Plecăm luni.”, Ctrl+X, clic înainte de „Aduceți”, Ctrl+V. Iese tot „Plecăm luni.Aduceți apă. ” (lipit de punct)? Pe PC-ul ăsta, Word real a dat asta; setarea „Smart cut and paste” (File › Options › Advanced) poate fi alta în laborator.
 <!-- RUNDA26-ACOPERIRE-OFFICE:END -->
+
+<!-- RUNDA29-EXCEL:START (scris de constructorul rundei 29, 21.11.2026 — Excel: foile din viii/m1-l03, G25-1, unghiul stare_finala_erori) -->
+## Runda 29 (B-excel#3, stare_finala_erori) — de verificat
+Desenate / deduse fără referință înghețată (supliment_B_excel_runda29.md: „le desenezi după captura lecției și treci rândul R29-…”). Toate se pot captura invizibil, cu Excel prin DispatchEx pe desktopul ascuns, `CommandBars.ExecuteMso(...)` + dump UI Automation, ca la `acoperire_excel_r7.py`.
+- [ ] **R29-1** Întrebarea la ștergerea unei foi CU DATE (`excel.js › DLG_STERGE`, desenată după `lectii/viii/m1-l03/img/confirma-stergerea.webp`): arborele UIA (titlu, textul pe două rânduri, butoanele Delete / Cancel, care are focusul, locurile la 1366×768). Scenariu: Sheet1 + Sheet2 cu A1 = „x”, Sheet2 activă, `ExecuteMso("SheetDelete")` cu DisplayAlerts = True → dump; apoi Enter → `Worksheets.Count`, `ActiveSheet.Name`.
+- [ ] **R29-2** Refuzul la singura foaie (`DLG_REFUZ`; textul „A workbook must contain at least one visible worksheet. …” e [DEDUS], fără captură): textul exact, pictograma, butoanele. Scenariu: registru cu o foaie, `ExecuteMso("SheetDelete")` → dump.
+- [ ] **R29-3** Istoricul Ctrl+Z după ștergerea / mutarea / copierea unei foi și foaia activă după ștergere. Simulatorul: istoricul se GOLEȘTE la toate trei (m1-l03:239 spune doar că foaia nu revine); după ștergerea foii active devine activă vecina din DREAPTA (la ultima, cea din stânga). Scenariu: A1 = 5 pe Sheet1; Sheet2 cu date, activă, ștearsă → `ActiveSheet.Name`; Ctrl+Z → A1 pe Sheet1 (5 sau gol?); la fel după Move or Copy și după tragerea filei.
+- [ ] **R29-4** Move or Copy: rândul ales la deschidere în Before sheet (simulatorul: foaia activă), focusul la deschidere, ↑ / ↓ în listă (simulatorul nu le are), cu 4 foi. Scenariu: Sheet1-4, Sheet3 activă, `ExecuteMso("SheetMoveOrCopy")` → dump (ListItem cu SelectionItem.IsSelected, FocusedElement).
+- [ ] **R29-5** Submeniul Tab Color: simulatorul folosește galeria din `uia_excel.json › lista.CellFillColorPicker` (Fill Color), cu „No Color” în loc de „No Fill”. De capturat: arborele submeniului (are „High-contrast only”? „No Color”? locul față de rândul Tab Color) și `Tab.Color` după Green (#00B050 = 5287936?), Red, Yellow, o nuanță „Lighter 40%”; Ctrl+Z după culoare (simulatorul o anulează).
+- [ ] **R29-6** Home › Cells › Delete ▾ (`TableDeleteRowsAndColumnsMenu_Dropdown`): rândurile listei (simulatorul: Delete Cells..., Delete Sheet Rows, Delete Sheet Columns, Delete Sheet) și locul ei. Scenariu: UIA ExpandCollapse.Expand pe SplitButton „Delete” → dump.
+- [ ] **R29-7** Redenumirea foii (unghiul stare_finala_erori, m1-l03:226): cu numele altei foi („septembrie” lângă „Septembrie”) simulatorul arată „That name is already taken. Try a different one.” (OK), iar după OK fila revine în redenumire cu textul tastat ales — textul, pictograma și ce rămâne după OK sunt [DEDUS]. De capturat și: nume gol + Enter (simulatorul: revine tăcut la numele vechi), un caracter nepermis „:” (simulatorul: revine tăcut), 32 de caractere.
+- [ ] **R29-8** Formula cu greșeală de tastare, Enter: „=SUM(A1:A3” (fără paranteza de închidere) și „=A1+”. Simulatorul: rămâne în editare + mesajul central „Excel nu primește formula…; aici nu e simulată” (`proba/stare_erori.json › E1`, `E2`). Excel: închide singur paranteza / „We found a typo…” / „There's a problem with this formula”? Scenariu: A1:A3 = 1, 2, 3; C1 tastat + Enter (WM_CHAR, ca `eroare_formula_2`) → dump + `Range("C1").Formula`.
+- [ ] **R29-9** Tragerea filei: unde se lasă foaia (simulatorul: înaintea filei peste a cărei jumătate stângă e mouse-ul), semnul de inserare (simulatorul: triunghi negru deasupra filelor), Ctrl ținut = copie „Nume (2)”, activă. Gest real (fără model de obiect) → pentru sesiunea cu Vasile, ca R13.
+<!-- RUNDA29-EXCEL:END -->
+
+<!-- RUNDA27-EXPLORER:START (scris de constructorul rundei 27, 21.11.2026 — Explorer: montarea, meniurile înalte, căutarea, aspectul) -->
+- [ ] **R27-1** Lățimea panoului de navigare când fereastra Explorer e mai îngustă decât captura (1534 px). Simulatorul: `clamp(120px, 26%, 389px)` = 333 px la fereastra de 1284 px a poligonului (lista începe la x 348, referința la 403). Scenariu: fereastra Explorer pe 1284×640 (desktopul ascuns), dump UIA › `Gazdă control` și `Vizualizare folder shell`: rămâne 389 px sau se micșorează?
+- [ ] **R27-2** Meniul „Nou” și meniul clasic mai înalte decât ecranul. Simulatorul: cutia meniului se derulează (rotița: probat, `proba_grav.py M1` 20/20 rânduri apăsabile pe 1093×526, 360, 1366, 1920); cu degetul nu se poate proba headless (nici un `div` martor nu derulează cu `Input.synthesizeScrollGesture`). De văzut: (a) pe un telefon real, Nou pe 360 px, tras în sus, apăsat „Folder comprimat (ZIP)”; (b) în Windows real, la 1366×657 / 125 %, cum arată meniul Nou: bară de derulare (WinUI) sau săgeți de derulare (meniul clasic).
+- [ ] **R27-3** Ctrl+Z în caseta de căutare a Explorer-ului real: anulează literă cu literă sau tot cuvântul, și lista se refiltrează? Simulatorul (de la runda 27): literă cu literă (în Chromium orice schimbare a paginii între litere închide grupul de anulare; filtrul viu schimbă lista), iar lista urmează textul. Scenariu: Ctrl+E, „har”, Ctrl+Z, Ctrl+Z, Ctrl+Y, cu dump UIA al casetei după fiecare tastă.
+- [ ] **R27-4** Fonturile și pictogramele (UI Automation nu le dă). Simulatorul: Segoe UI Variable, 12 px, greutate 400 în rânduri, antet, bara de comenzi, panoul de navigare, bara de stare și fila (`probe_iesiri/aspect27.json › stil`); pictogramele Fluent din `date/explorer.json › icoane`. De comparat pe o captură de ecran a ferestrei reale la 100 %.
+- [ ] **R27-5** Vederea „Pictograme mari” (butonul din bara de stare, folosit de lecții): referința are doar vederea Detalii, deci dalele (96 px, pictograma 48 px) n-au dreptunghiuri. Scenariu: aceeași fereastră, clic pe „Pictograme mari”, dump UIA al listei.
+- [ ] **R27-6** Caseta de nume deschisă + clic pe bara de titlu a ferestrei (MINOR 5 al criticului 23, la montare): Explorer real confirmă numele sau păstrează caseta? Simulatorul: confirmă (cum confirmă și clicul pe orice loc nefocusabil din afara Explorer-ului), fără eveniment Explorer.
+<!-- RUNDA27-EXPLORER:END -->
+
+<!-- RUNDA30-WINDOWS:START (scris de constructorul rundei 30, 21.11.2026 — Explorer montat, tasta Windows, focusul) -->
+## Runda 30 · Windows
+- **R30-1** [DEDUS] Fereastra Explorer deschisă din bară / cu Windows + E: mărimea și locul. Simulatorul: 82 % × 86 % din zona de lucru,
+  cel mult 1534 × 814 (rect-ul din `uia_explorer.json › explorer_fereastra`, capturat pe alt ecran), centrată orizontal; sub 600 px
+  maximizată. Scenariul care lămurește: pe un ecran 1366 × 768 la 100 % și la 125 %, Windows + E cu Explorer închis; UIA `BoundingRectangle`
+  al ferestrei `CabinetWClass` (a doua deschidere, după închidere, ca Windows să nu-și amintească locul vechi).
+- **R30-2** [DEDUS] Clic dreapta în afara panoului Start (pe desktop / pe o fereastră): simulatorul închide Start, ca clicul stâng.
+  Scenariul: Start deschis, clic dreapta pe desktop; UIA: Start mai e în arbore? apare meniul desktopului?
+- **R30-3** [NEVERIFICAT] Ce face Windows la Windows + Spațiu / 1 / . / , / Tab / ↑ (selectorul de limbă, aplicația fixată 1, panoul de
+  emoji, Vizualizare activități, maximizarea). Simulatorul: mesajul central „Windows + <tastă>” și Start închis (hotărârea orchestratorului
+  din suplimentul r30). Leagă de R26-1 (pagina Microsoft „Keyboard shortcuts in Windows” de înghețat în `surse_microsoft.md`).
+- **R30-4** [NEVERIFICAT] Momentul deschiderii Start: la apăsarea sau la ridicarea tastei Windows. Simulatorul (runda 30): la ridicare.
+  Scenariul: tasta Windows ținută 500 ms; UIA citit în timp ce e ținută (fereastra Start există?) și după ridicare.
+- **R30-5** [NEVERIFICAT] Focusul după redenumirea pe desktop (Enter / Esc / nume gol): simulatorul îl pune pe rădăcina shell-ului, cu
+  pictograma selectată (F2 / Delete lucrează pe ea). Scenariul: UIA `FocusedElement` după Enter și după Esc (critic 26 §8).
+- **R30-6** [FARA_REFERINTA] Telefonul (360 / 390): dosarul galben stă în banda derulabilă a barei, după Vizualizare activități și To Do;
+  fără ferestre deschise se vede doar după o glisare a benzii (proba rundei 30 › TEL o face cu degetul). Nu există referință pentru bara
+  îngustă; de hotărât dacă banda pornește cu dosarul galben în vedere.
+<!-- RUNDA30-WINDOWS:END -->
+
+<!-- RUNDA28-WORD:START (scris de constructorul rundei 28, 21.11.2026 — Word: lipirea, tastele Ctrl, meniul Pictures) -->
+- [ ] **R28-1** Word real (M365, apoi Word 2007 din laborator), „Smart cut and paste” pornit: lipește cuvântul „mere” (copiat cu Ctrl+C) în: (a) mijlocul lui „are” („a|re”); (b) după „(” în „Ana (|are)”; (c) după spațiu („Ana |are”); (d) înaintea lui „are” la început de paragraf, fără spațiu după; (e) „mere” lipit înaintea unui cuvânt („|Ana”). Ce text iese?
+  - Simulatorul (word365) pune spațiul DOAR înainte, doar la capăt de cuvânt, după literă / cifră / `.,;:!?` (`aplicatii/word.js` › `spatiuInainte`); în (a)-(e) nu pune nimic. Dovedit doar pe `scenarii_real/word-copiere-lipire.json` („Ana are mere. mere”) și `word-decupare-lipire.json` („Plecăm luni.Aduceți apă. ”).
+  - Word 2007 (`word2007`) a rămas fără spațiu: n-avem real (R26O-5).
+  - Scenariul care ar lămuri: copii ale lui `word-copiere-lipire` cu `start.paragrafe` / pasul `clic` mutate în cele 5 locuri, `mod: gest_real` (Ctrl+C / Ctrl+V cu tastele, ca în r26).
+- [ ] **R28-2** Word real, Insert › Pictures ▾: cum arată antetul grupului „Insert Picture From” (bandă gri? text îngroșat? mărimea)? O captură decupată a meniului.
+  - UI Automation dă doar numele grupului (`runde/26/acoperire_office/capturi_word_brut.json` › etichete). Simulatorul: bandă gri #f3f2f1, 12 px, îngroșat (`word.js` › `STIL_WORD`) [presupus].
+- [ ] **R28-3** Word real, „Ana are mere. Pleacă.” — Ctrl+Backspace cu cursorul: (a) după „mere.” (înainte de spațiu); (b) după „mere” (înainte de punct); (c) după „are ” (după spațiu). Ctrl+Delete cu cursorul înaintea lui „are”, apoi după „Ana” (înainte de spațiu). Ctrl+↑ cu cursorul în mijlocul paragrafului 2, apoi la începutul lui.
+  - Sursa felului gestului: support.microsoft.com/en-us/office/keyboard-shortcuts-in-word-95ef89dd-7142-4b50-afb2-f762f663ceb2 („Delete one word to the left. | Ctrl+Backspace”, „Delete one word to the right. | Ctrl+Delete”, „Move the cursor up by one paragraph. | Ctrl+Up arrow key”). Granițele simulatorului sunt cele ale lui Ctrl+← / Ctrl+→ (punctul și spațiile merg cu cuvântul dinainte; Ctrl+↑ = începutul paragrafului curent, apoi al celui dinainte) [presupus].
+  - Scenarii noi `word-ctrl-backspace-*`, `word-ctrl-delete-*`, `word-ctrl-sus-*` într-o rundă `acoperire` (gest_real, WM_KEYDOWN Ctrl+Backspace pe fereastra documentului, ca Ctrl+Z în r26).
+- [ ] **R28-4** Word real, document de 3 rânduri (mai scurt decât ecranul), cursorul pe rândul 1: unde ajunge cursorul după Page Down? Dar după Page Up de pe rândul 3?
+  - Pagina Microsoft: „Move the cursor by scrolling the document view down by one screen. | Page down”. Simulatorul derulează, dar cursorul rămâne pe loc (`word.js` › `tasta_pagina`); NEREPARAT până la real.
+<!-- RUNDA28-WORD:END -->

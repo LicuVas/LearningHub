@@ -23,7 +23,20 @@ N = 30. Regulile sunt în `D/runde/_paralel/REGULI_CRITIC.md`: citește-le înt�
   Ce vezi la Windows din cauza lor notezi, fără să atribui rundei 30.
 
 ## Ce spune constructorul (de judecat, nu de crezut)
-(se completează la finalul benzii)
+- **`30/proba_grav.py --minor4`:** la pornire 51 de verificări picate din 69, la final 0 din 123.
+- **N1 ÎNCHIS** (9 → 0 / 19): după Enter, Esc sau nume gol focusul rămâne în aplicație, iar pictograma selectată; Delete → Coș, F2 → redenumire, tasta Windows → Start.
+- **N2 ÎNCHIS** (31 → 0 / 38): Windows + Spațiu, 1, punct, virgulă, Tab, ↑ dau câte un gest `win_*`, mesajul („Windows + Spațiu” etc.) și Start închis.
+- **W4 ÎNCHIS** (4 → 0 / 28; telefon 2 → 0 / 8):
+  - A23-1 P1 + P2 aplicate; dosarul galben, Windows + E și „Explorer” din Start deschid Explorer-ul bibliotecii montat într-o fereastră a shell-ului;
+  - titlul urmează folderul; minimizarea, readucerea, închiderea și redesenarea gazdei păstrează starea și focusul; redenumirea în timpul redesenării trece (r27 a scris `MINOR4_GATA`);
+  - a doua deschidere aduce în față fereastra existentă, deși Windows real deschide una nouă (A30-1);
+  - pe telefon (360 / 390), dosarul galben apare doar după o glisare a barei (R30-6).
+  - Nereparat, cod comun din afara zonelor lui: cât Explorer-ul e montat, lista de ținte a Windows-ului include și țintele Explorer-ului. Judecă dacă încurcă asistentul sau evenimentele.
+- **A26-2 făcut** (3 → 0 / 5): Start se deschide la ridicarea tastei Windows; la Windows + E nu mai clipește.
+- **MINOR start_fundal** făcut; **pe drum, în `windows.js`:** după ~15 activări Start se deschidea sub ferestre; maximizarea ieșea 1-2 px sub bară (S3).
+- **`aplicatii.js`, doar zonele lui:** `I.emite` (:121), `deschideSuprafata` (:187-188), `WIN_COD` + `tastaWin` + începutul lui `gestTasta` (:269-298), `pointerdown` (:350-353); diff în `runde/30/diff_aplicatii_js_runda30.txt`.
+- **Regresul:** Ctrl / Meta + tastă, clic, clic dreapta: 0 diferențe pe Word, Excel, PowerPoint, Explorer (39 de evenimente fiecare); O4 42 / 42 înainte și după; probele r22 0 / 50, r18 0 / 37; r26 4 / 84 (2 voite: Windows + E deschide acum Explorer-ul; 2 = A26-1).
+- **De aprobat / de verificat:** A30-1; R30-1…R30-6.
 
 ## Sarcina
 1. **A. W4, N1, N2.** Joci gestul criticului 26, apoi un gest vecin, și scrii ÎNCHIS sau DESCHIS, cu proba ta.

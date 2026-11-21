@@ -149,3 +149,24 @@ Aprobat → se mută în `abateri.md`; respins → se repară sau se scoate.
 - [ ] **A26O-3** **Eticheta din meniu e „This Device...” (trei puncte)**, cum o arată Word real în UI Automation; lecțiile scriu „This Device…” (un semn). Scenariul `word-imagine-inserare` folosește eticheta reală.
   - Ce o închide: dacă simulatorul nu găsește rândul după etichetă, e treaba bibliotecii (O4 îl arată ca neexecutabil), nu a scenariului.
 <!-- RUNDA26-ACOPERIRE-OFFICE:END -->
+
+<!-- RUNDA30-WINDOWS:START (scris de constructorul rundei 30, 21.11.2026) -->
+## Runda 30 · Windows
+- [ ] **A30-1** **Windows + E (sau dosarul galben) când e deja deschisă fereastra Explorer montată: fereastra existentă vine în față, nu
+  se deschide a doua** (abatere păstrată, W4). În Windows, Windows + E deschide de fiecare dată o fereastră nouă.
+  - De ce: biblioteca ține o singură instanță pe nume (`aplicatii.js` › `INST[nume]`; al doilea `deschide('explorer')` o închide pe prima).
+    Două Explorer-e montate deodată cer o schimbare de api (instanțe cu cheie proprie), în afara zonelor rundei.
+  - Variante: (a) Vasile acceptă (lecțiile folosesc o singură fereastră Explorer); (b) runda următoare cere instanțe multiple în §1.
+- [x] **A26-2** (Start la apăsarea tastei Windows) — implementat în runda 30, nu mai e o abatere: `I.emite(…, extra)` + Start la ridicare
+  (`runde/30/raport_constructor.md`). Rămâne doar ca notă: închiderea o confirmă criticul rundei 30.
+<!-- RUNDA30-WINDOWS:END -->
+
+<!-- RUNDA28-WORD:START (scris de constructorul rundei 28, 21.11.2026 — asistentul comun) -->
+- [ ] **A28-1** Asistentul (`aplicatii.js` › `L.asistent`): tastele de editare într-un câmp de text al interfeței (File name, caseta din Start, Font Size, Name Box, adresa, redenumirea) NU mai sunt greșeli; tastarea în document (Word, Excel, PowerPoint) rămâne greșeală.
+  - De ce: critic 26 › K2 (indiciul „Alege Paint” apărea după două litere bune pe drumul „Windows, pai, Enter”); critic 24 (File name).
+  - Urmarea de aprobat: un elev care scrie mult în caseta greșită (de ex. Font Size în loc de document) primește indiciul doar după 30 s sau după alte greșeli, nu din litere.
+  - Variante: (a) așa; (b) doar caseta din Start și File name (o listă de ținte); (c) cum era (literele = greșeli).
+- [ ] **A28-2** Asistentul: clicul pe un buton GRI (`indisponibil`) bifează pasul, ca înainte, deși nu face nimic.
+  - De ce n-am schimbat: cazurile E / G ale lui O9 (înghețat) iau ca pas Bold-ul gri al PowerPoint-ului la pornire; cu `indisponibil` între refuzuri O9 creștea 13 → 15.
+  - Variante: (a) rămâne așa; (b) o rundă `acoperire` schimbă ținta din O9 (un buton activ) și apoi `indisponibil` intră între refuzuri.
+<!-- RUNDA28-WORD:END -->

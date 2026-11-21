@@ -116,7 +116,7 @@
 .lh-ap-e-pd{position:relative;flex:none;width:clamp(0px,30%,456px);margin:4px 4px 4px 21px;display:flex;align-items:center;justify-content:center;text-align:center;overflow:hidden}
 .lh-ap-e-pd.lh-ap-e-ascuns,.lh-ap-e-ingust .lh-ap-e-pd{display:none}
 .lh-ap-e-stare{position:relative;display:flex;align-items:center;margin:0 8px;height:24px;background:var(--e-fond)}
-.lh-ap-e-stare .lh-ap-e-nr{margin-left:12px;white-space:nowrap}
+.lh-ap-e-stare .lh-ap-e-nr{margin-left:12px;white-space:nowrap;height:24px;display:flex;align-items:center}
 .lh-ap-e-moduri{margin-left:auto;margin-right:4px;display:flex}
 .lh-ap-e-mod{width:24px;height:24px;display:flex;align-items:center;justify-content:center;border-radius:3px}
 .lh-ap-e-mod[aria-checked="true"]{background:var(--e-ales)}
@@ -144,6 +144,7 @@
   .lh-ap-e-desk{width:58px}.lh-ap-e-desk-ic{width:54px;font-size:11px}
   .lh-ap-e-np{width:118px;margin-left:2px}.lh-ap-e-pd{display:none}
   .lh-ap-e-caut{width:92px;min-width:92px;margin-right:6px}
+  .lh-ap-e-adr{min-width:40px}
   .lh-ap-e-nav{width:146px;margin-left:2px}.lh-ap-e-nb{width:34px;height:34px;top:7px}
   .lh-ap-e-nb[data-lh-id="inapoi"]{left:2px!important}.lh-ap-e-nb[data-lh-id="inainte"]{left:38px!important}.lh-ap-e-nb[data-lh-id="sus"]{left:74px!important}.lh-ap-e-nb[data-lh-id="reimprospatare"]{left:110px!important}
   .lh-ap-e-rand{height:34px}.lh-ap-e-nod{height:36px}.lh-ap-e-mr{min-height:32px}
@@ -427,7 +428,7 @@
         inp.focus({ preventScroll: true });
         const v = inp.value, e = eDir(M.edit) || !M.ext || !ext(v) ? v.length : v.lastIndexOf('.');
         try { inp.setSelectionRange(0, e); } catch (x) { /* */ }
-        inp.addEventListener('blur', () => {
+        inp.addEventListener('blur', ev => {
           if (redesenez || !M.edit) return;
           /* runda 19 (critic 15, GRAV E2): pe telefon comanda (Nou › Folder, Redenumire) rulează la pointerup, iar mousedown-ul
              de compatibilitate al ACELEIAȘI atingeri vine după el și mută focusul pe rădăcină. Fără un pointerdown nou de la
@@ -436,7 +437,24 @@
             setTimeout(() => { if (inp.isConnected && M.edit && document.activeElement !== inp) inp.focus({ preventScroll: true }); }, 0);
             return;
           }
-          const p = M.edit; M.edit = null; redenumeste(p, inp.value); deseneaza();
+          const p0 = M.edit;
+          const confirma = () => { if (M.edit !== p0 || !root.contains(inp)) return; M.edit = null; redenumeste(p0, inp.value); deseneaza(); };
+          if (ev.relatedTarget) return confirma();   // focusul a plecat pe alt element (clic în listă = root.focus() din I.la.jos, Tab)
+          /* runda 27 (critic 23, MINOR 4): un blur fără element-țintă vine din clicul pe un loc nefocusabil, din fereastra
+             browserului părăsită SAU din gazda care își rescrie stratul (api §1, opt.incadrat: scoate rădăcina și o pune înapoi în
+             aceeași funcție — Chromium trimite blur-ul la scoatere). Hotărârea se ia după ce funcția aceea s-a terminat (microtask):
+             dacă rădăcina a fost scoasă / pusă în pagină între timp, e o mutare, nu un clic în altă parte — caseta rămâne cu textul
+             ei și nimic nu se redenumește până la Enter (instanta.focus() pune cursorul înapoi în ea). */
+          const mo = typeof MutationObserver === 'function' ? new MutationObserver(() => { /* doar takeRecords */ }) : null;
+          if (mo) mo.observe(document, { childList: true, subtree: true });
+          queueMicrotask(() => {
+            const rec = mo ? mo.takeRecords() : [];
+            if (mo) mo.disconnect();
+            const atinsa = n => n === root || (n.nodeType === 1 && n.contains(root));
+            const mutata = !root.isConnected || rec.some(r => [...r.removedNodes, ...r.addedNodes].some(atinsa));
+            if (!mutata) return confirma();
+            if (root.isConnected && M.edit === p0 && root.contains(inp) && root.contains(document.activeElement) && document.activeElement !== inp) inp.focus({ preventScroll: true });
+          });
         });
         return;
       }
@@ -449,6 +467,26 @@
       if (M.dlg) { const b = root.querySelector('.lh-ap-e-db'); if (b && aveaFocus) b.focus({ preventScroll: true }); return; }
       if (aveaFocus && !root.contains(document.activeElement)) root.focus({ preventScroll: true });
     }
+
+    /* runda 27 (critic 23, MINOR 2): căutarea filtrează lista fără să rescrie caseta în care scrie elevul. Înainte, fiecare literă
+       redesena toată fereastra, iar caseta nouă nu mai avea istoricul de anulare: Ctrl+Z / Ctrl+Y nu mergeau (alt text decât un
+       <input> obișnuit pe aceleași taste). Acum se rescriu doar lista (cu antetul) și bara de stare; caseta, cursorul și istoricul ei
+       rămân. Cu un meniu, un dialog sau o redenumire deschisă se redesenează tot, ca înainte. */
+    function deseneazaLista() {
+      const cont = root.querySelector('.lh-ap-e-cont'), bs = root.querySelector('.lh-ap-e-stare');
+      if (!cont || !bs || M.meniu || M.dlg || M.edit || M.editAdresa) { deseneaza(); return; }
+      redesenez = true;
+      const t = document.createElement('div');
+      t.innerHTML = htmlLista(); cont.replaceWith(t.firstElementChild);
+      t.innerHTML = htmlStare(); bs.replaceWith(t.firstElementChild);
+      redesenez = false;
+    }
+    /* textul căutării vine și fără tastă: lipire, Ctrl+Z / Ctrl+Y, scrisul de pe telefon (insertText), dictarea */
+    root.addEventListener('input', e => {
+      const tg = e.target;
+      if (!tg || !tg.classList || !tg.classList.contains('lh-ap-e-caut-in') || M.cautare === tg.value) return;
+      M.cautare = tg.value; M.cautareFocus = true; deseneazaLista();
+    });
 
     /* ---------------------------------------------------------------- operațiile */
     const dialog = (cheie, titlu, intrebare, butoane, fa) => { M.dlg = { cheie, titlu, intrebare, butoane, fa }; M.dialog = { titlu, intrebare, butoane: butoane.slice(), apasat: null }; M.meniu = null; };
@@ -658,6 +696,10 @@
     I.la = {};
     I.la.jos = (ev, t) => {
       josNr++;
+      /* runda 27 (MINOR 4): caseta rămasă deschisă după o mutare a rădăcinii, fără focus (gazda inactivă n-a chemat focus()):
+         clicul în altă parte o confirmă, ca blur-ul pe care nu-l mai primește */
+      const c0 = M.edit && root.querySelector('.lh-ap-e-ren');
+      if (c0 && document.activeElement !== c0 && !(ev.target && ev.target.closest && ev.target.closest('.lh-ap-e-ren'))) { const p = M.edit; M.edit = null; redenumeste(p, c0.value); deseneaza(); }
       if (!(ev.target && ev.target.closest && ev.target.closest('input'))) try { root.focus({ preventScroll: true }); } catch (x) { /* */ }
       if (ev.target && ev.target.closest && ev.target.closest('.lh-ap-e-ren')) return null;   // în caseta de nume: cursorul / selecția textului, nu tragere
       const m = /^(lista):(.+)$/.exec(t || '');
@@ -723,6 +765,10 @@
       let a = 'fara_efect';
       /* clicul / atingerea ÎN caseta de nume mută doar cursorul: fără redesenare (ar pune înapoi numele vechi peste ce s-a scris) */
       if (M.edit && ev && ev.target && ev.target.closest && ev.target.closest('.lh-ap-e-ren')) return 'fara_efect';
+      /* runda 27 (G27-1, găsit la proba MINOR 4): clicul care confirmă redenumirea redesenează lista chiar în pointerdown; acțiunea
+         implicită a lui mousedown cade pe rândul vechi, scos din pagină, iar browserul mută focusul pe <body>: Delete / F2 / Ctrl+C
+         de după clic nu mai ajungeau la Explorer. Clicul a fost în Explorer, deci focusul rămâne al lui (I.la.jos îl pusese deja). */
+      if (!document.activeElement || document.activeElement === document.body) try { root.focus({ preventScroll: true }); } catch (x) { /* */ }
       if (M.edit && fel !== 'lista') { const p = M.edit; M.edit = null; redenumeste(p, (root.querySelector('.lh-ap-e-ren') || {}).value); }
       if (fel !== 'adresa' && M.editAdresa) M.editAdresa = false;
       if (fel !== 'cautare') M.cautareFocus = false;
@@ -825,7 +871,7 @@
         if (tg.classList.contains('lh-ap-e-caut-in')) {
           I.tintaTasta = 'cautare';
           if (e.key === 'Escape') { e.preventDefault(); M.cautare = ''; M.cautareFocus = false; deseneaza(); return 'fara_efect'; }
-          setTimeout(() => { if (root.isConnected && tg.isConnected && M.cautare !== tg.value) { M.cautare = tg.value; M.cautareFocus = true; deseneaza(); } }, 0);
+          setTimeout(() => { if (root.isConnected && tg.isConnected && M.cautare !== tg.value) { M.cautare = tg.value; M.cautareFocus = true; deseneazaLista(); } }, 0);
           return 'cautare';
         }
         return null;
@@ -898,7 +944,8 @@
       return a;
     };
     I.la.fereastra = () => root.querySelector('.lh-ap-e-dlg');
-    I.focus = () => { try { root.focus({ preventScroll: true }); } catch (e) { /* */ } };
+    /* runda 27 (MINOR 4): cu redenumirea deschisă, focusul cerut de gazdă (după mutarea rădăcinii) se întoarce în caseta de nume */
+    I.focus = () => { try { const c = M.edit && root.querySelector('.lh-ap-e-ren'); (c || root).focus({ preventScroll: true }); } catch (e) { /* */ } };
 
     /* plasa oracolelor (CONVENTIE_ARBORE.md §4.6): deschide o suprafață fără gest */
     I.deschideSuprafata = cheie => {

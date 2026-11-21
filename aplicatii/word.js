@@ -21,6 +21,21 @@
   const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const egal = (a, b) => a === b || (!!a && !!b && a.b === b.b && a.i === b.i && a.u === b.u && a.sz === b.sz);
   const ALINIERI = { left: 'stanga', center: 'centru', right: 'dreapta', justify: 'stanga-dreapta' };
+  /* stilul propriu al lui Word (doar sub [data-lh-aplicatie="word"], ca explorer.js / windows.js; aplicatii.css rămâne comun):
+     - copiii unei casete cu chenar din panglică (Font, Font Size: Edit + butonul ▾) se așază față de colțul casetei, nu față de
+       interiorul chenarului de 1 px: erau la +1 / +1 față de casetă și +3 / +3 față de fereastră (critic 24, MINOR 1;
+       referinte/uia_word.json › panglica.TabHome › Font: ComboBox [105,91], Edit [106,93], Open [216,92]);
+     - antetul unui grup din meniu (Pictures › „Insert Picture From”, capturi_word_brut.json): bandă gri, text îngroșat
+       [presupus] R28-2 (UI Automation dă doar numele grupului, nu aspectul) */
+  const STIL_WORD = '[data-lh-aplicatie="word"] [data-lh-suprafata^="panglica."] .lh-ap-t-ComboBox>.lh-ap-n{margin:-1px 0 0 -1px}' +
+    '[data-lh-aplicatie="word"] .lh-ap-meniu-antet{padding:4px 12px;margin-bottom:2px;background:#f3f2f1;color:#323130;font-weight:600;font-size:12px;cursor:default}';
+  function stilWord() {
+    if (document.getElementById('lh-ap-word-css')) return;
+    const s = document.createElement('style');
+    s.id = 'lh-ap-word-css';
+    s.textContent = STIL_WORD;
+    document.head.appendChild(s);
+  }
 
   /* Ctrl+S pe un document nou (Word M365) = fereastra Office „Save this file”, desenată din referință (uia_word.json ›
      dialog.save_this_file: File name, Save as type, Choose a Location, More options…, Save, Cancel; runda `acoperire`
@@ -32,6 +47,7 @@
   const OFFICE_NUI = [SALVARE_NOUA, INTREBARE_INCHIDERE];
 
   function creeaza(I, c) {
+    stilWord();
     const PG = window.LH.aplicatii; // obiectul public (pentru mesaje / asistent)
     const pang = modul('panglica'), st = modul('stare');
     const date = I.date, root = I.root;
@@ -275,6 +291,32 @@
       });
       return 'stergere';
     }
+    /* Ctrl+Backspace / Ctrl+Delete: un cuvânt, cu aceleași granițe ca Ctrl+← / Ctrl+→ (muta1): înapoi până la începutul
+       cuvântului dinainte (cu spațiile de după el), înainte până la începutul cuvântului următor. Cum tratează Word real
+       punctuația și spațiile la aceste granițe n-avem real [presupus] R28-3. Cu selecție / în tabel: ca Backspace / Delete. */
+    function stergeCuvant(dir) {
+      const p = M.sel.f, tot = textIntre(0, lungime());
+      let q = p;
+      if (dir > 0) { while (q < maxCaret() && LIT.test(tot[q])) q++; while (q < maxCaret() && !LIT.test(tot[q]) && tot[q] !== '\r') q++; }
+      else { while (q > 0 && !LIT.test(tot[q - 1]) && tot[q - 1] !== '\r') q--; while (q > 0 && LIT.test(tot[q - 1])) q--; }
+      if (q === p) return dir > 0 ? del() : backspace();
+      const a = Math.min(p, q), b = Math.max(p, q);
+      schimba(dir > 0 ? 'stergere_inainte' : 'stergere_inapoi', () => { sterge(a, b); M.sel = { a, f: a }; });
+      H.rupe();
+      return 'stergere';
+    }
+    /* Ctrl+↑ / Ctrl+↓: începutul paragrafului curent (sau al celui dinainte, dacă ești deja la început) / al celui următor;
+       la ultimul paragraf Ctrl+↓ duce la capătul lui. Regula „curent, apoi cel dinainte” [presupus] R28-3. */
+    function mutaParagraf(dir, extinde) {
+      const p = M.sel.f, l = loc(p), inceput = p - l.o;
+      let q;
+      if (dir < 0) q = l.o > 0 ? inceput : (l.i > 0 ? inceput - 1 - M.P[l.i - 1].t.length : 0);
+      else q = l.i < M.P.length - 1 ? inceput + M.P[l.i].t.length + 1 : maxCaret();
+      q = clamp(q);
+      M.sel = { a: extinde ? M.sel.a : q, f: q };
+      H.rupe();
+      return extinde ? 'selectare' : 'cursor';
+    }
     function del() {
       if (M.cel) return stergeCelula(1);
       if (areSel()) { schimba('stergere', () => stergeSelectia(true)); H.rupe(); return 'stergere'; }
@@ -416,11 +458,25 @@
       H.rupe();
       return 'decupare';
     }
+    /* „Smart cut and paste” (word365): la lipire, Word pune singur spațiul dinaintea textului lipit când acesta începe cu o
+       literă / cifră și se lipește imediat după o literă, o cifră sau un semn de punctuație, la capăt de cuvânt
+       (referinte/scenarii_real/word-copiere-lipire.json: „mere” lipit după „mere.” → „Ana are mere. mere”). La începutul
+       paragrafului nu pune nimic, iar după textul lipit nu adaugă spațiu (word-decupare-lipire.json: „Plecăm luni.” lipit
+       înaintea lui „Aduceți” → „Plecăm luni.Aduceți apă. ”). În mijlocul unui cuvânt, după spațiu sau după „(” nu se pune
+       nimic: n-avem real pentru ele [presupus] R28-1. word2007 n-are real (R26O-5) → neschimbat. */
+    const CAPAT_CUVANT = /[\p{L}\p{N}.,;:!?]/u;
+    function spatiuInainte(pos, text) {
+      if (p2007 || pos <= 0 || !LIT.test(String(text).charAt(0))) return false;
+      const ina = textIntre(pos - 1, pos), dupa = pos < maxCaret() ? textIntre(pos, pos + 1) : '';
+      return CAPAT_CUVANT.test(ina) && !LIT.test(dupa);
+    }
     function lipeste(doarText) {
       if (!M.clip) return 'fara_efect';
       if (M.cel) return scrieCelula(M.clip.text.replace(/\r/g, ' '));
       schimba('lipire', () => {
         if (areSel()) stergeSelectia(false);
+        const sp = spatiuInainte(M.sel.f, M.clip.text);
+        if (sp) { const q = insereaza(M.sel.f, ' ', fmtLa(M.sel.f)); M.sel = { a: q, f: q }; }
         const pos = insereaza(M.sel.f, M.clip.text, doarText ? fmtLa(M.sel.f) : M.clip.f.map(f => f || DEF));
         M.sel = { a: pos, f: pos };
       });
@@ -1001,9 +1057,13 @@
       const R = root.getBoundingClientRect(), r = anc.getBoundingClientRect();
       const m = el('div', 'lh-ap-meniu ' + (cls || ''), { role: 'menu' });
       itemi.forEach(it => {
+        /* antetul unui grup al meniului (Pictures › „Insert Picture From”): doar text, fără clic */
+        if (it.antet) { const h = el('div', 'lh-ap-meniu-antet', { role: 'presentation' }); h.textContent = it.antet; m.appendChild(h); return; }
         const b = el('div', 'lh-ap-meniu-rand', { role: 'menuitem', 'data-lh-tinta': 'meniu:' + it.tinta, 'aria-label': it.tinta });
         b.innerHTML = it.html || '<span class="lh-ap-text">' + esc(it.text) + '</span>';
         b.__fa = it.fa;
+        /* rândul cu tastă de acces din referință (ex. „Alt, N, P, D”): îl găsesc tastele de acces (ktTinte), ca pe comenzile panglicii */
+        if (it.ta) { b.setAttribute('data-lh-tip', 'MenuItem'); b.__nod = { t: 'MenuItem', e: it.text, ta: it.ta }; }
         m.appendChild(b);
       });
       m.style.left = Math.max(0, r.left - R.left) + 'px';
@@ -1111,6 +1171,7 @@
          referinței. Felul micșorării nu e în referință: [presupus] R24-3 */
       const kMic = R.height > 0 && R.height < r[3] && R.width >= r[2] ? Math.max(0.7, (R.height - 2) / r[3]) : 1;
       if (kMic < 1) { s.style.transformOrigin = '0 0'; s.style.transform = 'scale(' + kMic.toFixed(4) + ')'; }
+      dialog.kMic = kMic;   // aceeași micșorare pentru lista deschisă a unei casete din fereastră (listaRef)
       dialog.strat.appendChild(s);
       dialog.el = s;
       /* panoul din stânga al ferestrei Save As: elementele IMPLICITE Windows 11 din referință (uia_word.json ›
@@ -1334,8 +1395,12 @@
       /* rolul după tipul real al ferestrei-listă: Menu (Font Size) / List (Save as type) */
       if (!s.getAttribute('role')) s.setAttribute('role', SUP[cheie].t === 'Menu' ? 'menu' : 'listbox');
       s.style.position = 'absolute';
+      /* lista unei casete din fereastra micșorată (laptopul la 125 %): aceeași micșorare ca fereastra, ca să rămână lată cât
+         caseta și în fereastră (critic 24, MINOR 2: 814 px peste caseta de 755, ieșea cu 59 px din fereastră) */
+      const kL = dialog && dialog.el && dialog.el.contains(caseta) && dialog.kMic < 1 ? dialog.kMic : 1;
+      if (kL < 1) { s.style.transformOrigin = '0 0'; s.style.transform = 'scale(' + kL.toFixed(4) + ')'; }
       s.style.left = Math.max(0, r.left - R.left) + 'px';
-      s.style.top = (r.bottom - R.top + (dy || 0)) + 'px';
+      s.style.top = (r.bottom - R.top + (dy || 0) * kL) + 'px';
       const randuri = [...s.querySelectorAll('[data-lh-tip="ListItem"]')];
       randuri.forEach(x => { x.__fa = () => alege(x.getAttribute('data-lh-eticheta')); });
       s.__randuri = randuri;
@@ -1345,7 +1410,7 @@
          (critic 16 și 20, MINOR „Fereastra mică”) — se deschide deasupra casetei dacă acolo încape, altfel lipită de marginea
          de jos. Cât încape dedesubt (1366x768, tabla) nu se mișcă nimic. [presupus] R24-3 */
       if (dialog && dialog.el && dialog.el.contains(caseta)) {
-        const hl = s.getBoundingClientRect().height, sus = r.top - R.top, jos = r.bottom - R.top + (dy || 0);
+        const hl = s.getBoundingClientRect().height, sus = r.top - R.top, jos = r.bottom - R.top + (dy || 0) * kL;
         if (jos + hl > R.height) s.style.top = Math.max(0, sus - hl >= 0 ? sus - hl : R.height - hl) + 'px';
       }
       meniu = s;
@@ -1661,9 +1726,13 @@
         { tinta: 'Custom Margins', text: 'Custom Margins', fa: () => (deschideDialog('dialog.PageSetupDialog') && 'dialog_pagina') }]); return 'meniu_margini'; },
       PageOrientationGallery: e => { meniuLa(e, [{ tinta: 'Portrait', text: 'Portrait', fa: () => orientare('portret') },
         { tinta: 'Landscape', text: 'Landscape', fa: () => orientare('vedere') }]); return 'meniu_orientare'; },
-      FlyoutAnchorInsertPictures: e => { meniuLa(e, [{ tinta: 'This Device', text: 'This Device', fa: () => (deschideDialog('dialog.PictureInsertFromFile') && 'dialog_imagine') },
-        { tinta: 'Stock Images', text: 'Stock Images', fa: () => I.nesimulat('Stock Images') },
-        { tinta: 'Online Pictures', text: 'Online Pictures', fa: () => I.nesimulat('Online Pictures') }]); return 'meniu_imagini'; }
+      /* Pictures ▾: grupul „Insert Picture From” cu „This Device...” (Alt, N, P, D), „Stock Images...” (S), „Online
+         Pictures...” (O) — etichetele reale, cu trei puncte (runde/26/acoperire_office/capturi_word_brut.json › randuri_meniu,
+         etichete; A26O-3); „This Device...” deschide fereastra Insert Picture (› dupa_this_device: #32770 „Insert Picture”) */
+      FlyoutAnchorInsertPictures: e => { meniuLa(e, [{ antet: 'Insert Picture From' },
+        { tinta: 'This Device...', text: 'This Device...', ta: 'Alt, N, P, D', fa: () => (deschideDialog('dialog.PictureInsertFromFile') && 'dialog_imagine') },
+        { tinta: 'Stock Images...', text: 'Stock Images...', ta: 'Alt, N, P, S', fa: () => I.nesimulat('Stock Images...') },
+        { tinta: 'Online Pictures...', text: 'Online Pictures...', ta: 'Alt, N, P, O', fa: () => I.nesimulat('Online Pictures...') }]); return 'meniu_imagini'; }
     };
     const DUPA_NUME = { 'Bold': 'Bold', 'Italic': 'Italic', 'Underline': 'UnderlineGallery', 'Grow Font': 'FontSizeIncreaseWord',
       'Shrink Font': 'FontSizeDecreaseWord', 'Bullets': 'BulletsGalleryWord', 'Numbering': 'NumberingGalleryWord', 'Cut': 'Cut',
@@ -2073,12 +2142,18 @@
       switch (g) {
         case 'tastare': e.preventDefault(); r = scrie(e.key, true); break;
         case 'tasta_enter': e.preventDefault(); r = e.ctrlKey ? I.nesimulat('Ctrl+Enter') : enter(); break;
-        case 'tasta_backspace': e.preventDefault(); r = backspace(); break;
-        case 'tasta_delete': e.preventDefault(); r = del(); break;
+        /* support.microsoft.com/en-us/office/keyboard-shortcuts-in-word-95ef89dd-7142-4b50-afb2-f762f663ceb2 (citit 21.11.2026),
+           „Edit text and graphics”: „Delete one word to the left. | Ctrl+Backspace”, „Delete one word to the right. | Ctrl+Delete”
+           (runda 28, unghiul gest_tastatura: Ctrl+Backspace ștergea o literă) */
+        case 'tasta_backspace': e.preventDefault(); r = e.ctrlKey && !M.cel && !areSel() ? stergeCuvant(-1) : backspace(); break;
+        case 'tasta_delete': e.preventDefault(); r = e.ctrlKey && !M.cel && !areSel() ? stergeCuvant(1) : del(); break;
         case 'tasta_tab': e.preventDefault(); r = M.cel ? tabInTabel(sh) : scrie('\t', false); break;
         case 'sageti':
           e.preventDefault();
           if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') r = muta1(e.key === 'ArrowLeft' ? -1 : 1, sh, e.ctrlKey);
+          /* „Navigate the document”: „Move the cursor up by one paragraph. | Ctrl+Up arrow key”, „… down by one paragraph. |
+             Ctrl+Down arrow key” (aceeași pagină; runda 28: Ctrl+↑/↓ mutau un rând) */
+          else if (e.ctrlKey && !M.cel) r = mutaParagraf(e.key === 'ArrowUp' ? -1 : 1, sh);
           else r = M.cel ? 'cursor' : mutaRand(e.key === 'ArrowUp' ? -1 : 1, sh);
           break;
         case 'tasta_home_end':

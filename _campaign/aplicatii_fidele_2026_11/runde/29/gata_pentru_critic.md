@@ -1,0 +1,13 @@
+# Runda 29 (B-excel#3, unghiul stare_finala_erori) — gata pentru criticul rece
+
+- **Ce s-a schimbat:** doar `aplicatii/excel.js` (copia de pornire: `runde/29/inainte/excel.js`; diff: `diff inainte/excel.js ../../../../aplicatii/excel.js`). Fișiere comune atinse: niciunul.
+- **Ținta:** G25-1 (`runde/25/critic.md:68`) — foile din viii/m1-l03: Delete pe filă (cu date → întrebarea, goală → direct, singura → refuzul), Home › Delete ▾ › Delete Sheet, Move or Copy (lista foilor, OK, Create a copy), tragerea filei (și cu Ctrl), Tab Color, Ctrl+Z după ștergere; apoi Ctrl+PageDown / PageUp (R25-7), Alt într-o fereastră (MINOR 1 critic 25), redenumirea cu numele altei foi (m1-l03:226, pe unghi).
+- **Unde în cod** (caută comentariile „runda 29”): constantele și ferestrele desenate lângă `SALVARE_NOUA` (`DLG_STERGE`, `DLG_REFUZ`, `DLG_NUME`, `mesajExcel`); blocul „foile: ștergere, mutare, copiere, culoare” după `alegeFoaia` (`stergeFoaia`, `stergeAcum`, `mutaFoaia`, `pregatesteMutare`, `submeniuCuloare`, `coloreazaFila`, `listaStergere`, `locFila`); `stilFila` lângă `foileFile`; clicurile în `I.la.clic` (ramura `fereastra` și ramura `meniu`), `apasa` › `TableDeleteRowsAndColumnsMenu_Dropdown`; tragerea în `I.la.jos` / `misca` / `sus`; Ctrl+PageDown în `I.la.tasta`; Alt în `keyup`; `terminaRedenumire` / `reiaRedenumire`; starea `culori_file`.
+- **Fără referință** (desenat / dedus, cu rândurile R29-1 … R29-9 în `de_verificat.md`): cele trei ferestre „Microsoft Excel”, submeniul Tab Color, lista Delete ▾, golirea istoricului, rândul ales în Move or Copy, regula locului la tragere. Captura lecției folosită: `lectii/viii/m1-l03/img/confirma-stergerea.webp`, `mutare-sau-copiere.webp`, `file-colorate.webp`, `file-dupa-copie.webp`.
+- **Probele constructorului:** `proba_grav.py` (`--iesire`; `LH_VECHI=1` = codul de pornire), `proba/stare_erori.py`, `proba/telefon.py`, `proba/capturi.py`; regresul `regres.sh` → `regres/regres_rezumat.txt`; O4 în `probe_iesiri/o4_excel_final.log`.
+- **Ce n-am făcut:** măsurarea completă (o face orchestratorul), „=SUM(A1:A3” / „=A1+” + Enter (fără referință, R29-8), proba pe telefon cu atingeri adevărate pe file (hamul nu nimerește fila nici pe codul vechi).
+
+- **Cifrele:** `proba_grav.py` 17/18 picate pe codul de pornire (`LH_VECHI=1`) → 0/18; probele 25 și 21 = 0; O4 `excel-*` 64/66, 0 diferențe (2 trageri fără real). Proba 8 › K2 (asistentul nu numără `activat`) pică la fel și cu `excel.js` de la pornire (`proba/k2_izolat.py`) → cod comun, nu banda.
+- **Diff-ul rundei:** `runde/29/excel_js.diff` (= `inainte/excel.js` → `excel_js_dupa.js` = discul la final).
+
+GATA_PENTRU_CRITIC
