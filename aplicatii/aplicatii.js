@@ -79,6 +79,7 @@
   SURSE_APP.windows = ['windows.js', 'date/windows.json'];   // runda 18 (B-windows): Windows 11 RO, generat din uia_windows.json
   SURSE_APP.explorer = ['explorer.js', 'date/explorer.json'];   // runda 15 (B-explorer): File Explorer RO, generat din uia_explorer.json
   PROFILURI.explorer = ['explorer_windows11', 'windows11']; SETARI_IMPLICITE.profil.explorer = 'explorer_windows11';   // runda 15
+  SURSE_APP.paint = ['paint.js', 'date/paint.json'];   // Paint (Windows 11): aplicatii/paint.js; profilul paint11 vine din setari.json
   function incarcaApp(nume) {
     const s = SURSE_APP[nume];
     if (!s) return Promise.reject(new Error('„' + nume + '” nu e încă în bibliotecă (vine într-un val următor)'));
