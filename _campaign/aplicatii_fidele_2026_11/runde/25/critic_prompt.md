@@ -15,7 +15,22 @@ N = 25. Regulile sunt în `D/runde/_paralel/REGULI_CRITIC.md`: citește-le înt�
   Ce vezi la Excel din cauza lor notezi cu ora, fără să atribui rundei 25.
 
 ## Ce spune constructorul (de judecat, nu de crezut)
-(se completează de orchestrator când banda termină)
+- **`25/proba_grav.py`:** 9 verificări picate din 13 la pornire, acum 0. A schimbat doar `excel.js`. Regresul Excel e 0: G17-1 / G17-2 (r21) și probele 17, 10, 9, 8, 6.
+- **R21-2 / MINOR 1-3:**
+  - rotița, bara și „Line up” trec de marginea ferestrei, până la rândul 1;
+  - ↑ coboară vederea câte un rând, iar PgDn are pas constant (23 de rânduri);
+  - fâșia de 16 px a dispărut;
+  - grila normală e neschimbată.
+- **MINOR 5-6:** grila stă la y 220, iar barele au numele din referință („Column left / right”, „Page up / down / left / right”).
+- **O4 `excel-*`:** 57/64 → 59/64, dar unitățile rămân 12 → 12.
+  - `numere-afisare` și `autofit-latime` trec acum.
+  - `sortare-doua-niveluri` nu mai e neexecutabil (ținta nouă `camp:Order#2` în `deseneazaNiveluri`), dar dă 8 diferențe. Constructorul spune că rezultatul real înregistrat e greșit: `acoperire_excel_r7.py:1113` a sortat Punctaj crescător, deși pasul cere „Largest to Smallest”. Orchestratorul a păstrat ținta. Judecă dacă simulatorul face ce cere pasul.
+  - `autocompletare-tab` și `separator-virgula` au câte o diferență, despre care constructorul spune că ține de scenariu (realul citește după Esc + Esc).
+- **gest_tastatura (54 de gesturi):**
+  - Ctrl+; și Ctrl+1 nu emit niciun eveniment (`gestTasta` comun, notat pentru orchestrator);
+  - Ctrl+PgDn pe ultima foaie mută celula 23 de rânduri, deși `viii/m1-l03:197` spune „te lasă pe loc”. Judecă: e GRAV pe drumul lecției?
+  - PgDn, Alt+PgDn, Alt+↓ și Ctrl+A de două ori diferă de Excel, dar n-au referință: R25-5…9.
+- **Fișiere comune atinse: niciunul.**
 
 ## Sarcina
 1. **A. GRAV vechi:** niciunul deschis.

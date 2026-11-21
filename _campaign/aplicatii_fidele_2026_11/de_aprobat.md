@@ -99,3 +99,40 @@ Aprobat → se mută în `abateri.md`; respins → se repară sau se scoate.
   - Aplicațiile nu sunt în bibliotecă, dar drumul din v/m2-l08 cere: pornește → minimizează → readu din bară → maximizează → închide.
   - Ce o închide: Paint în bibliotecă (contractul: „apoi Paint”) sau Vasile o acceptă.
 <!-- RUNDA22-WINDOWS:END -->
+
+<!-- RUNDA24-WORD:START (scris de constructorul rundei 24, 21.11.2026 — asistentul comun și fereastra mică) -->
+- [ ] **A24-1** **Asistentul (§6.3): Tab / Shift+Tab care doar mută focusul (`actiune: 'mutare_focus'`) nu face pasul și nu e greșeală** (hotărârea orchestratorului din `runde/supliment_B_word_runda24.md`, pe constatarea criticului 20 › B, `rc20.json` › M6):
+  - Înainte, pe drumul lecției `m1-l03:189-192` făcut cu tastele, Tab-ul care pleca de pe Save bifa „Save” fără salvare, iar Tab-urile se numărau ca greșeli. Bula apărea pe PDF după doi pași buni.
+  - Acum (`aplicatii.js` › `L.asistent`, `api_biblioteca.md` §6.3), pasul Save se bifează doar la salvarea adevărată.
+  - O lecție care chiar învață Tab-ul își spune pasul cu `asteapta(ev)`; acela primește evenimentul în continuare (A21-1 neatins).
+  - Proba: `runde/24/proba_grav.py` › AS1-AS5 (Word + PowerPoint). Ce o închide: Vasile o acceptă.
+- [ ] **A24-2** **Fereastra mică (laptopul la 125% în browser, 1093×526 css): fereastra Word mai înaltă decât ecranul se micșorează cât să încapă (cel puțin 70%); lista unei casete din fereastră se deschide deasupra casetei când dedesubt nu încape** (`word.js` › `arataFilaDialog`, `listaRef`):
+  - Referința e capturată doar la 1366×768. Acolo și pe tablă dreptunghiurile rămân la pixel (`runde/24/probe_iesiri/aspect_dupa.json`, `proba_grav.py` › MN4).
+  - Pe laptopul real fereastra încape (614 css la 125%); în browser bara lui fură înălțimea și Save / Cancel ieșeau din ecran (critic 16 și 20, MINOR).
+  - Ce o închide: Vasile o acceptă, sau captura R24-3 arată altceva.
+<!-- RUNDA24-WORD:END -->
+
+<!-- RUNDA26-WINDOWS:START (scris de constructorul rundei 26, 21.11.2026) -->
+## Runda 26 · Windows
+- [ ] **A26-1** **Paint găsit pe telefon fără tastare** (suplimentul rundei 26, K3). Referința nu-l arată nicăieri în Start fără căutare.
+  - Variante: (a) Vasile acceptă că pe telefon drumul e „scrii pai” (merge din runda 26); (b) o dală „Paint” fixată, deși PC-ul de
+    referință n-o are (abatere de aspect, O3 ar crește); (c) așteptăm captura R26-3 și deschidem categoria cum o arată ea.
+  - Constructorul n-a implementat nimic din (b) / (c).
+- [ ] **A26-2** **Start se deschide la APĂSAREA tastei Windows, nu la ridicare** (abatere de gest, păstrată în runda 26).
+  - De ce: evenimentul emis la ridicare ar trece prin `I.emite`, care nu poartă `activat` (K2); `I.emite` e cod comun în afara zonei rundei.
+  - Ce o închide: orchestratorul lărgește `I.emite` cu `extra` (un rând, `aplicatii.js` › `L.deschide`), apoi windows.js deschide Start la
+    `keyup`; sau Vasile acceptă clipirea Start-ului la Windows + E.
+<!-- RUNDA26-WINDOWS:END -->
+
+<!-- RUNDA23-EXPLORER:START (scris de constructorul rundei 23, 21.11.2026) -->
+## Runda 23 · Explorer
+- [ ] **A23-1** **CERERE către orchestrator: paza comună pentru montare (A22-1), 2 schimbări mici în `aplicatii.js`, în afara zonei r23.**
+  - P1: în `leagaGesturi › pointerdown`, un clic pe o țintă dintr-o ALTĂ rădăcină montată în aceasta e al ei (`jos = null`).
+  - P2: `deschideSuprafata(cheie, nume?)`: aplicația cerută, dacă e vie.
+  - Fără ele, gazda Windows primește și ea clicurile din Explorer (`clic`, `dublu_clic` cu aplicatie „windows”).
+  - Textul exact + proba pe copie (0 picate din 15): `runde/23/propunere_comun_A22-1.md`.
+  - Ce o închide: orchestratorul aplică P1 + P2 (sau le dă unei benzi), apoi banda Windows leagă montarea în `windows.js`.
+- [ ] **A23-2** **Semnele interzise în nume: numele rămâne neschimbat + mesajul central, nu balonul real** (balonul nu e în referință, R23-2).
+  - De ce: altfel starea se strică („a/b” mută fișierul într-un folder inexistent).
+  - Ce o închide: captura balonului (R23-2) sau Vasile acceptă.
+<!-- RUNDA23-EXPLORER:END -->

@@ -19,7 +19,21 @@ N = 26. Regulile sunt în `D/runde/_paralel/REGULI_CRITIC.md`: citește-le înt�
   Ce vezi la Windows din cauza lor notezi, fără să atribui rundei 26.
 
 ## Ce spune constructorul (de judecat, nu de crezut)
-(se completează de orchestrator când banda termină)
+- **`26/proba_grav.py`:** 36 de verificări picate din 81 la pornire; la final, 3 din 84.
+  - 2 sunt „Paint fără tastare” pe telefon: Paint nu e în referință (A26-1, decide Vasile).
+  - 1 e o abatere de 2 px la fereastra maximizată, lăsată.
+  - Proba r22 trece 50/50, proba r18 37/37. O5 = 35 și O9 = 13, ca la pornire.
+- **K1 ÎNCHIS:**
+  - Win+E dă `win_e` (nu `ctrl_e`) și mesajul central „Windows + E”, iar Start rămâne închis;
+  - pe drum, Start se deschide o clipă, pentru că se deschide la apăsarea tastei Windows, nu la ridicare, ca să păstreze `activat`;
+  - deschiderea la ridicare cere un rând în codul comun `I.emite(…, extra)`: A26-2. Judecă dacă clipirea e vizibilă și dacă încurcă drumul lecției.
+- **K2 ÎNCHIS:** pe drumul „Windows, pai, Enter”, asistentul ajunge la `pas() = 2`, fără indiciu la final.
+- **K3 ÎNCHIS pentru caseta din Start:** la 360 / 390 px atingerea pune focusul într-un câmp adevărat, iar textul de telefon ajunge în căutare. „Paint fără tastare” rămâne NEÎNCHIS (A26-1), deci nu-l numeri ca GRAV nou dacă A26-1 e încă deschis.
+- **Schimbarea comună** (`aplicatii.js:266-275`, 8 rânduri în `gestTasta`; `api_biblioteca.md:170`, un rând în §4):
+  - Win + literă = `win_<literă>`, doar în aplicația care declară `I.tastaWindows` (azi Windows) și nu pe Mac;
+  - regresul pe Word, Excel, PowerPoint și Explorer: 0 diferențe la 24 de evenimente pe aplicație.
+- **Fără referință:** R26-1…R26-3 în `de_verificat.md`.
+- **Nefăcut:** MINOR-urile din criticii 22 / 18. W4 rămâne parțial.
 
 ## Sarcina
 1. **A. W4, K1, K2, K3.** Joci gestul criticului 22, apoi un gest vecin, și scrii ÎNCHIS sau DESCHIS, cu proba ta.

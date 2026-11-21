@@ -753,3 +753,70 @@ Până la răspuns, simulatorul face ce scrie în paranteză.
   Cancel, apoi **Space**: se apasă butonul cu focusul, nu Save? (Simulatorul: da — ca regula Windows „butonul cu focusul primește
   Enter”, folosită deja de PowerPoint, critic 13 › T1. Pentru ferestrele Office desenate de Word, regula e [presupus].)
 <!-- RUNDA20-WORD:END -->
+
+<!-- RUNDA24-WORD:START (scris de constructorul rundei 24, 21.11.2026 — Word: O4, fereastra mică, Alt+F4) -->
+- [ ] **R24-1** Word, „Ana are mere multe”, clic în „mere” la **x + 16 px** din cele 31 (`Window.GetPoint`), apoi la **x + 15 px**: cursorul ajunge la 10, respectiv la 9?
+  - Ar lămuri că Word pune cursorul la cea mai apropiată graniță, ca simulatorul. Atunci diferența din `word-clic-pune-cursorul` vine din ham: realul dă clic la `x + l // 2` (`referinte/ruleaza_real.py:596-604`), O4 la `x + w / 2` (`oracole/oracol_comportament.py:189`).
+  - Măsurat în simulator: clicul O4 e la 0,257 px DREAPTA de centrul lui „e” (`runde/24/probe_iesiri/masura_inainte.json` › M3). O rundă `acoperire` ar alinia cele două clicuri.
+- [ ] **R24-2** Word, **Insert › Pictures ▾**: rândul „This Device…” are idMso `PictureInsertFromFile` (deschide „Insert Picture”, ca `CommandBars.ExecuteMso('PictureInsertFromFile')` din `uia_word.json`)?
+  - Dacă da, scenariul înghețat `word-imagine-inserare` (pas `id_mso: PictureInsertFromFile` direct după fila Insert) nu se poate juca pe o panglică fidelă. Ar trebui rescris într-o rundă `acoperire` cu `id_mso: FlyoutAnchorInsertPictures, element: "This Device"`.
+  - Varianta, jucată pe o copie: 1/1 la fel ca realul (`runde/24/probe_iesiri/O4_varianta_imagine/iesire.log`).
+- [ ] **R24-3** Word pe laptopul 1366×768 la 125%: dreptunghiul ferestrei Save As (F12) și al ferestrei Font (Ctrl+D). Încap întregi pe ecran, cu Save / Cancel vizibile? Lista Save as type deschisă lângă marginea de jos se deschide în sus?
+  - Ar confirma sau ar răsturna A24-2 (micșorarea ferestrei și lista întoarsă în simulator, `word.js` › `arataFilaDialog` / `listaRef`).
+- [ ] **R24-4** Word, F12, File name = un fișier care există, Enter: textul ferestrei de înlocuire (aceeași captură ca **R5-3**; runda 24 a căutat-o în `referinte/` și n-a găsit-o — „already exists” rămâne mesajul central).
+- [ ] **R24-5** Chrome pe Windows (laboratorul), o lecție Word cu Save As deschisă, **Alt+F4**:
+  - se închide doar fereastra simulată (Word: `tasta_f4` → Cancel, runda 24), sau Windows închide tot browserul?
+  - Dacă se închide browserul, Alt+F4 nu e un gest pe care lecțiile îl pot cere.
+<!-- RUNDA24-WORD:END -->
+
+<!-- RUNDA26-WINDOWS:START (scris de constructorul rundei 26, 21.11.2026 — Windows: tasta cu sigla, caseta din Start, stările finale) -->
+## Runda 26 · Windows — ce n-are referință
+- [ ] **R26-1** **Tasta Windows + literă** (E, D și celelalte): ce deschide fiecare în Windows 11 și dacă Start apare o clipă.
+  - Azi: gestul `win_<literă>`, Start închis, mesajul central „Windows + E”. Start se deschide totuși la APĂSAREA tastei Windows și se închide
+    la literă (în Windows se deschide la ridicare, dacă n-a venit altă tastă) — vezi `runde/26/contra.md`.
+  - Ce ar lămuri: pagina Microsoft „Keyboard shortcuts in Windows” înghețată în `surse_microsoft.md` (Windows + E = File Explorer,
+    Windows + D = desktopul) + un scenariu `gest_real` (Windows + E, apoi UIA pe fereastra din față).
+- [ ] **R26-2** **Tastele cu Start deschis, când pe desktop e selectată o pictogramă**: Delete, F2, Enter (cu caseta goală).
+  - Azi: `fara_efect`, ținta = caseta (dedus din S-MS „Search box, edit” + §4 „la taste: ținta focusului”); înainte de runda 26 Delete muta
+    pictograma în Coș, sub Start.
+  - Ce ar lămuri: scenariu `gest_real`: clic pe o pictogramă, tasta Windows, Delete / F2 / Enter, apoi UIA pe desktop și pe Start.
+- [ ] **R26-3** **Paint (și Calculator) fără tastare, în Start › „Toate”**: în ce categorie stau și ce se vede la clic pe locul al 4-lea al
+  categoriei (celelalte aplicații).
+  - Azi: Paint nu e în `uia_windows.json`; pe telefon se găsește doar scriind „pai” (merge din runda 26, tastatura ecranului).
+  - Ce ar lămuri: UIA pe Start › Toate cu categoria „Creativitate” (și „Utilități și instrumente”) deschisă + captură decupată.
+<!-- RUNDA26-WINDOWS:END -->
+
+<!-- RUNDA23-EXPLORER:START (scris de constructorul rundei 23, 21.11.2026 — Explorer: tastele din câmpuri, greșelile tipice, montarea) -->
+## Runda 23 · Explorer (unghiul stare_finala_erori)
+- **R23-1** Tab / Shift+Tab cu focusul în caseta de redenumire, în adresă și în căutare.
+  - Azi: Tab în câmp rămâne al browserului (focusul pleacă din câmp; redenumirea se încheie cu textul scris la ieșirea din casetă).
+    Runda 23 NU l-a oprit (supliment: în câmp se opresc „F-uri, Alt+…, celelalte Ctrl+…”). api §4 îl pomenește.
+  - Ce ar lămuri: scenariu `gest_real`: F2 pe un fișier, „x”, Tab; apoi UIA `FocusedElement` + `nume_fisiere` (trece la rândul următor în redenumire?).
+- **R23-2** Semnele interzise în nume (`\ / : * ? " < > |`): balonul de avertizare (textul, locul, cât stă) și dacă semnul intră în casetă.
+  - Azi: la Enter / ieșirea din casetă numele rămâne neschimbat și apare mesajul central „avertizarea pentru semnele … din nume”
+    (`explorer.js:508-511`). Înainte, „a/b” muta fișierul într-un folder inexistent (G23-1).
+  - Ce ar lămuri: scenariu `gest_real` cu captură: F2 pe un fișier, tastat „a/b”, captura balonului + UIA (valoarea casetei), apoi Enter.
+- **R23-3** Ctrl+X, apoi Ctrl+V în ACELAȘI folder.
+  - Azi: nimic schimbat, clipboardul golit, evenimentul `lipire` cu `dupa` = `inainte`.
+  - Ce ar lămuri: scenariu `gest_real`: Ctrl+X pe un fișier, Ctrl+V în același folder; `nume_fisiere` + starea butonului Lipire (activ?).
+- **R23-4** Căutarea fără rezultat: textul din lista goală („Niciun element…”?) și dacă Esc golește caseta.
+  - Azi: lista goală, fără text; Esc golește căutarea și readuce lista întreagă (ecranul = starea).
+  - Ce ar lămuri: UIA pe lista goală după „zzz” în Căutați + după Esc.
+- **R23-5** Montarea (A22-1): titlul ferestrei Explorer în bara gazdei = „<folder> - Explorer” (`uia_explorer.json › explorer_fereastra ›
+  ferestre[0].arbore.nume` = „sesiune - Explorer”); pe bara de activități Windows îl arată la fel?
+  - Ce ar lămuri: UIA pe butonul Explorer din bara de activități, cu un folder deschis.
+<!-- RUNDA23-EXPLORER:END -->
+
+<!-- RUNDA25-EXCEL:START -->
+## Runda 25 (B-excel#2, gest_tastatura) — de verificat
+- [ ] **R25-1** `excel-sortare-doua-niveluri`: rezultatul REAL e greșit. `referinte/acoperire_excel_r7.py:1113` cheamă `Range.Sort(Key1=…, Order1=1, Key2=…, Order2=2, Header=1)` cu argumente numite, iar `scenarii_real/excel-sortare-doua-niveluri.json` are Punctaj CRESCĂTOR în fiecare clasă (C2…C7 = 60, 88, 95 / 60, 78, 95), contra pasului „Largest to Smallest” și a propriei descrieri („Key2 = Punctaj descendent”). Simulatorul sortează descrescător (ca pasul). De refăcut într-o rundă `acoperire` (argumente poziționale sau `EnsureDispatch`), apoi O4 reluat.
+- [ ] **R25-2** `excel-autocompletare-tab`, `excel-separator-virgula`: realul citește `celule` DUPĂ „Esc în mesaj și Esc în celulă” (descrierea scenariului), simulatorul fără ele. Cu Esc + Esc, simulatorul dă exact celulele reale, iar înainte de ele același mesaj și `ramane_in_editare: true` (`runde/25/proba/gest_tastatura.json › _protocol_esc_esc`). Scenariul are nevoie de pașii Esc (sau de chei citite în două momente) — rundă `acoperire`.
+- [ ] **R25-3** Lățirea coloanei la un număr TASTAT: `7 px × caractere + 9` vine din 2 lungimi (10 → 79, 11 → 86, `excel-numere-afisare`). De capturat: 5-9 caractere, un zecimal lung tastat (ex. 1234567,891), un rezultat de formulă întreg prea lat (ex. =10^10) — se lățește sau nu?
+- [ ] **R25-4** Potrivirea lățimii (dublu clic) pe text: modelul „lățimea la 15 px + 5” vine dintr-un singur text (`excel-autofit-latime`, 186 px). De capturat: 3-4 texte de lungimi diferite, unul aldin.
+- [ ] **R25-5** PgDn / PgUp: ce rând e sus și care e celula activă după PgDn din A1 și din A10 (`ActiveCell`, `ActiveWindow.ScrollRow`). Simulatorul: celula coboară 23 de rânduri, vederea se mișcă doar cât s-o arate (din A1: A24, vederea rămâne la rândul 1).
+- [ ] **R25-6** Alt+PgDn / Alt+PgUp: în Excel (lista de scurtături Microsoft) un ecran la dreapta / la stânga; simulatorul le face ca PgDn / PgUp (A1 → A24). Scenariu: A1, Alt+PgDn → `ActiveCell`, `ActiveWindow.ScrollColumn`.
+- [ ] **R25-7** Ctrl+PgDn pe ULTIMA foaie (și cu o singură foaie): simulatorul mută celula activă 23 de rânduri (`{tasta_pagina, mutare, celula:A24}`); lecția viii/m1-l03:197 spune „La ultima foaie, Ctrl+PageDown te lasă pe loc”. Scenariu: registru cu 1 și cu 4 foi, Ctrl+PgDn de 6 ori → foaia activă și celula activă.
+- [ ] **R25-8** Alt+↓ într-o celulă fără filtru: simulatorul coboară o celulă (`{alt_sageti, mutare}`); în Excel deschide lista „Pick From Drop-down List”. Scenariu: A1:A3 text, A4 activă, Alt+↓ → ce fereastră / listă apare.
+- [ ] **R25-9** Ctrl+A de două ori: simulatorul dă zona „A:XFD”; adresa lui Excel pentru toată foaia (Selection.Address) — „$1:$1048576”? Scenariu de o linie.
+- [ ] **R25-10** Bara verticală la A1048576 (R21-2): cât e de mare cursorul și unde duce tragerea lui până sus. Simulatorul: cursorul arată locul în toată foaia (17 px la A1048576), tras sus → rândul 1, fără salturi.
+<!-- RUNDA25-EXCEL:END -->

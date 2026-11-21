@@ -51,6 +51,7 @@
     '.lh-w-baterie{width:18px;height:10px;border:1.5px solid #333;border-radius:2px;position:relative}.lh-w-baterie::after{content:"";position:absolute;left:1px;top:1px;right:1px;bottom:1px;background:#333}',
     '.lh-w-sigla{width:20px;height:20px;display:grid;grid-template-columns:9px 9px;gap:2px}.lh-w-sigla i{background:#0078d4;border-radius:1px}',
     '.lh-w-start{position:absolute;left:0;top:0;right:0;bottom:48px;z-index:15}',
+    '.lh-ap-compune .lh-w-caut-in{z-index:16}.lh-ap-compune .lh-w-indiciu-caut{visibility:hidden}',
     '.lh-w-panou{position:absolute;background:rgba(243,243,243,.97);border:1px solid rgba(0,0,0,.15);border-radius:8px;box-shadow:0 12px 32px rgba(0,0,0,.35);overflow:hidden}',
     '.lh-w-p{position:absolute;display:flex;align-items:center;cursor:default}',
     '.lh-w-p:hover{background:rgba(0,0,0,.05)}',
@@ -376,6 +377,38 @@
        date/windows.json › aplicatii; panoul cu rezultate nu e capturat: listă simplă [NEVERIFICAT] R22-1. */
     const CASETA = (S.noduri.find(n => n.rol === 'cautare') || {}).nume || 'Căutare';
     const FARA_POTRIVIRE = 'căutarea în documente și pe web';
+    /* runda 26 (critic 22, K3): caseta din Start primește textul printr-un câmp ADEVĂRAT, ca I.intrare la Word / Excel / PowerPoint:
+       pe telefon atingerea pe casetă îl focalizează (apare tastatura ecranului), iar textul ei („input”, compunerea) ajunge în
+       căutare prin I.la.text; la fel textul venit fără keydown pe PC (IME, dictare). Stă în afara lui startEl (care se redesenează
+       la fiecare literă: un câmp scos din pagină își pierde focusul și tastatura se închide), peste casetă, invizibil (clasa comună
+       lh-ap-intrare). data-lh-intrare-document: tastele lui merg tot pe drumul de până acum (tastaStart, ținta = caseta). */
+    const cautIn = document.createElement('input');
+    cautIn.className = 'lh-ap-intrare lh-w-caut-in';
+    [['data-lh-intrare-document', ''], ['type', 'text'], ['aria-label', CASETA], ['autocomplete', 'off'], ['autocorrect', 'off'],
+      ['autocapitalize', 'off'], ['spellcheck', 'false'], ['enterkeyhint', 'search']].forEach(a => cautIn.setAttribute(a[0], a[1]));
+    cautIn.style.display = 'none';
+    root.appendChild(cautIn);
+    I.intrare = cautIn;
+    /* runda 26 (critic 22, K1): aici tasta cu sigla e tasta Windows: Windows + literă = gestul ei (win_e), nu ctrl_e (aplicatii.js › gestTasta) */
+    I.tastaWindows = true;
+    const zona0 = I.zonaTinta;
+    const focusCaut = () => { if (cautIn.style.display !== 'none') try { cautIn.focus({ preventScroll: true }); } catch (e) { /* */ } };
+    const ascundeCaut = () => {
+      if (document.activeElement === cautIn) try { root.focus({ preventScroll: true }); } catch (e) { /* */ }
+      cautIn.style.display = 'none';
+      I.zonaTinta = zona0;
+    };
+    function pozCaut() {
+      const cs = startEl && startEl.querySelector('.lh-w-cautare-st');
+      if (!cs) { ascundeCaut(); return; }
+      const rr = root.getBoundingClientRect(), c = cs.getBoundingClientRect(), k = cs.querySelector('.lh-w-caret');
+      cautIn.style.display = '';
+      cautIn.style.left = Math.round((k ? k.getBoundingClientRect().left : c.left + 40) - rr.left) + 'px';
+      cautIn.style.top = Math.round(c.top - rr.top + Math.max(0, (c.height - 20) / 2)) + 'px';
+      I.zonaTinta = 'start:' + CASETA;      // ținta evenimentelor venite prin câmp (I.la.text / I.la.sterge)
+    }
+    /* iOS: focusul care deschide tastatura ecranului trebuie dat din „click”; Chrome îl acceptă și din pointerup (la.clic) */
+    root.addEventListener('click', e => { if (M.start && document.activeElement !== cautIn && e.target.closest && e.target.closest('.lh-w-cautare-st')) focusCaut(); });
     const fara = s => String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
     const CAND = (() => {
       const v = [], vaz = new Set();
@@ -411,7 +444,7 @@
         if (startEl.contains(document.activeElement)) try { root.focus({ preventScroll: true }); } catch (e) { /* */ }   // tastele rămân la aplicație
         startEl.remove(); startEl = null;
       }
-      if (!M.start) return;
+      if (!M.start) { ascundeCaut(); return; }
       const Ha = H - BH, P = S.panou, ingust = W < 600;
       const pw = ingust ? W - 16 : P[2], top = Math.max(6, Ha - (S.rect[3] - P[1]));
       const ph = Ha - top, left = ingust ? 8 : Math.round((W - P[2]) / 2);
@@ -475,6 +508,7 @@
       startEl.innerHTML = '<div class="lh-w-panou" data-lh-tinta="start" style="left:' + left + 'px;top:' + top + 'px;width:' + pw + 'px;height:' + ph + 'px">' + p.join('') + '</div>';
       root.appendChild(startEl);
       startEl.querySelectorAll('.lh-w-zona-apps [data-lh-tinta]').forEach(x => { x.tabIndex = -1; });   // focusul tastaturii (W2)
+      pozCaut();
     }
     /* runda 22 (W2): tastatura în Start. Sursa: aceeași pagină Microsoft, „Navigate to Pinned and All apps”: „press the Tab key
        until you hear "Pinned," followed by the name of the first pinned app. Then use the arrow keys to navigate the apps, and
@@ -519,6 +553,9 @@
         I.tintaTasta = ct;
         return 'cautare';
       }
+      /* runda 26 (stare_finala_erori): cu Start deschis tastele sunt ale casetei (ținta lor e caseta, §4), nu ale desktopului din
+         spate: Delete / F2 nu mai șterg / redenumesc pictograma selectată sub Start, iar Enter pe caseta goală nu face nimic */
+      if (!inGrila && (g === 'tasta_delete' || g === 'tasta_f2')) { e.preventDefault(); I.tintaTasta = ct; return 'fara_efect'; }
       if (M.caut && !inGrila) {
         const rz = cautaRez();
         I.tintaTasta = ct;
@@ -529,12 +566,14 @@
           deseneazaStart();
           return 'alegere_rezultat';
         }
-        if (g === 'tasta_enter') { e.preventDefault(); return rz.length ? pornire(rz[M.rezSel].nume) : I.nesimulat(FARA_POTRIVIRE); }
+        /* runda 26 (critic 22, K2): Enter pornește rezultatul ales = butonul apăsat de tastă fără focus → activat (§4) */
+        if (g === 'tasta_enter') { e.preventDefault(); if (!rz.length) return I.nesimulat(FARA_POTRIVIRE); I.activat = 'start:' + rz[M.rezSel].nume; return pornire(rz[M.rezSel].nume); }
         return null;
       }
+      if (!inGrila && g === 'tasta_enter') { e.preventDefault(); I.tintaTasta = ct; return 'fara_efect'; }
       if (g === 'tasta_tab') {
         e.preventDefault();
-        if (inGrila || e.shiftKey) { try { root.focus({ preventScroll: true }); } catch (x) { /* */ } I.tintaTasta = ct; return 'focus'; }
+        if (inGrila || e.shiftKey) { focusCaut(); if (document.activeElement !== cautIn) try { root.focus({ preventScroll: true }); } catch (x) { /* */ } I.tintaTasta = ct; return 'focus'; }
         const prima = z && z.querySelector('.lh-w-dala');
         if (!prima) return 'fara_efect';
         try { prima.focus({ preventScroll: true }); } catch (x) { /* */ }
@@ -652,7 +691,7 @@
         if (fel === 'start_fundal') return seteazaStart(false);
         if (t === 'start') return 'fara_efect';                          // clic pe fondul panoului Start: nu se închide
         if (fel === 'start' && el && el.closest && el.closest('[data-lh-rezultat]')) return pornire(eticheta(t));   // W3: rezultatul căutării
-        if (t === 'start:' + CASETA) { if (M.caut == null) M.caut = ''; deseneazaStart(); return 'focus_cautare'; }   // W3: caseta primește textul
+        if (t === 'start:' + CASETA) { if (M.caut == null) M.caut = ''; deseneazaStart(); focusCaut(); return 'focus_cautare'; }   // W3 + K3 (runda 26): câmpul adevărat primește focusul
         if (fel === 'start' || fel === 'meniu_derulant') return I.nesimulat(eticheta(t));
         if (M.start) seteazaStart(false);
         if (fel === 'bara_titlu') {
@@ -699,13 +738,25 @@
         return 'fara_efect';
       },
       tasta(e, g, inCamp) {
+        /* runda 26 (critic 22, K1): tasta Windows + literă (gestul win_<literă>, aplicatii.js › gestTasta). Start deschis de aceeași
+           apăsare se închide (în Windows, Start se deschide doar dacă tasta e lăsată singură); combinația nu e simulată → mesajul
+           central, nu tăcere (R12). Ce face fiecare combinație în Windows nu e în referințe: R26-1. */
+        if (/^win_/.test(g)) {
+          e.preventDefault();
+          if (M.redenumire) termina((desk.querySelector('input') || {}).value, false);
+          if (M.start) seteazaStart(false);
+          inchideMeniu();
+          return I.nesimulat('Windows + ' + (/^win_shift_/.test(g) ? 'Shift + ' : '') + g.slice(-1).toUpperCase());
+        }
         if (inCamp && M.redenumire) {
           if (g === 'tasta_enter') { const v = e.target.value; return termina(v, false); }
           if (g === 'tasta_esc') { e.preventDefault(); return termina(null, true); }
           return null;
         }
         if (M.start && !inCamp) { const r = tastaStart(e, g); if (r) return r; }   // runda 22: W3 (căutarea), W2 (Tab, săgețile)
-        if (g === 'tasta_windows') { e.preventDefault(); return seteazaStart(!M.start); }
+        /* runda 26 (critic 22, K2): tasta Windows face ce face butonul Start („Apasă Start (tasta cu sigla Windows)”) → activat (§4);
+           la deschidere focusul intră în casetă (W3: „la deschidere focusul e în Search box”), ca și textul fără keydown să ajungă acolo */
+        if (g === 'tasta_windows') { e.preventDefault(); I.activat = 'bara_activitati:Start'; const a = seteazaStart(!M.start); if (M.start) focusCaut(); return a; }
         if (g === 'tasta_esc') {
           if (M.meniu && M.meniu.sub) { M.meniu.sub = false; deseneazaMeniu(); return 'inchide_submeniu'; }
           if (inchideMeniu()) return 'inchide_meniu';
@@ -728,9 +779,25 @@
         return null;
       },
       /* tragerea: pe o pictogramă = mutare; pe desktopul gol = dreptunghiul de selecție; pe bara de titlu = mutarea ferestrei */
+      /* runda 26 (K3): textul venit prin câmpul casetei (tastatura telefonului, IME, dictare) → căutarea, ca literele de la tastatură */
+      text(v) {
+        if (!M.start) return 'fara_efect';
+        M.caut = (M.caut || '') + v; M.rezSel = 0;
+        deseneazaStart();
+        return cautaRez().length || !M.caut.trim() ? 'cautare' : I.nesimulat(FARA_POTRIVIRE);
+      },
+      sterge(g) {
+        if (!M.start || M.caut == null || g !== 'tasta_backspace') return 'fara_efect';
+        M.caut = M.caut.slice(0, -1); M.rezSel = 0;
+        deseneazaStart();
+        return 'cautare';
+      },
       jos(e) {
         const el = e.target;
         if (el.closest && el.closest('input')) return null;
+        /* runda 26 (K3): pe telefon, după atingere vine „mousedown”-ul de compatibilitate, care ar muta focusul pe rădăcină și ar
+           închide tastatura ecranului deschisă la atingerea casetei; anularea lui pointerdown îl oprește (Pointer Events, §11) */
+        if (M.start && el.closest && el.closest('.lh-w-cautare-st')) { e.preventDefault(); return null; }
         const ic = el.closest && el.closest('.lh-w-ico');
         if (ic && desk.contains(ic)) { I._tr = { fel: 'ico', nume: ic.getAttribute('data-lh-id'), el: ic, x0: e.clientX, y0: e.clientY }; return 'tragere'; }
         const tb = el.closest && el.closest('.lh-w-titlu');

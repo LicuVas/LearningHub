@@ -44,8 +44,10 @@
     if (!isFinite(n)) return '#NUM!';
     if (Number.isInteger(n) && Math.abs(n) < 1e11) return String(n);
     let s = String(+n.toPrecision(10));
-    if (/e/i.test(s) || s.replace('-', '').length > 11) {
-      if (Math.abs(n) >= 1e11 || Math.abs(n) < 1e-9) s = n.toExponential(5).replace(/\.?0+e/, 'e').replace('e', 'E').replace(/E([+-])(\d)$/, 'E$10$2');
+    /* runda 25: sub 0,0001 General e științific (excel-numere-afisare: =1/30000 → „3,33333E-05”, =1/7000000 → „1,42857E-07”;
+       pragul 1e-9 de dinainte lăsa „1,4e-7”, textul lui String() din JavaScript); același prag ca în inLatime */
+    if (/e/i.test(s) || s.replace('-', '').length > 11 || Math.abs(n) < 1e-4) {
+      if (Math.abs(n) >= 1e11 || Math.abs(n) < 1e-4) s = n.toExponential(5).replace(/\.?0+e/, 'e').replace('e', 'E').replace(/E([+-])(\d)$/, 'E$10$2');
       else { const i = String(Math.trunc(Math.abs(n))).length; s = String(+n.toFixed(Math.max(0, 9 - i))); }
     }
     return s.replace('.', ',');
@@ -75,6 +77,10 @@
   const latCifre = t => { let n = 0; for (const ch of String(t)) n += /\d/.test(ch) ? 1 : (LAT_CAR[ch] != null ? LAT_CAR[ch] : 0.95); return n; };
   const unitatiDin = px => (3 * px - 16) / 22;
   const pxDin = u => Math.ceil((22 * u + 16) / 3);
+  /* runda 25: lățimea pe care o ia coloana când Excel o lățește singur pentru un număr TASTAT: 7 px pe caracter + 9
+     (scenarii_real/excel-numere-afisare: „1234567890” → 79, „1,23457E+13” / „3,33333E-05” / „1,42857E-07” → 86; alte lungimi
+     nu sunt capturate: de_verificat R25-3) */
+  const latTastat = t => 7 * [...String(t)].length + 9;
   const diezi = u => '#'.repeat(Math.max(0, Math.floor(u + 1e-9)));
   const virgula = t => t.replace('.', ',');
   function rotunjit(n, d) { const a = Math.abs(n), f = Math.pow(10, d); return (n < 0 ? -1 : 1) * Math.round(a * f + 1e-9 * a * f) / f; }
@@ -656,6 +662,10 @@
     const el = (tag, cls, attrs) => { const e = document.createElement(tag); if (cls) e.className = cls; Object.entries(attrs || {}).forEach(([k, v]) => e.setAttribute(k, v)); return e; };
     const pozitie = (e, r, baza) => { e.style.position = 'absolute'; e.style.left = (r[0] - (baza ? baza[0] : 0)) + 'px'; e.style.top = (r[1] - (baza ? baza[1] : 0)) + 'px'; };
     const sus = el('div', 'lh-ap-sus'), susIn = el('div', 'lh-ap-sus-in');
+    /* runda 25 (MINOR 5 al criticului 21): în Excel panglica se termină la y 179 (uia_excel.json › panglica.TabHome › Lower Ribbon
+       [9, 79, 1320, 100]), iar zona foii începe acolo (zona_document › Pane [1, 179, 239, 41], Grid [1, 220, 1342, 493]); cu înălțimea
+       comună de 180 px (aplicatii.css › .lh-ap, rândul de sus al grilei) grila stătea cu 2 px mai jos și era cu 3 px mai scurtă.
+       Doar la Excel, fără să schimb codul comun: zona foii urcă 2 px peste marginea de jos a panglicii (zonaSup.style.marginTop) */
     sus.appendChild(susIn);
     /* Acces rapid: în Excel bara e afișată (uia_excel.json › acces_rapid.afisat = True) și stă în bara de titlu */
     const QAT = new Set();
@@ -785,28 +795,39 @@
        deasupra filelor și peste rândul 25 (critic 6, X4); barele desenate derulează grila. */
     const banda = el('div', 'lh-ap-x-banda', { 'aria-hidden': 'true' });
     const desp = el('div', 'lh-ap-x-desp', { 'data-lh-tip': 'Pane', 'data-lh-eticheta': '' });
+    /* runda 25: cât e tras cursorul unei bare, întinderea ei rămâne cea de la apăsare (cursorul stă sub mouse cât se mută fereastra) */
+    let tragere = null;
     function baraDerulare(vert) {
       const pane = el('div', 'lh-ap-x-db ' + (vert ? 'lh-ap-x-db-v' : 'lh-ap-x-db-h'), { 'data-lh-tip': 'Pane', 'data-lh-eticheta': vert ? 'Vertical' : 'Horizontal' });
       const sb = el('div', 'lh-ap-x-sb', { 'data-lh-tip': 'ScrollBar', 'data-lh-eticheta': '' });
       const buton = (et, gl) => { const x = el('div', 'lh-ap-x-sb-btn', { 'data-lh-tip': 'Button', 'data-lh-eticheta': et, role: 'button', 'aria-label': et, 'data-lh-tinta': 'derulare:' + et }); x.innerHTML = pang.glif(gl, 10); return x; };
       const pista = el('div', 'lh-ap-x-sb-pista', { 'data-lh-tinta': 'derulare:' + (vert ? 'pagina_v' : 'pagina_h') });
       const cursor = el('div', 'lh-ap-x-sb-cursor', { 'data-lh-tip': 'Thumb', 'data-lh-eticheta': '' });
-      pista.appendChild(cursor);
-      sb.append(buton(vert ? 'Line up' : 'Line left', 'sus'), pista, buton(vert ? 'Line down' : 'Line right', 'sageata'));
+      /* runda 25 (MINOR 6 al criticului 21): bucățile barelor cu numele din referință (uia_excel.json › zona_document: Vertical =
+         Line up · Page up · Thumb · Page down · Line down; Horizontal = Column left · Page left · Thumb · Page right · Column right).
+         „Page up / down” sunt pista de deasupra / de sub cursor; cea de lungime 0 nu se vede (în referință: dreptunghi gol) */
+      const pagina = et => { const x = el('div', 'lh-ap-x-sb-pag', { 'data-lh-tip': 'Button', 'data-lh-eticheta': et, role: 'button', 'aria-label': et, 'data-lh-tinta': 'derulare:' + et });
+        x.style.position = 'absolute'; if (vert) { x.style.left = '0'; x.style.right = '0'; } else { x.style.top = '0'; x.style.bottom = '0'; } return x; };
+      const pInainte = pagina(vert ? 'Page up' : 'Page left'), pDupa = pagina(vert ? 'Page down' : 'Page right');
+      pista.append(pInainte, cursor, pDupa);
+      sb.append(buton(vert ? 'Line up' : 'Column left', 'sus'), pista, buton(vert ? 'Line down' : 'Column right', 'sageata'));
       pane.appendChild(sb);
-      /* tragerea cursorului barei (pointer capturat pe cursor; nu trece prin gesturile foii) */
+      /* tragerea cursorului barei (pointer capturat pe cursor; nu trece prin gesturile foii). Runda 25 (R21-2): locul e socotit în
+         toată foaia (px de la A1), nu în fereastră: trasă peste marginea ferestrei, vederea merge mai departe (laLoc), până la rândul 1 */
       cursor.addEventListener('pointerdown', e => {
         if (e.button !== 0) return;
         e.stopPropagation(); e.preventDefault();
-        const st = vert ? e.clientY : e.clientX, s0 = vert ? corp.scrollTop : corp.scrollLeft;
+        const st = vert ? e.clientY : e.clientX, v0 = vert ? OY + corp.scrollTop : OX + corp.scrollLeft;
         const cursa = Math.max(1, vert ? pista.clientHeight - cursor.offsetHeight : pista.clientWidth - cursor.offsetWidth);
-        const max = Math.max(0, vert ? corp.scrollHeight - corp.clientHeight : corp.scrollWidth - corp.clientWidth);
+        const tot = vert ? OY + corp.scrollHeight : OX + corp.scrollWidth;
+        const max = Math.max(0, tot - (vert ? corp.clientHeight : corp.clientWidth));
+        tragere = { vert, tot };
         try { cursor.setPointerCapture(e.pointerId); } catch (x) { /* */ }
-        const misca = ev => { const v = Math.max(0, Math.min(max, s0 + ((vert ? ev.clientY : ev.clientX) - st) * max / cursa)); if (vert) corp.scrollTop = v; else corp.scrollLeft = v; };
-        const gata = () => { cursor.removeEventListener('pointermove', misca); cursor.removeEventListener('pointerup', gata); cursor.removeEventListener('pointercancel', gata); };
+        const misca = ev => laLoc(vert, Math.max(0, Math.min(max, v0 + ((vert ? ev.clientY : ev.clientX) - st) * max / cursa)));
+        const gata = () => { tragere = null; aseazaCursoare(); cursor.removeEventListener('pointermove', misca); cursor.removeEventListener('pointerup', gata); cursor.removeEventListener('pointercancel', gata); };
         cursor.addEventListener('pointermove', misca); cursor.addEventListener('pointerup', gata); cursor.addEventListener('pointercancel', gata);
       });
-      return { pane, pista, cursor };
+      return { pane, pista, cursor, pInainte, pDupa };
     }
     const barV = baraDerulare(true), barH = baraDerulare(false);
     paneReg.insertBefore(banda, tabFoi);
@@ -824,19 +845,27 @@
     function aseazaCursoare() {
       [[barV, true], [barH, false]].forEach(([b, vert]) => {
         const lung = vert ? b.pista.clientHeight : b.pista.clientWidth;
-        const vede = vert ? corp.clientHeight : corp.clientWidth, tot = vert ? corp.scrollHeight : corp.scrollWidth, poz = vert ? corp.scrollTop : corp.scrollLeft;
+        /* runda 25: locul și întinderea în toată foaia (în grila normală OX = OY = 0, deci ca înainte) */
+        const vede = vert ? corp.clientHeight : corp.clientWidth, poz = vert ? OY + corp.scrollTop : OX + corp.scrollLeft;
+        const tot = tragere && tragere.vert === vert ? tragere.tot : vert ? OY + corp.scrollHeight : OX + corp.scrollWidth;
         if (!lung || !tot) return;
         const m = Math.max(Math.min(17, lung), Math.round(lung * Math.min(1, vede / tot)));
-        const x = tot > vede ? Math.round((lung - m) * poz / (tot - vede)) : 0;
+        const x = tot > vede ? Math.max(0, Math.min(lung - m, Math.round((lung - m) * poz / (tot - vede)))) : 0;
         if (vert) Object.assign(b.cursor.style, { top: x + 'px', height: m + 'px' }); else Object.assign(b.cursor.style, { left: x + 'px', width: m + 'px' });
+        const pune = (p, de, cat) => { p.style.display = cat >= 1 ? '' : 'none'; if (vert) { p.style.top = de + 'px'; p.style.height = cat + 'px'; } else { p.style.left = de + 'px'; p.style.width = cat + 'px'; } };
+        pune(b.pInainte, 0, x); pune(b.pDupa, x + m, lung - x - m);
       });
     }
     function derulare(v, e) {
+      /* runda 25 (R21-2): la marginea ferestrei, întâi fereastra se mută (altfel „Line up” de acolo nu mai urcă) */
+      margineFereastra();
       const r = randLa(corp.scrollTop), c0 = colLa(corp.scrollLeft);
       if (v === 'Line down') corp.scrollTop = yRand(r + 1);
       else if (v === 'Line up') corp.scrollTop = yRand(Math.max(0, corp.scrollTop > yRand(r) ? r : r - 1));
-      else if (v === 'Line right') corp.scrollLeft = xCol(c0 + 1);
-      else if (v === 'Line left') corp.scrollLeft = xCol(Math.max(0, corp.scrollLeft > xCol(c0) ? c0 : c0 - 1));
+      else if (v === 'Column right' || v === 'Line right') corp.scrollLeft = xCol(c0 + 1);
+      else if (v === 'Column left' || v === 'Line left') corp.scrollLeft = xCol(Math.max(0, corp.scrollLeft > xCol(c0) ? c0 : c0 - 1));
+      else if (v === 'Page down' || v === 'Page up') corp.scrollTop += (v === 'Page down' ? 1 : -1) * Math.max(HR(), corp.clientHeight - HR());
+      else if (v === 'Page right' || v === 'Page left') corp.scrollLeft += (v === 'Page right' ? 1 : -1) * Math.max(LC(), corp.clientWidth - LC());
       else if (v === 'pagina_v' || v === 'pagina_h') {
         const vert = v === 'pagina_v', b = (vert ? barV : barH).cursor.getBoundingClientRect();
         const inainte = vert ? e.clientY > b.bottom : e.clientX > b.right;
@@ -852,6 +881,7 @@
     const golEl = el('div', 'lh-ap-x-gol', { 'data-lh-tip': 'Pane', 'data-lh-eticheta': 'Excel' });
     golEl.style.display = 'none';
     zonaSup.appendChild(golEl);
+    zonaSup.style.marginTop = '-2px';   // runda 25, MINOR 5 (vezi la susIn): grila de la y 220, cu 493 px, ca în referință
     const intrare = el('textarea', 'lh-ap-intrare', { 'data-lh-intrare-document': '', 'aria-label': 'Grid', autocomplete: 'off', autocorrect: 'off',
       autocapitalize: 'off', spellcheck: 'false', rows: '1' });
     I.intrare = intrare;
@@ -968,6 +998,10 @@
        o FEREASTRĂ de rânduri / coloane în jurul ei (intindere), cu numerele și literele adevărate; OX / OY = px pe ecran de la A1
        până la colțul ferestrei (graficele, ancorate în px de grilă, se desenează mutate cu atât) */
     let R0 = 0, C0 = 0, OX = 0, OY = 0;
+    /* runda 25 (R21-2 al criticului 21): vederea mutată de DERULARE (rotița, cursorul barei, „Line up / down”, degetul) peste
+       marginea ferestrei: VR = { r0, n, a } (primul rând, câte rânduri, celula activă de atunci), VC la fel pe coloane. Ține cât
+       timp celula activă nu se mută în afara ei (intindere); null = fereastra stă în jurul celulei active, ca în runda 21 */
+    let VR = null, VC = null;
     /* antetul rândurilor: 26 px (uia_excel.json › zona_document, DataItem „1” [1, 240, 26, 19]) până la 3 cifre, ca până acum;
        numerele mai lungi (1000…1048576) încap întregi (lățimea lui Excel la 7 cifre nu e capturată: de_verificat R21-1) */
     function latAntetRand() { const n = String(R0 + Math.max(NR, 1)); return n.length <= 3 ? 26 : Math.max(26, Math.ceil(latimeText(n) / z() + 8)); }
@@ -1030,6 +1064,7 @@
       let r = Math.max(ur, a.r <= LR ? a.r : 0), c0 = Math.max(uc, a.c <= LC0 ? a.c : 0);
       f.sel.zone.forEach(x => { if (x.r1 < MAXR - 1 && x.r1 <= LR) r = Math.max(r, x.r1); if (x.c1 < MAXC - 1 && x.c1 <= LC0) c0 = Math.max(c0, x.c1); });
       const n = { r0: 0, r: Math.min(GR_R, Math.max(40, r + 12)), c0: 0, c: Math.min(GR_C, Math.max(26, c0 + 6)) };
+      const nr0 = n.r, nc0 = n.c;
       /* celula activă în afara grilei normale → fereastra în jurul ei (celula activă jos / la dreapta, ca după orice ↓ / →); fereastra
          rămâne pe loc cât celula activă se mișcă în ea și se mută abia când celula iese */
       if (a.r >= n.r) {
@@ -1040,6 +1075,13 @@
         if (C0 > 0 && a.c >= C0 && a.c < C0 + NC) { n.c0 = C0; n.c = NC; }
         else { n.c0 = Math.max(0, Math.min(a.c - 20, MAXC - FE_C)); n.c = Math.min(FE_C, MAXC - n.c0); }
       }
+      /* runda 25: vederea mutată de derulare are întâietate cât timp celula activă e cea de atunci sau e în ea; altfel se
+         anulează și fereastra se întoarce la celula activă (ca în Excel: o tastă după derulare aduce vederea la celulă) */
+      const ak = a.r + ',' + a.c;
+      if (VR && VR.a !== ak && (a.r < VR.r0 || a.r >= VR.r0 + VR.n)) VR = null;
+      if (VC && VC.a !== ak && (a.c < VC.c0 || a.c >= VC.c0 + VC.n)) VC = null;
+      if (VR) { VR.a = ak; n.r0 = VR.r0; n.r = VR.r0 === 0 ? Math.max(nr0, VR.n) : VR.n; }
+      if (VC) { VC.a = ak; n.c0 = VC.c0; n.c = VC.c0 === 0 ? Math.max(nc0, VC.n) : VC.n; }
       return n;
     }
     function mergeLa(f, r, c0) { for (const m of f.merge) { const q = zonaDin(m); if (q && inZona(q, r, c0)) return q; } return null; }
@@ -1048,6 +1090,9 @@
       /* tastatura stă în celula activă: redesenarea n-are voie să-i ia focusul (altfel tastele de după Enter se pierd) */
       const aveaFocus = document.activeElement === intrare;
       if (intrare.parentNode) intrare.parentNode.removeChild(intrare);
+      /* runda 25 (R21-2, MINOR 1-2 ale criticului 21): locul vederii în toată foaia (px de la A1), ca rândurile de pe ecran să nu
+         sară când fereastra își schimbă originea (scrollTop += OY_vechi − OY_nou) */
+      const vy0 = OY + corp.scrollTop, vx0 = OX + corp.scrollLeft, r00 = R0, c00 = C0;
       R0 = x.r0; C0 = x.c0; NR = x.r; NC = x.c;
       geomCol();
       geomRand();
@@ -1061,6 +1106,10 @@
       /* runda 21: în fereastra de la marginea foii (… XFD) grila se lungește cu lățimea barei verticale desenate peste ea, ca XFD să
          poată sta întreagă la stânga barei (uia_excel.json › zona_document: Grid [1, 220, 1342, 493], bara Vertical [1346, 220, 17, 496]) */
       corpIn.style.width = (PX[NC] + (C0 > 0 && C0 + NC >= MAXC ? subBara() : 0)) + 'px'; corpIn.style.height = PY[NR] + 'px';
+      /* runda 25 (MINOR 3 al criticului 21): sub rândul 1048576 / după XFD nu mai e nimic de derulat; zona de apucat a
+         pătrățelului de umplere (31 × 31 px) lungea grila cu 16 px albi */
+      corpIn.style.overflowY = R0 + NR >= MAXR ? 'clip' : '';
+      corpIn.style.overflowX = C0 + NC >= MAXC ? 'clip' : '';
       aseazaBanda();
       antCin.style.width = (PX[NC] + 40) + 'px'; antRin.style.height = (PY[NR] + 40) + 'px';
       antCin.innerHTML = ''; antRin.innerHTML = ''; corpIn.innerHTML = ''; celEl = {};
@@ -1127,6 +1176,8 @@
       corpIn.append(selStrat, clipStrat, propEl, maner);
       deseneazaGrafice(true);
       deseneazaSelectia();
+      if (R0 !== r00) corp.scrollTop = Math.max(0, vy0 - OY);
+      if (C0 !== c00) corp.scrollLeft = Math.max(0, vx0 - OX);
       if (aveaFocus) I.focus();
       sincronDerulare();
     }
@@ -1135,7 +1186,51 @@
       antRin.style.transform = 'translateY(' + (-corp.scrollTop) + 'px)';
       aseazaCursoare();
     }
-    corp.addEventListener('scroll', sincronDerulare, { passive: true });
+    corp.addEventListener('scroll', () => { sincronDerulare(); margineFereastra(); }, { passive: true });
+    /* runda 25 (R21-2, MINOR 1-3 ale criticului 21): fereastra de la marginea foii se mută cu DERULAREA. Când vederea ajunge
+       aproape de marginea ferestrei desenate (rotița, cursorul barei, „Line up / down”, degetul), fereastra se redesenează cu
+       vederea la mijloc, iar scrollTop trece pe noua origine (deseneazaGrila), deci rândurile de pe ecran nu se mișcă. Grila
+       normală (R0 = C0 = 0, fără vedere mutată) nu se mută: rămâne exact cea dinainte. */
+    let mutaVedere = false;
+    const vizR = () => Math.max(1, Math.ceil(corp.clientHeight / HR())), vizC = () => Math.max(1, Math.ceil(corp.clientWidth / LC()));
+    const lungR = () => Math.max(FE_R, 2 * vizR() + 8), lungC = () => Math.max(FE_C, 2 * vizC() + 4);
+    function redeseneazaVederea() { mutaVedere = true; try { deseneazaGrila(); } finally { mutaVedere = false; } }
+    function margineFereastra() {
+      if (mutaVedere || !corp.clientHeight || !NR) return false;
+      const a = F().sel.activa, ak = a.r + ',' + a.c;
+      let r0 = null, c0 = null;
+      if (R0 > 0 || VR) {
+        const n = lungR(), m = Math.max(2, Math.floor((n - vizR()) / 4)) * HR();
+        if ((corp.scrollTop < m && R0 > 0) || (corp.scrollTop + corp.clientHeight > PY[NR] - m && R0 + NR < MAXR)) {
+          r0 = Math.max(0, Math.min(MAXR - n, randLa(corp.scrollTop) - Math.floor((n - vizR()) / 2)));
+          if (r0 === R0) r0 = null;
+        }
+      }
+      if (C0 > 0 || VC) {
+        const n = lungC(), m = Math.max(1, Math.floor((n - vizC()) / 4)) * LC();
+        if ((corp.scrollLeft < m && C0 > 0) || (corp.scrollLeft + corp.clientWidth > PX[NC] - m && C0 + NC < MAXC)) {
+          c0 = Math.max(0, Math.min(MAXC - n, colLa(corp.scrollLeft) - Math.floor((n - vizC()) / 2)));
+          if (c0 === C0) c0 = null;
+        }
+      }
+      if (r0 == null && c0 == null) return false;
+      if (r0 != null) VR = { r0, n: Math.min(lungR(), MAXR - r0), a: ak };
+      if (c0 != null) VC = { c0, n: Math.min(lungC(), MAXC - c0), a: ak };
+      redeseneazaVederea();
+      return true;
+    }
+    /* vederea dusă la locul v (px de la A1, în toată foaia): în fereastră doar se derulează; în afara ei fereastra se mută acolo
+       (cursorul barei tras peste marginea ferestrei, până la rândul 1) */
+    function laLoc(vert, v) {
+      const max = vert ? corp.scrollHeight - corp.clientHeight : corp.scrollWidth - corp.clientWidth, o = vert ? OY : OX;
+      if ((vert ? R0 > 0 || VR : C0 > 0 || VC) && (v < o - 0.5 || v - o > max + 0.5)) {
+        const a = F().sel.activa, ak = a.r + ',' + a.c;
+        if (vert) { const n = lungR(), r0 = Math.max(0, Math.min(MAXR - n, Math.floor(v / HR()) - Math.floor((n - vizR()) / 2))); VR = { r0, n: Math.min(n, MAXR - r0), a: ak }; }
+        else { const n = lungC(), c0 = Math.max(0, Math.min(MAXC - n, Math.floor(v / LC()) - Math.floor((n - vizC()) / 2))); VC = { c0, n: Math.min(n, MAXC - c0), a: ak }; }
+        redeseneazaVederea();
+      }
+      if (vert) corp.scrollTop = Math.max(0, v - OY); else corp.scrollLeft = Math.max(0, v - OX);
+    }
 
     /* ---- selecția, chenarul copierii, pătrățelul de umplere, editarea */
     const selStrat = el('div', 'lh-ap-x-sel-strat', { 'aria-hidden': 'true' });
@@ -1190,7 +1285,7 @@
     const masura = document.createElement('canvas').getContext('2d');
     /* lățimea (px la 100 %) în care încape un număr: după modelul lui Excel și după cifrele desenate pe ecran (marginile celulei 2+2 px + linia) */
     const latNecesar = t => Math.max(pxDin(latCifre(t)), Math.ceil(latimeText(t) / z() + 6));
-    function latimeText(s) { masura.font = (14.667 * z()) + 'px Calibri, Carlito, "Segoe UI", sans-serif'; return masura.measureText(s).width; }
+    function latimeText(s, px) { masura.font = ((px || 14.667) * z()) + 'px Calibri, Carlito, "Segoe UI", sans-serif'; return masura.measureText(s).width; }
     function deseneazaEditarea() {
       propEl.style.display = 'none';
       if (edEl) { edEl.remove(); edEl = null; }
@@ -1329,6 +1424,9 @@
         s.activa = { r, c: c0 };
         s.capat = null;
       }
+      /* runda 25: o tastă / un clic care duce celula activă (sau capătul selecției) în afara vederii mutate de derulare o anulează */
+      if (VR && (r < VR.r0 || r >= VR.r0 + VR.n)) VR = null;
+      if (VC && (c0 < VC.c0 || c0 >= VC.c0 + VC.n)) VC = null;
       const need = intindere();
       if (need.r > NR || need.c > NC || need.r0 !== R0 || need.c0 !== C0) deseneazaGrila(); else deseneazaSelectia();
       vedeCelula(r, c0);
@@ -1380,6 +1478,8 @@
     /* ============================================================ editarea celulei */
     function porneste(a, text, mod, poz, ales, propus) {
       M.edit = { a, text, mod, poz: poz == null ? text.length : poz, original: text, ales: ales || null, propus: propus || null };
+      /* runda 25: tastarea într-o celulă activă rămasă în afara vederii mutate de derulare aduce vederea înapoi la ea (Excel) */
+      if ((VR || VC) && !celEl[a]) { VR = VC = null; const q = pa(a); deseneazaGrila(); if (q) vedeCelula(q.r, q.c); }
       deseneazaSelectia();
       I.focus();
     }
@@ -1419,11 +1519,15 @@
       schimba('scriere', () => {
         if (nou) f.cel[e.a] = nou; else delete f.cel[e.a];
         if (fn) { f.fmt[e.a] = Object.assign({}, f.fmt[e.a] || {}, { format_numar: fn }); }
-        /* un număr TASTAT care nu încape lățește coloana (Excel real, gest: excel-zero-in-fata → „741234567” întreg, 9 cifre);
-           rezultatele formulelor și conținutul de pornire nu (com_r6.json: „1,23E+09”, „8,333333”) */
-        if (nou && typeof nou.v === 'number' && !fn && !f.latSet[p.c] && !mergeLa(f, p.r, p.c)) {
-          const fm = (fmtDe(f, e.a).format_numar) || 'General', t = afisat(nou.v, fm);
-          if (fm === 'General' && latCifre(t) > unitatiDin(latPx(f, p.c)) + 1e-9) f.lat[p.c] = latNecesar(t);
+        /* un număr TASTAT care nu încape lățește coloana (Excel real, gest: excel-zero-in-fata → „741234567” întreg, 9 cifre;
+           excel-numere-afisare: 1234567890 → 79 px, 12345678901234 → „1,23457E+13”, 86 px). Runda 25: și rezultatul TASTAT al
+           unei formule, când în General e științific (excel-numere-afisare: =1/30000 → „3,33333E-05”, =1/7000000 → „1,42857E-07”,
+           86 px; =25/3 → „8,333333” rămâne la 64 px). Lățimea = 7 px pe caracter + 9 (cele patru lățimi reale de mai sus).
+           Conținutul de pornire și valorile puse prin model nu lățesc (com_r6.json: „1,23E+09”, „8,333333”) */
+        if (nou && !fn && !f.latSet[p.c] && !mergeLa(f, p.r, p.c)) {
+          const v = nou.f ? valoare(f, p.r, p.c) : nou.v;
+          const fm = (fmtDe(f, e.a).format_numar) || 'General', t = typeof v === 'number' ? afisat(v, fm) : '';
+          if (t && fm === 'General' && (!nou.f || /E/.test(t)) && latCifre(t) > unitatiDin(latPx(f, p.c)) + 1e-9) f.lat[p.c] = latTastat(t);
         }
       });
       f.sel.activa = { r: p.r, c: p.c };
@@ -1823,6 +1927,9 @@
           /* rândurile 2+ sunt clone ale rândului „Sort by”: eticheta ȘI ținta casetei devin „Then by” (§4 „la taste: ținta
              focusului”; MINOR criticul 9: Esc pe Then by dădea camp:Sort by) */
           if (camp === 'coloana') { e.setAttribute('data-lh-eticheta', et); if (e.hasAttribute('data-lh-tinta')) e.setAttribute('data-lh-tinta', 'camp:' + et); }
+          /* runda 25: „Sort On” / „Order” de pe rândul i + 1 au ținta „camp:Order#2”… (scenariul excel-sortare-doua-niveluri, pasul 7),
+             ca să nu fie aceeași cu a rândului „Sort by” (ținta focusului la taste, §4) */
+          else if (i && e.hasAttribute('data-lh-tinta')) e.setAttribute('data-lh-tinta', e.getAttribute('data-lh-tinta').replace(/#\d+$/, '') + '#' + (i + 1));
           const inp = e.querySelector('input');
           if (inp) inp.value = val[k];
           e.setAttribute('data-lh-valoare', val[k]);
@@ -1847,7 +1954,7 @@
       const l = el('div', 'lh-ap-x-lista-combo', { role: 'listbox', 'data-lh-tip': 'List', 'data-lh-eticheta': cb.getAttribute('data-lh-eticheta') || camp });
       Object.assign(l.style, { left: ((b.left - R.left) / k) + 'px', top: ((b.bottom - R.top) / k) + 'px', width: (b.width / k) + 'px' });
       el0.forEach(x => {
-        const it = el('div', 'lh-ap-x-lista-el', { role: 'option', 'data-lh-tip': 'ListItem', 'data-lh-eticheta': x.e, 'data-lh-tinta': 'lista_sortare:' + x.e });
+        const it = el('div', 'lh-ap-x-lista-el', { role: 'option', 'data-lh-tip': 'ListItem', 'data-lh-eticheta': x.e, 'data-lh-tinta': 'meniu:' + x.e });   // runda 25: ținta listelor, ca la celelalte liste (scenariul excel-sortare-doua-niveluri: „meniu:Clasa”)
         it.textContent = x.e;
         it.__alege = x;
         l.appendChild(it);
@@ -3231,7 +3338,10 @@
         if (!q || q.c !== c0 || mergeLa(f, q.r, q.c)) return;
         const v = valoare(f, q.r, q.c), fm = fmtDe(f, a);
         const t = afisat(v, fm.format_numar);
-        const w = typeof v === 'number' ? latNecesar(t) : Math.ceil(latimeText(t) / z() + 7 + (fm.bold ? 1 : 0));
+        /* runda 25: textul se măsoară la 15 px (11 pt la 96 dpi, înălțimea rotunjită la pixel, ca fontul lui Excel), + 5 px marginea
+           celulei (scenarii_real/excel-autofit-latime: „Situația notelor la informatică” → 186 px; înainte, 14,667 px + 7 = 184).
+           Un singur text capturat: celelalte lungimi = de_verificat R25-4 */
+        const w = typeof v === 'number' ? latNecesar(t) : Math.ceil(latimeText(t, 15) / z() + 5 + (fm.bold ? 1 : 0));
         px = Math.max(px, w);
       });
       if (!px || px === latPx(f, c0)) return 'fara_efect';

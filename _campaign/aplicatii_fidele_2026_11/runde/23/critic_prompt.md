@@ -17,7 +17,22 @@ N = 23. Regulile sunt în `D/runde/_paralel/REGULI_CRITIC.md`: citește-le înt�
   Regresul comun te privește pentru N2. Pentru celelalte îl notezi, fără să-l atribui rundei 23.
 
 ## Ce spune constructorul (de judecat, nu de crezut)
-(se completează de orchestrator când banda termină)
+- **`23/proba_grav.py`:** 20 de verificări picate din 76 la pornire, acum 2. Cele 2 sunt partea comună a montării, cerută prin A23-1. Scenariile Explorer: 18/18.
+- **N1 ÎNCHIS** (`explorer.js:49`): pe fereastra mică (1093×526 la 125 %), mesajul central e în ecran, deasupra a tot. La 1366×768 fereastra rămâne de 640 px.
+- **N2 ÎNCHIS** (`aplicatii.js:415-426`; api §4 `:191-194`): în caseta de nume, adresă și căutare, F5, Ctrl+R, Alt+←, Ctrl+P etc. se opresc, iar tastele de editare merg ca înainte.
+  - Regresul pe Word, Excel, PowerPoint și Windows: 89 de pași înainte / după.
+  - 11 diferențe sunt așteptate (F12, Ctrl+S, Ctrl+P, F5, Ctrl+R, Alt+← în câmpuri sunt acum oprite). Atenție: F12 / Ctrl+S în File name din Save As trebuie să facă tot ce făceau în Word, nu doar să fie oprite. Verifică.
+  - Scrisul, diacriticele și Ctrl+A / C / V / Z sunt identice.
+- **GRAV nou, găsit și reparat de el** (`explorer.js:508-511`): redenumirea cu `\ / : * ? " < > |` strica starea („a/b” făcea fișierul să dispară). Acum numele rămâne și apare mesajul central.
+- **Montarea (A22-1):** `deschide('explorer', {loc, incadrat: true})`:
+  - fără bara de titlu și Coș, umple gazda;
+  - evenimentele oprite în rădăcina ei;
+  - `stare().titlu` („<folder> - Explorer”);
+  - la redesenarea gazdei, gazda pune înapoi `radacina` și cheamă `focus()`;
+  - documentată în §1 (`:38-41`).
+  Rămân două probleme: gazda primește și ea clicurile, iar `deschideSuprafata` ia prima aplicație vie. Amândouă cer cod comun din afara zonei lui (patch în `23/propunere_comun_A22-1.md`, cererea A23-1, neaplicat). Nu le număra GRAV ale rundei 23; confirmă doar starea.
+- **Fără referință:** R23-1…5 în `de_verificat.md`; A23-2 în `de_aprobat.md`.
+- **Nefăcut:** MINOR-urile din criticii 19 / 15.
 
 ## Sarcina
 1. **A. N1 și N2.** Pe fiecare joci gestul criticului 19, apoi un gest vecin, și scrii ÎNCHIS sau DESCHIS, cu proba ta.

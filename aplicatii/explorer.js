@@ -46,8 +46,10 @@
   };
   const STIL = `
 .lh-ap.lh-ap-explorer{--e-h:640px;--e-fond:#f3f3f3;--e-alb:#fff;--e-linie:#e5e5e5;--e-ales:#cce8ff;--e-ales-b:#99d1ff;--e-hover:#e5f3ff;--e-text:#1a1a1a;--e-gri:#a0a0a0;--e-desk:#1f5b8f;
-  display:flex;grid-template-rows:none;height:var(--e-h);max-height:none;min-height:420px;background:var(--e-desk);color:var(--e-text);
+  display:flex;grid-template-rows:none;height:var(--e-h);max-height:100vh;min-height:420px;background:var(--e-desk);color:var(--e-text);
   font:12px 'Segoe UI Variable','Segoe UI',system-ui,sans-serif;user-select:none;-webkit-user-select:none}
+.lh-ap.lh-ap-explorer.lh-ap-e-incadrat{height:100%;max-height:none;min-height:0;border:0;background:var(--e-fond)}
+.lh-ap-e-incadrat .lh-ap-e-win{grid-template-rows:48px 1px 46px 1px minmax(0,1fr) 24px 8px;border:0}
 .lh-ap-explorer[data-lh-tema="intunecat"]{--e-fond:#202020;--e-alb:#191919;--e-linie:#3a3a3a;--e-ales:#3b4f66;--e-ales-b:#5a7a9e;--e-hover:#2d2d2d;--e-text:#f0f0f0;--e-gri:#777}
 @media (prefers-color-scheme:dark){.lh-ap-explorer:not([data-lh-tema="luminos"]){--e-fond:#202020;--e-alb:#191919;--e-linie:#3a3a3a;--e-ales:#3b4f66;--e-ales-b:#5a7a9e;--e-hover:#2d2d2d;--e-text:#f0f0f0;--e-gri:#777}}
 .lh-ap-explorer button{font:inherit;color:inherit;background:none;border:0;padding:0;margin:0;cursor:default}
@@ -193,7 +195,11 @@
       panouDreapta: set.panou_examinare === false ? null : 'examinare', vedere: 'Detalii',
       sortare: { col: srt.coloana || 'Nume', desc: srt.directie === 'descrescator' }, istoric: [], refacere: [], inapoi: [], inainte: [],
       cautare: '', editAdresa: false, deskSel: false };
-    const desktop = c.desktop !== false;
+    /* runda 23 (A22-1, cererea benzii Windows): montat într-o fereastră străină (opt.incadrat), Explorer-ul nu-și desenează bara de
+       titlu (rândul filelor + Minimizare / Maximizare / Închidere) și nici desktopul cu Coșul: le are gazda. Umple corpul gazdei. */
+    const incadrat = !!(I.opt && I.opt.incadrat);
+    const desktop = !incadrat && c.desktop !== false;
+    if (incadrat) { root.classList.add('lh-ap-e-incadrat'); root.setAttribute('data-lh-incadrat', ''); }
 
     const copii = d => {
       if (d === COS) return M.cos.map(e => e.p);
@@ -234,7 +240,10 @@
         in_cos: M.cos.filter(e => par(e.p) === W).map(e => cu(e.p)),
         continut_fisiere: Object.fromEntries(k.filter(p => M.F.get(p).continut !== undefined).map(p => [num(p), M.F.get(p).continut])),
         dialog: M.dialog ? JSON.parse(JSON.stringify(M.dialog)) : null,
-        cale_curenta: M.cur, selectie: M.sel.map(cu)
+        cale_curenta: M.cur, selectie: M.sel.map(cu),
+        /* A22-1: titlul ferestrei, pentru bara de titlu a gazdei — „<folder> - Explorer” (uia_explorer.json › explorer_fereastra ›
+           ferestre[0].arbore.nume = „sesiune - Explorer”); doar la montare, ca starea din poligon / O4 să rămână aceeași */
+        ...(incadrat ? { titlu: fol() + ' - Explorer' } : {})
       };
     };
     I.zonaTinta = 'lista';
@@ -263,7 +272,8 @@
         '<button class="lh-ap-e-adauga" ' + atr({ 'data-lh-tip': fl.adauga.t, 'data-lh-id-mso': fl.adauga.id, 'aria-label': fl.adauga.e, 'data-lh-eticheta': fl.adauga.e, 'data-lh-tinta': 'bara_titlu', 'data-lh-id': fl.adauga.e }) + '>' +
         '<svg class="lh-ap-e-ic" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 4.5v11M4.5 10h11" stroke="currentColor"/></svg></button></div>';
       tb.forEach(b => { h += '<button class="lh-ap-e-tbut" style="right:' + (wR - b.r[0] - b.r[2]) + 'px" ' + atr({ 'data-lh-tip': b.t, 'aria-label': b.e, 'data-lh-eticheta': b.e, 'data-lh-tinta': 'bara_titlu', 'data-lh-id': b.e }) + '>' + ic(b.e) + '</button>'; });
-      h += '</div><div class="lh-ap-e-r2"><div class="lh-ap-e-nav" data-lh-suprafata="butoane_navigare">';
+      if (incadrat) h = '';   // A22-1: bara de titlu e a gazdei
+      h += (incadrat ? '' : '</div>') + '<div class="lh-ap-e-r2"><div class="lh-ap-e-nav" data-lh-suprafata="butoane_navigare">';
       nav.forEach(b => {
         const k = navId[b.id] || b.id, et = sablon(b.sablon || b.e, folder, parinte);
         h += '<button class="lh-ap-e-nb" style="left:' + b.r[0] + 'px" ' + atr({ 'data-lh-tip': b.t, 'data-lh-id-mso': b.id, 'aria-label': et, 'data-lh-eticheta': et, title: et, 'data-lh-tinta': 'nav', 'data-lh-id': k, 'aria-disabled': navActiv[k] ? null : 'true' }) + '>' + ic(k) + '</button>';
@@ -495,6 +505,10 @@
     function redenumeste(p, v) {
       v = String(v || '').trim();
       if (!v || !M.F.has(p)) return 'fara_efect';
+      /* runda 23 (G23-1, unghiul stare_finala_erori): Windows nu primește în nume semnele \ / : * ? " < > |. Înainte, „a/b” muta
+         fișierul într-un folder inexistent (dispărea din listă), iar „x:y” devenea un nume imposibil. Avertizarea reală (balonul de
+         lângă casetă) nu e în referință (R23-2): numele rămâne neschimbat și apare mesajul central (R12). */
+      if (/[\\/:*?"<>|]/.test(v)) return I.nesimulat('avertizarea pentru semnele \\ / : * ? " < > | din nume');
       const f = eDir(p), n = num(p), vechiExt = ext(n);
       let nou = f || M.ext || !vechiExt ? v : v + '.' + vechiExt;
       if (nou === n) return 'fara_efect';
@@ -910,6 +924,12 @@
       I._ro.observe(root);
     }
     I.distruge = () => { if (I._ro) try { I._ro.disconnect(); } catch (e) { /* */ } };
+    /* A22-1: montat într-o fereastră străină, Explorer-ul își oprește evenimentele în rădăcina lui (după ce ascultătorii bibliotecii
+       de pe ea le-au tratat), ca gazda să nu le mai trateze o dată. Ce prinde gazda ÎNAINTE (captura ei de pointerdown, pointerup
+       pe window) nu se poate opri de aici: paza comună e în runde/23/propunere_comun_A22-1.md. */
+    if (incadrat) ['click', 'dblclick', 'auxclick', 'contextmenu', 'wheel', 'keydown', 'keyup', 'keypress', 'pointerdown', 'pointermove',
+      'pointerup', 'mousedown', 'mouseup', 'touchstart', 'touchmove', 'touchend', 'input', 'beforeinput', 'dragstart', 'dragover', 'drop']
+      .forEach(t => root.addEventListener(t, e => e.stopPropagation(), t === 'wheel' || /^touch/.test(t) ? { passive: true } : false));
     deseneaza();
   }
 

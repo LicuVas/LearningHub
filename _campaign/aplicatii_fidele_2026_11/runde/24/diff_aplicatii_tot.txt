@@ -1,0 +1,57 @@
+--- C:/00/Projects/LearningHub_fidel/_campaign/aplicatii_fidele_2026_11/runde/24/inainte/aplicatii.js	2026-11-21 02:29:25.973526700 +0200
++++ C:/00/Projects/LearningHub_fidel/aplicatii/aplicatii.js	2026-11-21 02:45:33.510140400 +0200
+@@ -263,8 +263,16 @@
+     if (m) return m[1].toLowerCase();
+     return e.key && e.key.length === 1 && /[a-z]/i.test(e.key) ? e.key.toLowerCase() : null;
+   }
++  /* runda 26 (critic 22, K1): tasta Windows + literă = gestul ei (`win_e`, `win_shift_s`), nu Ctrl + literă, DOAR în aplicația
++     care declară tasta cu sigla a ei (`I.tastaWindows`, azi Windows) și nu pe Mac (acolo Cmd ține locul lui Ctrl). În rest, la fel. */
++  const MAC = /Mac|iPhone|iPad|iPod/.test(((W.navigator || {}).userAgentData || {}).platform || (W.navigator || {}).platform || '');
+   function gestTasta(e) {
+     const k = e.key, c = e.ctrlKey || (e.metaKey && k !== 'Meta');
++    if (e.metaKey && !e.ctrlKey && !e.altKey && k !== 'Meta' && !MAC) {
++      const rad = e.currentTarget, I = rad && rad.getAttribute ? INST[rad.getAttribute('data-lh-aplicatie')] : null;
++      const l = I && I.root === rad && I.tastaWindows ? litera(e) : null;
++      if (l) return (e.shiftKey ? 'win_shift_' : 'win_') + l;
++    }
+     if (/^Arrow/.test(k)) return e.altKey ? 'alt_sageti' : 'sageti';
+     if (/^F\d{1,2}$/.test(k)) return 'tasta_' + k.toLowerCase();
+     if (c && !e.altKey) {
+@@ -404,7 +412,17 @@
+       I.activat = null;
+       const tAp = I.tintaTasta;
+       I.tintaTasta = null;
+-      if (!inCamp && (e.ctrlKey || e.metaKey || e.altKey || /^F\d/.test(e.key) || e.key === 'Tab')) e.preventDefault();
++      /* runda 23 (critic 19, GRAV N2; api §4): scurtăturile se opresc ȘI în câmpurile de text ale aplicației (acolo F5 / Ctrl+R
++         reîncărcau lecția, Alt+← pleca din ea). În câmp rămân ale câmpului DOAR tastele de editare: Ctrl+A/C/V/X/Z/Y (+ Ctrl+Shift+
++         Z/V), săgețile, Home/End, Backspace/Delete, simple sau cu Ctrl/Shift (cuvinte, selecție); pe Mac și Option+săgeți /
++         Backspace / Delete. Tab în câmp rămâne ca înainte. Scrisul, Enter, Esc, Shift+săgeți n-au Ctrl/Alt/F: nu se opresc;
++         AltGr (Ctrl+Alt + literă) dă gestTasta = null și iese mai sus, deci diacriticele nu ajung aici. */
++      const cuMod = e.ctrlKey || e.metaKey || e.altKey || /^F\d/.test(e.key);
++      const lit = /^Key[A-Z]$/.test(e.code || '') ? e.code.slice(3).toLowerCase() : String(e.key || '').toLowerCase();
++      const deEditare = !/^F\d/.test(e.key) && (/^(Arrow(Left|Right|Up|Down)|Home|End|Backspace|Delete)$/.test(e.key)
++        ? !e.altKey || (/Mac|iPhone|iPad/.test(navigator.platform || '') && !e.ctrlKey && !e.metaKey)
++        : !e.altKey && (e.ctrlKey || e.metaKey) && (e.shiftKey ? /^[zv]$/ : /^[acvxzy]$/).test(lit));
++      if (inCamp ? cuMod && !deEditare : cuMod || e.key === 'Tab') e.preventDefault();
+       const t = t0 || tAp || tintaDin(I, document.activeElement && r.contains(document.activeElement) ? document.activeElement : null);
+       if (inCamp) setTimeout(() => emite(I, g, act || I.ultimaActiune || g, t, ina, extra), 0);
+       else emite(I, g, act || I.ultimaActiune || g, t, ina, extra);
+@@ -641,12 +659,16 @@
+       const p = pas();
+       if (!p || ev.aplicatie !== nume) return;
+       let bun = false;
++      /* Tab / Shift+Tab care doar mută focusul (`actiune: 'mutare_focus'`, §4: ținta = focusul din momentul tastei) nu apasă
++         nimic: nu bifează pasul, nici când pleacă de PE ținta pasului (Tab peste Save ≠ Save), și nu e greșeală (§6.3).
++         Critic 20, B (rc20.json › M6); runda 24 */
++      const doarFocus = ev.actiune === 'mutare_focus';
+       if (typeof p.asteapta === 'function') { try { bun = !!p.asteapta(ev); } catch (e) { bun = false; } }
+-      else bun = ev.tinta === p.tinta || (!!canonPas(p) && ev.tinta === canonPas(p)) || (!!ev.activat && ev.activat === p.tinta);
++      else bun = !doarFocus && (ev.tinta === p.tinta || (!!canonPas(p) && ev.tinta === canonPas(p)) || (!!ev.activat && ev.activat === p.tinta));
+       if (bun) { L.ascunde(); k++; gres = 0; porneste(); return; }
+       /* T4 (critic 13): Esc care doar iese din modul tastelor de acces (tasta_esc / iesire_taste_acces) nu schimbă nimic,
+          ca navigarea: nu e greșeală */
+-      if (NEGRESELI.has(ev.gest) || (ev.gest === 'tasta_acces' && NAVIGARE_TA.has(ev.actiune)) ||
++      if (doarFocus || NEGRESELI.has(ev.gest) || (ev.gest === 'tasta_acces' && NAVIGARE_TA.has(ev.actiune)) ||
+         (ev.gest === 'tasta_esc' && ev.actiune === 'iesire_taste_acces')) return;
+       gres++;
+       if (gres >= dupaGreseli) arata();

@@ -35,6 +35,10 @@ uită-te cum o face jucăria. Dovada că oracolele prind greșeli: `python oraco
   `sarcina` (§8.2), `asistent` (§6.3), `focus` (true = focusul tastaturii intră în zona de lucru, ca la pornirea aplicației
   reale), `scenariu` (true = deschisă de un oracol: nicio animație, nicio întârziere)`}`.
   Un al doilea `deschide` cu același `nume` în același `loc` înlocuiește instanța veche (o închide întâi).
+- `opt.incadrat` (runda 23, A22-1; azi doar `explorer`): aplicația se montează în fereastra unei gazde (`loc` = corpul ferestrei):
+  nu-și desenează bara de titlu și nici desktopul, umple `loc`-ul, își oprește evenimentele în rădăcina ei, iar `stare()` are în
+  plus `titlu` („<folder> - Explorer”). Gazda care își rescrie stratul pune înapoi `instanta.radacina` în corpul nou în aceeași
+  funcție (mutarea păstrează starea) și cheamă `instanta.focus()` dacă fereastra era activă.
 - `opt.asistent` pornește asistentul prin funcția PUBLICĂ: `deschide` cheamă `window.LH.aplicatii.asistent(nume,
   opt.asistent)` (citit din obiectul public în momentul apelului, nu o referință internă păstrată la încărcare) — §6.3;
   `inchide` îl oprește. Jucăria: `L.deschide` / `L.inchide`.
@@ -163,6 +167,7 @@ detail = { aplicatie: 'word',            // numele din §1
   `meniu_derulant`, `acces_rapid`, `zoom`, `clic_dreapta`, `dublu_clic`, `shift_clic`, `ctrl_clic`, `selectie`, `tragere`,
   `umplere_tragere`, `rotita`, `tastare`, `sageti`, `alt_sageti`, `tasta_delete|backspace|enter|esc|tab|home_end|pagina|
   windows|f2|f4|f5|f12`, `ctrl_<literă>`, `ctrl_shift_<literă>`, `tasta_acces`. Un clic simplu în afara acestor ținte: `gest:'clic'`.
+  `win_<literă>` / `win_shift_<literă>` (runda 26) = tasta Windows + literă, fără Ctrl, doar în aplicația Windows (`I.tastaWindows`) și nu pe Mac; în rest tasta cu sigla + literă rămâne `ctrl_<literă>`.
 - **`tasta_acces`** (runda `acoperire`, 18.11.2026) = o tastă din șirul tastelor de acces ale panglicii / Backstage
   (KeyTips: Alt, apoi literele afișate pe file și comenzi; literele vin din referință, `uia_<app>.json › tasta_acces`,
   ex. Home „Alt, H”, Bold „Alt, H, 1”, Font Size „Alt, H, F S”). Câte UN eveniment pe tastă. Când tasta duce la capăt un
@@ -183,8 +188,10 @@ detail = { aplicatie: 'word',            // numele din §1
 - Ascultarea în lecție: `const opreste = LH.aplicatii.asculta(ev => …)` (= `addEventListener('lh-aplicatie')`);
   ultimele `setari.evenimente.tampon` evenimente stau și în `window.__lhAplicatieEv`.
 - [regulă, I10] Evenimentele rămân în pagină: biblioteca nu trimite nimic pe rețea; ce trimite deja motorul rămâne neschimbat.
-- [regulă] Scurtăturile aplicației (Ctrl+…, Alt+săgeți, F-uri, Tab) se opresc cu `preventDefault` DOAR cât focusul e în
-  rădăcină; în câmpurile de text ale aplicației (redenumire, Save As) Ctrl+A/C/V rămân ale câmpului.
+- [regulă] Scurtăturile aplicației (Ctrl+…, Alt+săgeți / Home / Enter, F-uri, Tab) se opresc cu `preventDefault` DOAR cât focusul e în
+  rădăcină — inclusiv în câmpurile ei de text (redenumire, adresă, căutare, Save As, Name Box; runda 23, critic 19 › N2). În câmp
+  rămân ale câmpului doar tastele de editare: Ctrl+A/C/V/X/Z/Y, Ctrl+Shift+Z/V, săgețile, Home/End, Backspace/Delete (simple sau
+  cu Ctrl/Shift; pe Mac și cu Option), plus Tab (rândul R23-1).
 - §4.4 Demonstrația (opțională): `LH.aplicatii.demonstratie(nume, gest) -> {pregatire:[ținta | {gest:'dublu_clic', tinta}]}`
   — ce trebuie apăsat ÎNAINTE ca un gest să aibă sens (Paint: unealta Selectare înaintea selecției; Word: dublu clic pe un
   cuvânt înaintea tragerii). O5 o face cu clicuri adevărate; ținta gestului însuși o alege tot O5 (§3), nu biblioteca.
@@ -255,7 +262,10 @@ Verificarea unei sarcini se face pe stare, nu pe ultimul clic (glosar: „verifi
   (și `deschide(..., {asistent: {...}})`). Pasul curent e făcut când vine un eveniment al aplicației cu `tinta` = ținta
   canonică a pasului (aliasul `mso:` se rezolvă), cu `activat` (§4) = ținta canonică a pasului, sau `asteapta(ev)` =
   true. **Greșeală** = orice alt eveniment al aplicației, în afară de `rotita`, `sageti`, `tasta_home_end`,
-  `tasta_pagina` și `tasta_acces` cu `actiune` `arata_taste_acces` / `prefix_tasta_acces` (§4). După `dupaGreseli` greșeli la rând SAU după
+  `tasta_pagina`, `tasta_acces` cu `actiune` `arata_taste_acces` / `prefix_tasta_acces` (§4) și orice eveniment cu
+  `actiune: 'mutare_focus'` (Tab / Shift+Tab care doar mută focusul într-o fereastră, §4). Evenimentul `mutare_focus` nici
+  nu face pasul: `tinta` lui e focusul din momentul tastei, deci Tab care pleacă de pe Save nu e „Save” (runda 24, critic
+  20 › B; un pas cu `asteapta` primește evenimentul și hotărăște singur). După `dupaGreseli` greșeli la rând SAU după
   `dupaSecunde` secunde fără pasul făcut: `evidentiaza` + `indiciu` pe ținta pasului. Pasul făcut: bula și evidențierea
   dispar, contoarele și ceasul pornesc de la zero pentru pasul următor. Ceasul repornește și la `lh-pas` (motorul schimbă pasul).
   Asistentul de mai mulți pași: după pasul k făcut, evidențierea și indiciul (la greșeli sau la ceas) vin pe ținta

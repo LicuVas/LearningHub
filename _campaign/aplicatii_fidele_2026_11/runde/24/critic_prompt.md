@@ -20,7 +20,24 @@ N = 24. Regulile sunt în `D/runde/_paralel/REGULI_CRITIC.md`: citește-le înt�
   Regresul lor la Word îl notezi, fără să-l atribui rundei 24.
 
 ## Ce spune constructorul (de judecat, nu de crezut)
-(se completează de orchestrator când banda termină)
+- **`24/proba_grav.py`:** 13 verificări picate din 19 la pornire, acum 0.
+- **Asistentul** (`aplicatii.js` › `L.asistent`, rândurile cu `doarFocus`, ~`:663-672`; §6.3 din api):
+  - Tab / Shift+Tab care doar mută focusul nu bifează pasul și nu e greșeală;
+  - un pas cu `asteapta` hotărăște singur, ca înainte;
+  - Save se bifează doar la salvarea adevărată, la Word și la PowerPoint;
+  - O9: 13 înainte, 13 după, aceleași cazuri.
+- **O4 `word-*`:** 13 → 13. Constructorul spune că cele două rânduri nu se pot repara cinstit în `word.js`:
+  - `clic-pune-cursorul`: o asimetrie a hamului de măsură, sub un pixel;
+  - `imagine-inserare`: cere „This Device” dintr-un meniu închis;
+  - le-a trecut ca R24-1, R24-2. Judecă afirmația dacă poți, cu proba ta.
+- **MINOR-uri făcute în `word.js`:**
+  - Alt+F4 închide fereastra ca Cancel (cu sursă Microsoft);
+  - mesajul de eroare dispare la salvarea reușită;
+  - pe fereastra mică, Save / Cancel și rândul PDF încap în ecran, iar Tab aduce butonul în vedere;
+  - la 1366×768 dreptunghiurile au rămas ale referinței.
+- **Aspectul la 1366×768:** 5 ferestre și 4 file, la ±2 px.
+- **Regresul Word:** proba 20 a coborât de la 3 la 2 (rămâne Save bifat la salvarea refuzată: regulă nouă în asistent, pentru orchestrator); probele 16, 4, telefon, 3, 2 dau 0.
+- **Nefăcut:** „already exists” cu întrebarea de înlocuire (fără referință, R24-4).
 
 ## Sarcina
 1. **A. GRAV vechi:** niciunul deschis.
