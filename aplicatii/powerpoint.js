@@ -504,7 +504,9 @@
       const fig = f.tip === 'forma' ? '<svg class="lh-ap-p-sageata" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">' +
         desenForma(f.forma) + ' fill="' + (um.tip === 'solid' ? um.culoare : 'none') + '" pointer-events="' + (um.tip === 'solid' ? 'visiblePainted' : 'visible') +
         '" stroke="' + (co.fara ? 'none' : co.culoare || '#172C51') + '" stroke-width="' + Math.max(0.5, (co.grosime || 1) * z * 4 / 3) + '" vector-effect="non-scaling-stroke"/></svg>' : '';
-      const st = 'font-size:' + f.marime * z + 'px;' + (f.centru ? 'justify-content:center;' : '');
+      /* Shape Fill pe o casetă de text (Insert › Text Box): umplerea solidă se vede în spatele textului */
+      const stU = f.tip === 'caseta' && f.umplere && f.umplere.tip === 'solid' ? 'background:' + f.umplere.culoare + ';' : '';
+      const st = 'font-size:' + f.marime * z + 'px;' + (f.centru ? 'justify-content:center;' : '') + stU;
       return fig + '<div class="lh-ap-p-text' + (f.tip === 'titlu' ? ' lh-ap-p-titlu' : '') + '" style="' + st + '">' + htmlText(f, cuSel, z) + '</div>';
     }
     function deseneazaDiapozitiv() {
@@ -1606,29 +1608,58 @@
     function expunere(de) {
       if (!M.dia.length) return 'fara_efect';
       inchideMeniu();
-      M.expunere = { i: de, el: strat('lh-ap-p-expunere') };
+      M.expunere = { i: de, pas: 0, el: strat('lh-ap-p-expunere') };
       arataExpunere();
       return 'expunere';
     }
     function arataExpunere() {
       const x = M.expunere;
       if (!x) return;
-      if (x.i >= M.dia.length) { x.el.innerHTML = ''; return; }
+      /* sfârșitul expunerii: ecran negru cu „End of slide show, click to exit.” (un clic iese) */
+      if (x.i >= M.dia.length) { x.el.innerHTML = '<div class="lh-ap-p-fin" style="color:#fff;font:16px Calibri,Arial,sans-serif;text-align:center;padding-top:40%">End of slide show, click to exit.</div>'; return; }
       const z = Math.min(root.clientWidth / SL.w, root.clientHeight / SL.h), d = M.dia[x.i];
       x.el.innerHTML = '<div class="lh-ap-p-slide lh-ap-p-slide-exp" data-lh-tema="' + esc(M.tema) + '" style="width:' + SL.w * z + 'px;height:' + SL.h * z + 'px"></div>';
       const s = x.el.firstChild;
-      d.forme.forEach(f => { const e = el('div', 'lh-ap-p-forma', { style: stilForma(f, z) }); e.innerHTML = continutForma(f, z, false); s.appendChild(e); });
+      const ascuns = ascunseExp(d, x.pas);
+      d.forme.forEach((f, j) => { if (ascuns.has(j)) return; const e = el('div', 'lh-ap-p-forma', { style: stilForma(f, z) }); e.innerHTML = continutForma(f, z, false); s.appendChild(e); });
+    }
+    /* Animations în expunere: un grup „On Click” apare la fiecare clic; „With/After Previous” vin odată cu grupul dinainte
+       (sau singure, la începutul diapozitivului, dacă nu are dinainte). Formele ascunse sunt cele din grupurile de clic nerevelate */
+    function grupuriExp(d) {
+      const g = [];
+      (d.animatii || []).forEach(a => {
+        const auto = a.pornire === 'cu_precedenta' || a.pornire === 'dupa_precedenta';
+        if (auto && g.length) g[g.length - 1].ids.push(a.s);
+        else g.push({ ids: [a.s], clic: !auto });
+      });
+      return g;
+    }
+    function clicuriExp(d) { return grupuriExp(d).filter(g => g.clic).length; }
+    function ascunseExp(d, pas) {
+      const ascuns = new Set();
+      let c = 0;
+      grupuriExp(d).forEach(g => { if (g.clic) { if (c >= pas) g.ids.forEach(s => ascuns.add(s)); c++; } });
+      return ascuns;
     }
     function pasExpunere(k) {
       const x = M.expunere;
       if (!x) return 'fara_efect';
-      if (k < 0) { x.i = Math.max(0, x.i - 1); arataExpunere(); return 'diapozitiv_anterior'; }
+      if (k < 0) { x.i = Math.max(0, x.i - 1); x.pas = 0; arataExpunere(); return 'diapozitiv_anterior'; }
+      if (x.i < M.dia.length && x.pas < clicuriExp(M.dia[x.i])) { x.pas++; arataExpunere(); return 'animatie_expunere'; }
       if (x.i >= M.dia.length) return iesiExpunere();
       x.i++;
+      x.pas = 0;
       arataExpunere();
       return 'diapozitiv_urmator';
     }
-    function iesiExpunere() { if (!M.expunere) return 'fara_efect'; M.expunere.el.remove(); M.expunere = null; I.focus(); return 'iesire_expunere'; }
+    /* ieșirea (Esc sau clic pe ecranul final) te lasă pe diapozitivul la care ai ieșit, ca în PowerPoint */
+    function iesiExpunere() {
+      if (!M.expunere) return 'fara_efect';
+      const i = M.expunere.i;
+      if (M.dia.length) M.activ = Math.max(0, Math.min(i, M.dia.length - 1));
+      M.expunere.el.remove(); M.expunere = null; I.focus(); deseneaza();
+      return 'iesire_expunere';
+    }
 
     function idDin(elx) { const x = elx.closest('[data-lh-id-mso]'); return x ? x.getAttribute('data-lh-id-mso') : null; }
     function apasaComanda(elx, tinta, v) {
@@ -1691,6 +1722,11 @@
         case 'FontSizeIncrease': return formatare('mare');
         case 'FontSizeDecrease': return formatare('mic');
         case 'TableInsertGallery': return listaRef('lista.TableInsertGallery', elx, 'tabel');
+        /* Insert › Text Box: ca la Shapes › Text Box, caseta se pune cu un clic pe diapozitiv (insereazaForma) */
+        case 'TextBoxInsert': { if (!D()) return 'indisponibil'; unealta = 'Text Box'; slide.classList.add('lh-ap-p-cruce'); return 'alegere_forma_noua'; }
+        /* Animations › Move Earlier / Move Later: schimbă ordinea efectului ales cu cel de deasupra / de dedesubt */
+        case 'AnimationMoveEarlier': return mutaAnimatie(-1);
+        case 'AnimationMoveLater': return mutaAnimatie(1);
         /* Font Color (critic 11, GRAV P2): ▾ = paleta din referință (lista.FontColorPicker), butonul = culoarea sesiunii */
         case 'FontColorPicker_Dropdown': return formaSel() && textual(formaSel()) ? listaRef('lista.FontColorPicker', elx, 'culoare_text') : 'indisponibil';
         case 'FontColorPicker': return aplicaCuloare(CULOARE_SESIUNE);
@@ -2054,6 +2090,8 @@
     I.la.dublu = (tinta) => {
       if (dialog && dialog.baza === DESCHIDE && /^lista:/.test(tinta || '')) return deschideFisier(tinta.slice(6));
       const f = formaSel();
+      /* Slide Sorter: dublu clic pe o miniatură = înapoi în Normal, cu diapozitivul ales */
+      if (/^miniatura:/.test(tinta || '') && M.vedere === 'sortare') { M.activ = +tinta.slice(9) - 1; sel = null; M.vedere = 'normala'; notaActiva = false; deseneaza(); return 'vedere'; }
       if (!/^forma:/.test(tinta || '') || !sel || !sel.edit || !textual(f)) return null;
       const t = f.text, k = sel.b;
       let a = k, b = k;
