@@ -18,6 +18,17 @@
     'Intense Reference': 11, 'Book Title': 11, 'List Paragraph': 11 };
   const LIT = /[\p{L}\p{N}]/u;
   const DEF = Object.freeze({ b: false, i: false, u: false, sz: null });
+  /* Layout › Line Spacing (lista.LineSpacingGallery din referință: „1,0 … 3,0”), Indent 1,25 cm (cerința lecțiilor vii/m1-l06 …),
+     marginile din Margins (lista.PageMarginsGallery: Normal/Narrow/Moderate/Wide/Mirrored; valorile Word în cm) */
+  const INTERLINII = [['1,0', 1], ['1,15', 1.15], ['1,5', 1.5], ['2,0', 2], ['2,5', 2.5], ['3,0', 3]];
+  const PAS_RETRAGERE = 1.25;
+  const MARGINI_WORD = {
+    'Normal Margins': { sus: 2.54, jos: 2.54, stanga: 2.54, dreapta: 2.54 },
+    'Narrow Margins': { sus: 1.27, jos: 1.27, stanga: 1.27, dreapta: 1.27 },
+    'Moderate Margins': { sus: 2.54, jos: 2.54, stanga: 1.91, dreapta: 1.91 },
+    'Wide Margins': { sus: 2.54, jos: 2.54, stanga: 5.08, dreapta: 5.08 },
+    /* Mirrored: interior 3,18 / exterior 2,54. Modelul n-are pagini oglindite: interiorul e tratat ca stânga [presupus] */
+    'Mirrored Margins': { sus: 2.54, jos: 2.54, stanga: 3.18, dreapta: 2.54 } };
   const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const egal = (a, b) => a === b || (!!a && !!b && a.b === b.b && a.i === b.i && a.u === b.u && a.sz === b.sz);
   const ALINIERI = { left: 'stanga', center: 'centru', right: 'dreapta', justify: 'stanga-dreapta' };
@@ -363,10 +374,19 @@
        altfel pe ce se tastează de acum). Limitele: „Word: between 1 and 1638, in multiples of .5 (such as 10.5 or 105.5)”
        (support.microsoft.com/en-US/Office/fonts/change-the-font-size). Enter nu ajunge în document; focusul se întoarce în
        document. O valoare în afara limitelor nu schimbă nimic (mesajul lui Word: NEVERIFICAT, de_verificat.md R2-5). */
-    function marimeScrisa(inp) { return marimeLa(Number(String(inp.value).trim().replace(',', '.'))); }
+    function marimeScrisa(inp) {
+      const txt = String(inp.value).trim().replace(',', '.');
+      return marimeLa(txt === '' ? NaN : Number(txt));
+    }
+    /* Mesajele casetei Font Size în Word (Microsoft: „Word: between 1 and 1638, in multiples of .5”): număr care nu e
+       număr → „This is not a valid number.”; în afara 1…1638 → „The number must be between 1 and 1638.”. Un număr se rotunjește
+       în jos la multiplul de 0,5 (13,3 → 13). Mesajul e o fereastră „Microsoft Word” cu OK; caseta rămâne cu textul scris. */
     function marimeLa(n) {
       let r = 'fara_efect';
-      if (M.deschis && Number.isFinite(n) && n >= 1 && n <= 1638 && Number.isInteger(n * 2)) {
+      if (M.deschis) {
+        if (!Number.isFinite(n)) return alerta('This is not a valid number.');
+        if (n < 1 || n > 1638) return alerta('The number must be between 1 and 1638.');
+        n = Math.floor(n * 2) / 2;
         const iv = intervalFormat();
         if (!iv) M.fmtIns = Object.freeze(Object.assign({}, fmtLa(M.sel.f), { sz: n }));
         else { schimba('format', () => aplica(iv.a, iv.b, f => Object.freeze(Object.assign({}, f, { sz: n })))); H.rupe(); }
@@ -415,6 +435,106 @@
       H.rupe();
       return dir > 0 ? 'marire_font' : 'micsorare_font';
     }
+    /* fereastra de eroare a lui Word („Microsoft Word” + OK): Enter, Esc sau OK o închid; focusul se întoarce în document */
+    function alerta(text) {
+      inchideMeniu();
+      const s = el('div', 'lh-ap-alerta', { role: 'alertdialog', 'aria-label': 'Microsoft Word' });
+      s.style.cssText = 'position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);width:330px;background:#fff;border:1px solid #888;' +
+        'box-shadow:0 4px 16px rgba(0,0,0,.35);padding:14px 16px;font:13px Segoe UI,Arial,sans-serif;color:#000;z-index:60';
+      s.innerHTML = '<div style="font-weight:600;margin-bottom:10px">Microsoft Word</div><div style="margin-bottom:16px">' + esc(text) +
+        '</div><div style="text-align:right"><button type="button" class="lh-ap-alerta-ok" style="min-width:76px;padding:4px 10px">OK</button></div>';
+      root.appendChild(s);
+      const inchide = () => {
+        document.removeEventListener('keydown', tasta, true);
+        s.remove();
+        try { I.focus(); } catch (x) { /* */ }
+        actualizeaza();
+      };
+      const tasta = e => {
+        if (e.key === 'Enter' || e.key === 'Escape' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); inchide(); }
+      };
+      document.addEventListener('keydown', tasta, true);
+      s.querySelector('.lh-ap-alerta-ok').addEventListener('click', e => { e.stopPropagation(); inchide(); });
+      try { s.querySelector('.lh-ap-alerta-ok').focus(); } catch (x) { /* */ }
+      return 'eroare_word';
+    }
+    /* ---- paragraful: retrageri (cm), spațiere înainte/după (pt), interlinie (multiplu) — par.pf, doar ce a fost setat explicit
+       se desenează; valorile implicite sunt cele din Paragraph (Indents and Spacing: 0 / 0 / 0 / 8 pt / 1,08) */
+    const pfDe = par => Object.assign({ il: 0, ir: 0, pl: 0, sb: 0, sa: 8, ls: 1.08 }, par.pf || {});
+    function parAplica(fn) {
+      const idx = paragrafeSel();
+      schimba('format', () => { idx.forEach(i => { const f = pfDe(M.P[i]); M.P[i].pf = Object.assign({}, f, fn(f)); }); });
+      H.rupe();
+    }
+    /* Increase / Decrease Indent: pas de 1,25 cm, fără retragere sub 0 */
+    function indenteaza(pas) {
+      parAplica(f => ({ il: Math.max(0, Math.round((f.il + pas) * 100) / 100) }));
+      return pas > 0 ? 'marire_retragere' : 'micsorare_retragere';
+    }
+    /* Tab la începutul paragrafului = retragerea primei linii (fără selecție, cursorul în prima poziție) */
+    function primaLinie() {
+      parAplica(f => ({ pl: Math.round((f.pl + PAS_RETRAGERE) * 100) / 100 }));
+      return 'retragere_prima_linie';
+    }
+    function interlinie(v) { parAplica(() => ({ ls: v })); return 'interlinie'; }
+    /* Paragraph… : caseta se umple cu valorile primului paragraf selectat; OK le aplică tuturor paragrafelor selectate */
+    /* câmpurile din referință au eticheta fără „:” (camp:Before text), cum o scriu și apelurile de mai jos */
+    const campDialog = eticheta => {
+      const x = dialog && dialog.el && dialog.el.querySelector('[data-lh-tinta="camp:' + eticheta.replace(/:$/, '') + '"] input');
+      return x || null;
+    };
+    const fmtNumar = v => String(Math.round(v * 100) / 100).replace('.', ',');
+    function paragrafDialog() {
+      const idx = paragrafeSel(), f = pfDe(M.P[idx[0]] || { pf: null });
+      if (!deschideDialog('dialog.ParagraphDialog')) return false;
+      const pune = (eticheta, v) => { const x = campDialog(eticheta); if (x) x.value = v; };
+      pune('Before text:', fmtNumar(f.il)); pune('After text:', fmtNumar(f.ir));
+      pune('Special:', f.pl > 0 ? 'First line' : f.pl < 0 ? 'Hanging' : '(none)');
+      pune('By:', fmtNumar(Math.abs(f.pl)));
+      pune('Before:', fmtNumar(f.sb)); pune('After:', fmtNumar(f.sa));
+      const ls = INTERLINII.find(x => x[1] === f.ls);
+      pune('Line spacing:', f.ls === 1 ? 'Single' : f.ls === 2 ? 'Double' : f.ls === 1.5 ? '1.5 lines' : 'Multiple');
+      pune('At:', fmtNumar(ls ? ls[1] : f.ls));
+      return true;
+    }
+    function okParagraf() {
+      const val = eticheta => { const x = campDialog(eticheta); return x ? x.value : ''; };
+      const num = s => { const t = String(s).trim().replace(/[^\d,.-]/g, '').replace(',', '.'); const n = Number(t); return t !== '' && Number.isFinite(n) ? n : null; };
+      const il = num(val('Before text:')), ir = num(val('After text:')), by = num(val('By:'));
+      const sb = num(val('Before:')), sa = num(val('After:')), at = num(val('At:'));
+      const sp = val('Special:').trim().toLowerCase(), ls = val('Line spacing:').trim().toLowerCase();
+      const pl = by === null ? null : sp === 'first line' ? by : sp === 'hanging' ? -by : sp === '(none)' ? 0 : null;
+      const lsNou = ls === 'single' ? 1 : ls === '1.5 lines' ? 1.5 : ls === 'double' ? 2 : ls === 'multiple' && at ? at : null;
+      parAplica(f => {
+        const o = {};
+        if (il !== null && il >= 0) o.il = il;
+        if (ir !== null && ir >= 0) o.ir = ir;
+        if (pl !== null) o.pl = pl;
+        if (sb !== null && sb >= 0) o.sb = sb;
+        if (sa !== null && sa >= 0) o.sa = sa;
+        if (lsNou !== null) o.ls = lsNou;
+        return o;
+      });
+      inchideDialog();
+      return 'ok_paragraf';
+    }
+    /* Margins: galeria (Normal/Narrow/Moderate/Wide/Mirrored) și Custom Margins (caseta Margins din Page Setup) */
+    function paginaDialog() {
+      if (!deschideDialog('dialog.PageSetupDialog')) return false;
+      const m = M.pag.margini_cm;
+      const pune = (eticheta, v) => { const x = campDialog(eticheta); if (x) x.value = fmtNumar(v); };
+      pune('Top:', m.sus); pune('Bottom:', m.jos); pune('Left:', m.stanga); pune('Right:', m.dreapta);
+      return true;
+    }
+    function okPagina() {
+      const val = eticheta => { const x = campDialog(eticheta); return x ? Number(String(x.value).trim().replace(/[^\d,.-]/g, '').replace(',', '.')) : NaN; };
+      const c = { sus: val('Top:'), jos: val('Bottom:'), stanga: val('Left:'), dreapta: val('Right:') };
+      inchideDialog();
+      if (!Object.values(c).every(v => Number.isFinite(v) && v >= 0)) return 'fara_efect';
+      margini(c);
+      return 'ok_pagina';
+    }
+
     /* ---- alinierea (Ctrl+E/L/R/J și butoanele): a doua apăsare întoarce la stânga; Ctrl+L pe un paragraf deja la stânga
        îl face „stanga-dreapta” (scenarii_real/word-ctrl-e-de-doua-ori.json, word-ctrl-l-pe-paragraf-la-stanga.json) */
     function aliniaza(al) {
@@ -568,7 +688,8 @@
     /* ---- pagina (Layout › Margins › Narrow; Orientation › Landscape — scenarii_real/word-margini-ingust.json,
        word-orientare-vedere.json) */
     function margini(m) {
-      schimba('pagina', () => { M.pag = JSON.parse(JSON.stringify(M.pag)); M.pag.margini_cm = { sus: m, jos: m, stanga: m, dreapta: m }; });
+      const c = typeof m === 'number' ? { sus: m, jos: m, stanga: m, dreapta: m } : Object.assign({}, m);
+      schimba('pagina', () => { M.pag = JSON.parse(JSON.stringify(M.pag)); M.pag.margini_cm = c; });
       H.rupe();
       return 'margini';
     }
@@ -820,8 +941,16 @@
     function clasaPar(par) {
       return 'lh-ap-par lh-ap-al-' + par.al + ' lh-ap-stil-' + par.stil.replace(/\s+/g, '-').toLowerCase() + (par.lista ? ' lh-ap-lista' : '');
     }
+    /* retragerile și spațierea paragrafului (par.pf), numai dacă au fost setate; Heading 1 / Heading 2 în albastrul Word #2F5496 */
+    function stilParagraf(par) {
+      if (!par.pf) return '';
+      const f = pfDe(par);
+      return ' style="margin:' + (f.sb * PX_PT) + 'px 0 ' + (f.sa * PX_PT) + 'px;padding-left:0;margin-left:' + (f.il * PX_CM) +
+        'px;margin-right:' + (f.ir * PX_CM) + 'px;text-indent:' + (f.pl * PX_CM) + 'px;line-height:' + (f.ls * 1.2).toFixed(2) + '"';
+    }
     function spanuri(par, i) {
       if (!par.t.length) return '';
+      const albastru = /^Heading [12]$/.test(par.stil) ? 'color:#2F5496;' : '';
       const s0 = inceput(i), a = selMin(), b = selMax(), cuSel = areSel() && !M.cel;
       let html = '', k = 0;
       while (k < par.t.length) {
@@ -829,7 +958,7 @@
         let j = k + 1;
         while (j < par.t.length && egal(par.f[j] || DEF, f) && (cuSel && s0 + j >= a && s0 + j < b) === inS) j++;
         const cls = (f.b ? ' lh-ap-b' : '') + (f.i ? ' lh-ap-i' : '') + (f.u ? ' lh-ap-u' : '') + (inS ? ' lh-ap-sel' : '');
-        html += '<span data-o="' + k + '" class="lh-ap-bucata' + cls + '"' + (f.sz ? ' style="font-size:' + f.sz + 'pt"' : '') + '>' + esc(par.t.slice(k, j)) + '</span>';
+        html += '<span data-o="' + k + '" class="lh-ap-bucata' + cls + '"' + (f.sz || albastru ? ' style="' + (f.sz ? 'font-size:' + f.sz + 'pt;' : '') + albastru + '"' : '') + '>' + esc(par.t.slice(k, j)) + '</span>';
         k = j;
       }
       return html;
@@ -858,7 +987,7 @@
         M.tab.forEach((t, ti) => { if (t.la === i) h += deseneazaTabel(t, ti); });
         const imgs = M.img.filter(x => x.p === i).map((x, k) => '<span class="lh-ap-imagine" data-lh-tinta="imagine" data-lh-id="' + (M.img.indexOf(x) + 1) + '" aria-hidden="true"></span>').join('');
         const sb = lst[i] ? (lst[i].tip === 'marcatori' ? '•' : lst[i].simbol) : '';
-        h += '<div class="' + clasaPar(par) + '" data-lh-tinta="text" data-lh-id="' + (i + 1) + '"' + (sb ? ' data-simbol="' + esc(sb) + '"' : '') + '>' + imgs + spanuri(par, i) + '</div>';
+        h += '<div class="' + clasaPar(par) + '" data-lh-tinta="text" data-lh-id="' + (i + 1) + '"' + (sb ? ' data-simbol="' + esc(sb) + '"' : '') + stilParagraf(par) + '>' + imgs + spanuri(par, i) + '</div>';
       });
       corp.innerHTML = h;
       const m = M.pag.margini_cm;
@@ -1172,6 +1301,14 @@
       /* suprafața dialogului poartă cheia de BAZĂ pe orice filă (oracolul apasă filele și compune singur „#<filă>”,
          CONVENTIE_ARBORE.md §4.3); doar deschisă prin plasa cu o cheie „#…” poartă cheia întreagă */
       s.setAttribute('data-lh-suprafata', dialog.cheiePlasa || (k === 'dialog.FileSaveAs_pdf' ? k : dialog.baza));
+      /* imaginile din fereastră (fundalul panourilor, Preview) sunt desenate peste controale și nu sunt controale: trec clicurile
+         prin ele, ca un clic pe Before text / Top să ajungă la caseta de sub ele (în Word, imaginea nu primește clic) */
+      s.querySelectorAll('[data-lh-tip="Image"]').forEach(x => { x.style.pointerEvents = 'none'; });
+      /* casetele numerice ale Paragraph și Page Setup (Before text, Top, …) se pot scrie: în referință sunt „readonly”, dar
+         Word le lasă editabile — altfel nu s-ar putea scrie nicio valoare în ele */
+      if (dialog.baza === 'dialog.ParagraphDialog' || dialog.baza === 'dialog.PageSetupDialog') {
+        s.querySelectorAll('[data-lh-tip="Spinner"] input, [data-lh-tip="ComboBox"] input').forEach(x => { x.readOnly = false; x.removeAttribute('tabindex'); });
+      }
       const r = SUP[k].r, R = root.getBoundingClientRect();
       s.style.position = 'absolute';
       s.style.left = Math.max(0, Math.min(r[0], R.width - r[2])) + 'px';
@@ -1244,6 +1381,9 @@
       }
       if (dialog.baza === 'dialog.PictureInsertFromFile') return insereazaImagine();
       if (dialog.baza === 'dialog.TableInsertDialogWord') return okTabel();
+      /* OK-ul din Paragraph / Page Setup schimbă modelul: desenul se face imediat (altfel până la următoarea tastă) */
+      if (dialog.baza === 'dialog.ParagraphDialog') { const r = okParagraf(); actualizeaza(); return r; }
+      if (dialog.baza === 'dialog.PageSetupDialog') { const r = okPagina(); actualizeaza(); return r; }
       inchideDialog();
       return 'ok';
     }
@@ -1730,14 +1870,18 @@
       BulletsGalleryWord: () => lista('marcatori'), NumberingGalleryWord: () => lista('numerotare'),
       Paste: () => lipeste(false), Cut: () => decupeaza(), Copy: () => copiaza(),
       FontDialog: () => (deschideDialog('dialog.FontDialog') && 'dialog_font'),
-      ParagraphDialog: () => (deschideDialog('dialog.ParagraphDialog') && 'dialog_paragraf'),
-      PageSetupDialog: () => (deschideDialog('dialog.PageSetupDialog') && 'dialog_pagina'),
+      ParagraphDialog: () => (paragrafDialog() && 'dialog_paragraf'),
+      PageSetupDialog: () => (paginaDialog() && 'dialog_pagina'),
+      IndentIncreaseWord: () => indenteaza(PAS_RETRAGERE), IndentDecreaseWord: () => indenteaza(-PAS_RETRAGERE),
+      /* Line and Paragraph Spacing (Home/Layout): 1,0 … 3,0 și Line Spacing Options… */
+      LineSpacingGallery: e => { meniuLa(e, INTERLINII.map(([t, v]) => ({ tinta: t, text: t, fa: () => interlinie(v) }))
+        .concat([{ tinta: 'Line Spacing Options…', text: 'Line Spacing Options…', fa: () => (paragrafDialog() && 'dialog_paragraf') }])); return 'meniu_interlinie'; },
       TableInsertGallery: e => { grilaTabel(e); return 'meniu_tabel'; },
       /* listele deschise NU sunt în referința UIA: doar rândurile citate — „Narrow Margins” (scenarii_real/word-margini-ingust.json),
          „Custom Margins”, „Portrait”/„Landscape” (support.microsoft.com/en-US/Word/training/change-document-layout),
          „This Device”, „Stock Images”, „Online Pictures” (support.microsoft.com/en-us/word/training/insert-pictures) */
-      PageMarginsGallery: e => { meniuLa(e, [{ tinta: 'Narrow Margins', text: 'Narrow Margins', fa: () => margini(1.27) },
-        { tinta: 'Custom Margins', text: 'Custom Margins', fa: () => (deschideDialog('dialog.PageSetupDialog') && 'dialog_pagina') }]); return 'meniu_margini'; },
+      PageMarginsGallery: e => { meniuLa(e, Object.keys(MARGINI_WORD).map(nume => ({ tinta: nume, text: nume, fa: () => margini(MARGINI_WORD[nume]) }))
+        .concat([{ tinta: 'Custom Margins', text: 'Custom Margins', fa: () => (paginaDialog() && 'dialog_pagina') }])); return 'meniu_margini'; },
       PageOrientationGallery: e => { meniuLa(e, [{ tinta: 'Portrait', text: 'Portrait', fa: () => orientare('portret') },
         { tinta: 'Landscape', text: 'Landscape', fa: () => orientare('vedere') }]); return 'meniu_orientare'; },
       /* Pictures ▾: grupul „Insert Picture From” cu „This Device...” (Alt, N, P, D), „Stock Images...” (S), „Online
@@ -1763,11 +1907,17 @@
       const n = elx.__nod || {};
       if (elx.getAttribute('aria-disabled') === 'true') return 'indisponibil';
       const id = idDe(elx);
-      if (id && CMD[id]) { const r = CMD[id](elx); if (strat && strat.contextual && !meniuDeschisDe(elx)) inchideMeniuContextual(); return r; }
+      if (id && CMD[id]) {
+        const r = CMD[id](elx);
+        if (strat && strat.contextual && !meniuDeschisDe(elx)) inchideMeniuContextual();
+        /* comanda a schimbat modelul (format, pagină, paragraf): desenul se face acum, nu la următoarea tastă */
+        actualizeaza();
+        return r;
+      }
       /* galeria de stiluri din panglică: un stil = clic pe dala lui; săgeata „Styles” deschide galeria întreagă */
       if (/^meniu:/.test(tinta) && elx.closest('[data-lh-id-mso="QuickStylesGallery"]')) return stil(tinta.slice(6));
       if (n.t === 'Button' && n.e === 'Styles' && elx.closest('[data-lh-id-mso="QuickStylesGallery"]')) { galerieStiluri(elx); return 'galerie_stiluri'; }
-      if (elx.__fa) { const r = elx.__fa(); inchideMeniu(); return r; }
+      if (elx.__fa) { const r = elx.__fa(); inchideMeniu(); actualizeaza(); return r; }
       if (strat && strat.contextual && strat.contains(elx)) {
         if (n.e === 'Keep Text Only') { inchideMeniuContextual(); return lipeste(true); }
       }
@@ -2028,6 +2178,17 @@
     }
     const NESIM_TASTE = { ctrl_f: 'Ctrl+F', ctrl_h: 'Ctrl+H', ctrl_m: 'Ctrl+M', ctrl_o: 'Ctrl+O',
       ctrl_p: 'Ctrl+P', ctrl_q: 'Ctrl+Q', ctrl_shift_m: 'Ctrl+Shift+M' };
+    /* Ctrl+1 / Ctrl+2 / Ctrl+5 (interlinia 1,0 / 2,0 / 1,5): gestTasta din aplicatii.js dă gest numai pentru litere și
+       semne, deci cifrele nu ajung la I.la.tasta; le luăm aici, înainte de aplicație (rădăcina, faza de captură) */
+    root.addEventListener('keydown', e => {
+      if (!e.ctrlKey || e.altKey || e.metaKey || e.shiftKey || !M.deschis || dialog || backstage) return;
+      const m = /^Digit([125])$/.exec(e.code || '');
+      if (!m) return;
+      e.preventDefault();
+      e.stopPropagation();
+      interlinie(m[1] === '1' ? 1 : m[1] === '2' ? 2 : 1.5);
+      actualizeaza();
+    }, true);
     I.la.tasta = (e, g, inCamp) => {
       /* Enter într-o fereastră apasă butonul ei implicit: Save (Save As, „Save this file”, „Save your changes…”) */
       const activatEnter = () => !dialog ? null : (dialog.baza === 'dialog.FileSaveAs' || dialog.baza === SALVARE_NOUA) ? 'dialog_salvare:Save' :
@@ -2161,7 +2322,13 @@
            (runda 28, unghiul gest_tastatura: Ctrl+Backspace ștergea o literă) */
         case 'tasta_backspace': e.preventDefault(); r = e.ctrlKey && !M.cel && !areSel() ? stergeCuvant(-1) : backspace(); break;
         case 'tasta_delete': e.preventDefault(); r = e.ctrlKey && !M.cel && !areSel() ? stergeCuvant(1) : del(); break;
-        case 'tasta_tab': e.preventDefault(); r = M.cel ? tabInTabel(sh) : scrie('\t', false); break;
+        case 'tasta_tab': {
+          e.preventDefault();
+          /* Tab la începutul paragrafului (fără selecție, nu în tabel): retragerea primei linii, nu un caracter Tab */
+          const l0 = !M.cel && !areSel() && !sh && M.deschis ? loc(M.sel.f) : null;
+          r = M.cel ? tabInTabel(sh) : l0 && l0.o === 0 ? primaLinie() : scrie('\t', false);
+          break;
+        }
         case 'sageti':
           e.preventDefault();
           if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') r = muta1(e.key === 'ArrowLeft' ? -1 : 1, sh, e.ctrlKey);
