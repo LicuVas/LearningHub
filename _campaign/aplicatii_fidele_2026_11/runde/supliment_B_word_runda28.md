@@ -25,6 +25,10 @@ Se citește DUPĂ `runde/28/prompt.md`. Regulile ciclului paralel (`runde/_paral
 Fiecare edit e mic, făcut cu Edit, iar înainte de el citești din nou zona. În raport le treci la „Fișiere comune atinse”.
 
 ## Ținta rundei 28, în ordinea asta
+0. **Cele două rânduri `word-*` rămase în O4 după runda de acoperire** (`runde/26/acoperire_office.md`; O4 total 28 → 15). Amândouă sunt acum defecte ale simulatorului, cu real nou jucat pe Word:
+   - **`word-imagine-inserare` neexecutabil:** meniul Pictures din `word.js` (~`:1664`) are eticheta „This Device”, iar Word real (UI Automation) are „This Device...” (A26O-3). Eticheta și ținta urmează referința (`referinte/uia_word.json` / `referinte/scenarii_real/word-imagine-inserare.json`); rândul deschide fereastra Insert Picture.
+   - **`word-copiere-lipire`, 1 diferență:** la lipire, Word real pune singur spațiul dintre cuvinte (Smart Cut and Paste), iar simulatorul nu. Te uiți în `referinte/scenarii_real/word-copiere-lipire.json` și `word-decupare-lipire.json` la textul exact de după lipire și faci la fel, fără să strici decuparea (care dă acum 0).
+   - Proba: O4 pe `word-*` înainte și după (cu `LH_IESIRE` al tău), plus scenariile `word-*` care treceau.
 1. **Asistentul comun (`L.asistent`), trei reguli cerute de criticii 24 și 26.** Toate țin de același principiu: indiciul vine după greșeli adevărate, nu pe drumul bun.
    - **a) Un eveniment `nesimulat` sau refuzat nu face pasul** (critic 24, MINOR 4): Save bifat la salvarea refuzată (nume interzis; „already exists” + Save pe drumul `m1-l03:157`).
    - **b) Alt+↓ care deschide lista dintr-o fereastră nu e greșeală** (critic 24, MINOR 5), la fel ca `mutare_focus`.
