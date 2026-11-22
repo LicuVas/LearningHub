@@ -304,6 +304,10 @@
       if (parti.length) F().sel = { activa: { r: parti[0].r0, c: parti[0].c0 }, zone: parti };
     }
     if (c.nume) { M.nume = /\.[a-z0-9]{2,5}$/i.test(c.nume) ? String(c.nume) : c.nume + '.xlsx'; M.salvat = true; }
+    /* registrul pornit dintr-un fișier (continut.dosar = folderul lui), foaia activă (continut.fi), locul propus la Save As (continut.locPropus) */
+    if (c.dosar) M.dosar = String(c.dosar);
+    if (c.fi != null && isFinite(+c.fi)) M.fi = Math.max(0, Math.min(+c.fi, M.foi.length - 1));
+    M.locPropus = c.locPropus ? String(c.locPropus) : null;
     /* „modificat”: conținutul pus la pornire într-un registru nou, nesalvat, contează ca modificare (Excel real, conținut pus
        prin COM: uia_excel.json › acoperire_r7.fapte.b_ctrl_w_modificat.registru_saved_inainte = false; scenariul
        excel-ctrl-w-modificat pornește cu A1 = „x” și Excel întreabă); lecția îl poate spune explicit (ca la Word) */
@@ -2493,6 +2497,8 @@
     function raspunsInchidere(v) {
       if (v === 'Cancel' || v === 'Închidere') { inchideDialog(); return 'anulare'; }
       if (v === "Don't Save") { inchideDialog(); return inchideRegistruAcum('inchidere_fara_salvare'); }
+      /* registrul are deja fișierul lui (M.nume): Save îl scrie pe loc, fără „already exists” (e chiar fișierul lui) */
+      if (v === 'Save' && M.nume) { inchideDialog(); fixeaza(M.dosar || 'Documente', M.nume, /\.csv$/i.test(M.nume) ? 'csv' : 'xlsx'); return inchideRegistruAcum('salvare_si_inchidere'); }
       if (v === 'Save') return salveazaDinDialog(() => inchideRegistruAcum('salvare_si_inchidere'));
       if (v === 'Open') return I.nesimulat('Choose a Location ▾');
       return I.nesimulat(v);
@@ -3018,7 +3024,7 @@
       if (!F0 || !FS) return false;
       inchideMeniu();
       F0.salvareCa(root, {
-        magazie: FS, dosar: M.dosar || 'Documente', nume: M.nume || (BOOK + '.xlsx'), tip: 'xlsx',
+        magazie: FS, dosar: M.dosar || M.locPropus || 'Documente', nume: M.nume || (BOOK + '.xlsx'), tip: 'xlsx',
         nrFoi: () => M.foi.length,
         salveaza: (dosar, nume, tip) => { fixeaza(dosar, nume, tip); },
         nesimulat: v => I.nesimulat(v),
