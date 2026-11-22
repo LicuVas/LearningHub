@@ -344,7 +344,15 @@
         [{ t: 'Button', e: 'OK', r: [787, 432, 79, 27] }]);
       [DLG_STERGE, DLG_REFUZ, DLG_NUME].forEach(k => { date.dialoguri[k] = { titlu: 'Microsoft Excel', file: [{ s: k, fila: null }] }; });
     }
-    const MESAJ_FOAIE = { [DLG_STERGE]: TEXT_STERGE, [DLG_REFUZ]: TEXT_REFUZ, [DLG_NUME]: TEXT_NUME };
+    /* noaptea 22-23.11 (lot 1, excel-a-F040): lipirea pe o zonă care nu e o celulă, nici aceeași mărime, nici un multiplu exact
+       al zonei copiate = mesajul Excel, nimic lipit. Textul NU e în referință [DEDUS: textul mesajului Excel 365, de_capturat L1-2] */
+    const DLG_LIPIRE = 'dialog.lipire_marime';
+    const TEXT_LIPIRE = "The information cannot be pasted because the Copy area and the paste area are not the same size and shape. Try one of the following:\n\n• Click a single cell, and then paste.\n• Select a rectangle that's the same size and shape, and then paste.";
+    if (!SUP[DLG_LIPIRE]) {
+      SUP[DLG_LIPIRE] = mesajExcel([408, 262, 550, 236], TEXT_LIPIRE, [498, 352, 430, 92], [{ t: 'Button', e: 'OK', r: [849, 448, 79, 27] }]);
+      date.dialoguri[DLG_LIPIRE] = { titlu: 'Microsoft Excel', file: [{ s: DLG_LIPIRE, fila: null }] };
+    }
+    const MESAJ_FOAIE = { [DLG_STERGE]: TEXT_STERGE, [DLG_REFUZ]: TEXT_REFUZ, [DLG_NUME]: TEXT_NUME, [DLG_LIPIRE]: TEXT_LIPIRE };
     /* triunghiul de avertizare al ferestrelor de mai sus (desen propriu, nu o resursă Microsoft — I7) */
     const SVG_AVERT = '<svg viewBox="0 0 34 34" width="34" height="34" aria-hidden="true"><path d="M17 3.5 31.5 30h-29z" fill="#fcd77e" stroke="#c98a1b" stroke-width="1.6" stroke-linejoin="round"/><path d="M15.6 12h2.8l-.5 10h-1.8z" fill="#3b3b3b"/><circle cx="17" cy="25.3" r="1.6" fill="#3b3b3b"/></svg>';
 
@@ -359,7 +367,8 @@
       if (cache.has(k)) { const v = cache.get(k); return v === CICLU ? 0 : v; }
       cache.set(k, CICLU);
       let v;
-      try { v = evalua(f, arbore(jetoane(x.f.slice(1), 'en'))); } catch (e) { v = eErr(e) ? e : ERR('#NAME?'); }
+      /* o referință pierdută la ștergerea de rânduri / coloane / celule e scrisă #REF! în formulă (=#REF!*2): valoarea = #REF! */
+      try { v = evalua(f, arbore(jetoane(x.f.slice(1), 'en'))); } catch (e) { v = eErr(e) ? e : ERR(/#REF!/.test(x.f) ? '#REF!' : '#NAME?'); }
       /* rezultat-zonă (E5): ancora ia primul element, restul se varsă în celulele de sub / din dreapta (varsat) dacă sunt
          goale; ocupate = #SPILL! (runda 17; uia_excel.json › acoperire_r14.fapte.v_varsare_com.a_ocupat: D2 „#SPILL!”, CVErr
          2045, golirea lui D4 readuce vărsarea). O zonă simplă de mai multe celule (=B2:B6) se varsă la fel (fapte.c_simple:
@@ -656,7 +665,9 @@
         grafice: stareGrafice(), grafic_activ: !!M.gr, grafic_element_ales: M.gr ? (M.gr.parte === 'titlu' ? 'Chart Title' : 'Chart Area') : null,
         ...stareGraficPrim(),
         fisiere: magazie() ? magazie().stare() : null, dosar_fisier: M.dosar, avertisment_fisier: M.avertisment,
-        registru_activ: REG.gol ? null : numeRegistru(), registre: REG.alte.map(r => r.nume ? r.nume.replace(/\.[a-z0-9]{2,5}$/i, '') : r.book).concat(REG.gol ? [] : [numeRegistru()]) };
+        registru_activ: REG.gol ? null : numeRegistru(), registre: REG.alte.map(r => r.nume ? r.nume.replace(/\.[a-z0-9]{2,5}$/i, '') : r.book).concat(REG.gol ? [] : [numeRegistru()]),
+        /* lot 1 (F128): numele definite din Name Box, {nume: 'Foaie!B2:C3'} */
+        nume_definite: Object.fromEntries([].concat(...M.foi.map(x => Object.values(x.nume_def || {}).map(d => [d.nume, x.nume + '!' + d.zona])))) };
     };
     /* `dialog` (§5): fereastra deschisă; „Save your changes to this file?” = fereastra care ÎNTREABĂ, în forma din
        scenarii_real/excel-ctrl-w-modificat.json: {titlu: '' (bara de titlu goală), intrebare, butoane: rândul de jos, de la
@@ -1384,7 +1395,7 @@
     /* ---- barele: Name Box, bara de formule, modul celulei (bara de stare), titlul, Undo/Redo gri */
     function actualizeazaBare() {
       const f = F(), s = f.sel, a = adr(s.activa.r, s.activa.c);
-      if (document.activeElement !== inNume) inNume.value = M.gr ? 'Chart ' + (M.gr.i + 1) : (M.trageInfo || a);
+      if (document.activeElement !== inNume) inNume.value = M.gr ? 'Chart ' + (M.gr.i + 1) : (M.trageInfo || numeAlSelectiei() || a);
       inF.value = M.gr ? (M.grTitlu || '') : M.edit ? M.edit.text : textEditare(f, a);
       const mod = M.edit ? (M.edit.punct ? 'Point' : M.edit.mod) : 'Ready';
       if (elMod) { elMod.firstChild.textContent = mod; elMod.setAttribute('data-lh-eticheta', 'Cell Mode ' + mod); }
@@ -1394,6 +1405,9 @@
       const gri = (sel, on) => root.querySelectorAll(sel).forEach(x => { x.classList.toggle('lh-ap-gri', !on); if (on) x.removeAttribute('aria-disabled'); else x.setAttribute('aria-disabled', 'true'); });
       gri('[data-lh-suprafata="acces_rapid"] [data-lh-id-mso="Undo"], [data-lh-suprafata="acces_rapid"] [data-lh-id-mso="Undo"] *', H.poateAnula());
       gri('[data-lh-suprafata="acces_rapid"] [data-lh-id-mso="Redo"], [data-lh-suprafata="acces_rapid"] [data-lh-id-mso="Redo"] *', H.poateReface());
+      /* lot 1 (excel-a-F027): Paste (planșeta) e gri cât nu e nimic copiat; săgeata Paste ▾ rămâne (lista are rândurile gri)
+         [DEDUS: în Excel contează și planșeta Windows; aici doar copierea din registru] */
+      gri('[data-lh-suprafata="panglica.TabHome"] [data-lh-id-mso="Paste"], [data-lh-suprafata="panglica.TabHome"] [data-lh-id-mso="Paste"] *', !!M.clip);
       foileFile();
       actualizeazaPanglica();
     }
@@ -1795,8 +1809,37 @@
     function golesteContinut() {
       const f = F();
       schimba('stergere', () => celuleZone(f, false).forEach(x => { delete f.cel[x]; }));
+      /* golirea oprește copierea (chenarul punctat dispare, Ctrl+V nu mai lipește: excel-a-F042, excel-b-F122) */
+      M.clip = null;
       actualizeaza();
+      deseneazaSelectia();
       return 'golire';
+    }
+    /* Home › Clear ▾ (ClearMenu): Clear All = conținut + format + borduri + îmbinări; Clear Formats = doar formatul (valorile
+       rămân); Clear Contents = golesteContinut. Lista NU e în referință [DEDUS: rândurile listei din Excel 365, de_capturat L1-3] */
+    function golesteFormat(siContinut) {
+      const f = F(), ce = celuleZone(f, false), cf = celuleZone(f, true), zs = f.sel.zone.map(q => Object.assign({}, q));
+      schimba('stergere', () => {
+        if (siContinut) ce.forEach(x => { delete f.cel[x]; });
+        cf.forEach(x => { delete f.fmt[x]; });
+        /* îmbinările atinse de zonă se desfac (și celulele lor din afara zonei își pierd „imbinat”) */
+        f.merge = (f.merge || []).filter(t => {
+          const m = zonaDin(t);
+          if (!m || !zs.some(q => !(m.r1 < q.r0 || m.r0 > q.r1 || m.c1 < q.c0 || m.c0 > q.c1))) return true;
+          for (let r = m.r0; r <= m.r1; r++) for (let c0 = m.c0; c0 <= m.c1; c0++) { const a = adr(r, c0); if (f.fmt[a]) { delete f.fmt[a].imbinat; delete f.fmt[a].aliniere; } }
+          return false;
+        });
+        /* bordurile: muchiile celulelor din zonă (linia de sus / din stânga a celulei și cea de jos / din dreapta, a vecinei) */
+        const b = f.bord || {};
+        Object.keys(b).forEach(k => {
+          const [t, r, c0] = k.split(','), R = +r, C = +c0;
+          if (zs.some(q => (t === 'h' ? (C >= q.c0 && C <= q.c1 && R >= q.r0 && R <= q.r1 + 1) : (R >= q.r0 && R <= q.r1 && C >= q.c0 && C <= q.c1 + 1)))) delete b[k];
+        });
+      });
+      if (siContinut) M.clip = null;
+      actualizeaza();
+      deseneazaSelectia();
+      return siContinut ? 'golire_tot' : 'golire_format';
     }
     /* Merge & Center (excel-imbina-centreaza): fiecare celulă a zonei are aliniere „centru” și imbinat = zona */
     function imbina() {
@@ -2107,36 +2150,228 @@
     function copiaza(decupat) {
       const f = F();
       if (f.sel.zone.length > 1) return I.nesimulat(decupat ? 'Cut' : 'Copy');
-      const q = Object.assign({}, f.sel.zone[0]), u = ultim(f);
+      const q = Object.assign({}, f.sel.zone[0]), u = ultim(f), z0 = Object.assign({}, q);
       q.r1 = Math.min(q.r1, u.r); q.c1 = Math.min(q.c1, u.c);
-      const cel = {}, fmt = {};
-      for (let r = q.r0; r <= q.r1; r++) for (let c0 = q.c0; c0 <= q.c1; c0++) { const a = adr(r, c0); if (f.cel[a]) cel[(r - q.r0) + ',' + (c0 - q.c0)] = clona(f.cel[a]); if (f.fmt[a]) fmt[(r - q.r0) + ',' + (c0 - q.c0)] = clona(f.fmt[a]); }
-      M.clip = { z: q, fi: M.fi, cel, fmt, decupat };
+      const cel = {}, fmt = {}, val = {};
+      for (let r = q.r0; r <= q.r1; r++) for (let c0 = q.c0; c0 <= q.c1; c0++) {
+        const a = adr(r, c0), k = (r - q.r0) + ',' + (c0 - q.c0);
+        if (f.cel[a]) { cel[k] = clona(f.cel[a]); if (f.cel[a].f) { const v = valoare(f, r, c0); val[k] = eErr(v) ? v.e : v; } }
+        if (f.fmt[a]) fmt[k] = clona(f.fmt[a]);
+      }
+      /* z = zona copiată tăiată la ultima celulă folosită; z0 = zona aleasă (rânduri / coloane întregi rămân întregi: lipirea pe
+         un multiplu și mesajul de mărime se socotesc pe ea); val = valorile formulelor, pentru Paste ▾ › Values */
+      M.clip = { z: q, z0, fi: M.fi, cel, fmt, val, decupat };
       deseneazaSelectia();
       try { if (navigator.clipboard && !scenariu) navigator.clipboard.writeText(celuleText(f, q)).catch(() => {}); } catch (e) { /* */ }
       return decupat ? 'decupare' : 'copiere';
     }
     const celuleText = (f, q) => { const o = []; for (let r = q.r0; r <= q.r1; r++) { const l = []; for (let c0 = q.c0; c0 <= q.c1; c0++) l.push(textCelula(f, r, c0)); o.push(l.join('\t')); } return o.join('\n'); };
-    function lipeste() {
+    /* fel (Paste ▾): undefined = tot | 'formule' (fără format) | 'valori' (valorile formulelor, fără format) | 'formate' (doar formatul).
+       Zona-țintă (lot 1, excel-a-F039/F040, excel-b-F120): o celulă = o copie; aceeași mărime sau un multiplu exact al zonei copiate
+       = copia repetată (A1:A2 pe K1:K4 → de două ori); altă mărime = mesajul Excel, nimic lipit. Decupatul se lipește o dată. */
+    function lipeste(fel) {
       if (!M.clip) return 'fara_efect';
-      const f = F(), C = M.clip, src = M.foi[C.fi], a = f.sel.activa, q = C.z;
-      const dr0 = a.r - q.r0, dc0 = a.c - q.c0, h = q.r1 - q.r0, w = q.c1 - q.c0;
+      const f = F(), C = M.clip, src = M.foi[C.fi], a = f.sel.activa, q = C.z, z0 = C.z0 || q;
+      const h = q.r1 - q.r0, w = q.c1 - q.c0;
+      const sh = z0.r1 - z0.r0 + 1, sw = z0.c1 - z0.c0 + 1;
+      /* blocul lipit: zona aleasă la copiere (celulele ei goale golesc ținta), tăiată doar când e rând / coloană întreagă */
+      const bh = C.decupat || sh >= MAXR ? h + 1 : sh, bw = C.decupat || sw >= MAXC ? w + 1 : sw;
+      const T = f.sel.zone[f.sel.zone.length - 1], una = f.sel.zone.length > 1 || (T.r0 === T.r1 && T.c0 === T.c1);
+      let nr = 1, nc = 1, r0 = a.r, c0 = a.c;
+      if (!una && !C.decupat) {
+        const th = T.r1 - T.r0 + 1, tw = T.c1 - T.c0 + 1;
+        /* [DEDUS: o latură a țintei de 1 celulă ia toată latura copiată, ca o celulă; de_capturat L1-2] */
+        const cate = (t, s) => (t % s === 0 ? t / s : t === 1 ? 1 : 0);
+        nr = cate(th, sh); nc = cate(tw, sw);
+        if (!nr || !nc) return deschideMesajFoaie(DLG_LIPIRE) ? 'refuz_lipire' : I.nesimulat('Paste');
+        /* o celulă copiată pe rânduri / coloane întregi s-ar repeta pe un milion de celule: în simulator, doar până la marginea
+           zonei folosite / vizibile [DEDUS: limită a simulatorului, nu a Excelului] */
+        const u = ultim(f);
+        if (nr * bh > 2000) nr = Math.max(1, Math.ceil((Math.max(u.r, R0 + NR) - T.r0 + 1) / bh));
+        if (nc * bw > 300) nc = Math.max(1, Math.ceil((Math.max(u.c, C0 + NC) - T.c0 + 1) / bw));
+        r0 = T.r0; c0 = T.c0;
+      }
       schimba('lipire', () => {
         if (C.decupat) {
-          for (let r = q.r0; r <= q.r1; r++) for (let c0 = q.c0; c0 <= q.c1; c0++) { const x = adr(r, c0); delete src.cel[x]; delete src.fmt[x]; }
+          const dr0 = a.r - q.r0, dc0 = a.c - q.c0;
+          for (let r = q.r0; r <= q.r1; r++) for (let k = q.c0; k <= q.c1; k++) { const x = adr(r, k); delete src.cel[x]; delete src.fmt[x]; }
           /* formulele care arătau spre zona mutată o urmează (D1 =B1*2 → =B3*2) */
-          M.foi.forEach(fo => Object.keys(fo.cel).forEach(x => { const o = fo.cel[x]; if (o && o.f) o.f = mutaFormula(o.f, dr0, dc0, (r, c0) => fo === src && inZona(q, r, c0)); }));
+          M.foi.forEach(fo => Object.keys(fo.cel).forEach(x => { const o = fo.cel[x]; if (o && o.f) o.f = mutaFormula(o.f, dr0, dc0, (r, k) => fo === src && inZona(q, r, k)); }));
         }
-        for (let r = 0; r <= h; r++) for (let c0 = 0; c0 <= w; c0++) {
-          const x = adr(a.r + r, a.c + c0), o = C.cel[r + ',' + c0], fm = C.fmt[r + ',' + c0];
-          if (o) { const n = clona(o); if (n.f && !C.decupat) n.f = mutaFormula(n.f, dr0, dc0); f.cel[x] = n; } else delete f.cel[x];
-          if (fm) f.fmt[x] = clona(fm); else delete f.fmt[x];
+        for (let i = 0; i < nr; i++) for (let j = 0; j < nc; j++) {
+          const R = r0 + i * bh, K = c0 + j * bw, dr0 = R - q.r0, dc0 = K - q.c0;
+          for (let r = 0; r < bh; r++) for (let k = 0; k < bw; k++) {
+            if (R + r >= MAXR || K + k >= MAXC) continue;
+            const x = adr(R + r, K + k), o = C.cel[r + ',' + k], fm = C.fmt[r + ',' + k];
+            if (fel !== 'formate') {
+              if (o) {
+                let n = clona(o);
+                if (n.f && fel === 'valori') { const v = C.val ? C.val[r + ',' + k] : null; n = { v: v == null ? 0 : v }; }
+                else if (n.f && !C.decupat) n.f = mutaFormula(n.f, dr0, dc0);
+                f.cel[x] = n;
+              } else delete f.cel[x];
+            }
+            if (fel !== 'valori' && fel !== 'formule') { if (fm) f.fmt[x] = clona(fm); else delete f.fmt[x]; }
+          }
         }
       });
-      f.sel.zone = [{ r0: a.r, c0: a.c, r1: a.r + h, c1: a.c + w }];
+      f.sel.zone = [{ r0, c0, r1: !una && sh >= MAXR ? MAXR - 1 : Math.min(MAXR - 1, r0 + nr * bh - 1), c1: !una && sw >= MAXC ? MAXC - 1 : Math.min(MAXC - 1, c0 + nc * bw - 1) }];
+      if (!inZona(f.sel.zone[0], a.r, a.c)) f.sel.activa = { r: r0, c: c0 };
       if (C.decupat) M.clip = null;
       actualizeaza();
       return 'lipire';
+    }
+
+    /* ============================================================ ștergerea de rânduri / coloane / celule (lot 1, noaptea 22-23.11)
+       mod: 'randuri' | 'coloane' = rânduri / coloane întregi; 'sus' | 'stanga' = Shift cells up / left, doar în banda zonei.
+       Ca în Excel (Range.Delete; exercițiile m1-l04:591-617; felia a › excel-a-F032..F037, felia b › F112..F118): conținutul,
+       formatul, bordurile, îmbinările și lățimile (la coloane) de după zonă vin în locul ei; referințele formulelor de pe foaie
+       urmează celulele, și cele cu $ (e o schimbare de structură, nu o copiere); o referință spre o celulă ștearsă devine #REF!,
+       o zonă tăiată parțial se strânge (=SUM(B2:B6) fără rândul 3 → =SUM(B2:B5)). */
+    const OPT_STERGERE = { 'Shift cells left': 'stanga', 'Shift cells up': 'sus', 'Entire row': 'randuri', 'Entire column': 'coloane' };
+    const randuriIntregi = q => q.c0 === 0 && q.c1 === MAXC - 1;
+    const coloaneIntregi = q => q.r0 === 0 && q.r1 === MAXR - 1;
+    /* locul unei celule după ștergere; null = celula e ștearsă */
+    function dupaStergere(mod, q, r, c0) {
+      const inR = r >= q.r0 && r <= q.r1, inC = c0 >= q.c0 && c0 <= q.c1;
+      if (mod === 'randuri' || (mod === 'sus' && inC)) return inR ? null : { r: r > q.r1 ? r - (q.r1 - q.r0 + 1) : r, c: c0 };
+      if (mod === 'coloane' || (mod === 'stanga' && inR)) return inC ? null : { r, c: c0 > q.c1 ? c0 - (q.c1 - q.c0 + 1) : c0 };
+      return { r, c: c0 };
+    }
+    /* o zonă (referință A1:B5, îmbinare) după ștergere: null = ștearsă de tot; altfel mutată / strânsă. O zonă care iese din banda
+       unui Shift cells up / left rămâne cum era [DEDUS: de_capturat L1-4] */
+    function zonaDupaStergere(mod, q, z) {
+      if (mod === 'sus' && !(z.c0 >= q.c0 && z.c1 <= q.c1)) return z;
+      if (mod === 'stanga' && !(z.r0 >= q.r0 && z.r1 <= q.r1)) return z;
+      const peR = mod === 'randuri' || mod === 'sus';
+      const a0 = peR ? z.r0 : z.c0, a1 = peR ? z.r1 : z.c1, d0 = peR ? q.r0 : q.c0, d1 = peR ? q.r1 : q.c1, n = d1 - d0 + 1;
+      if (a0 >= d0 && a1 <= d1) return null;
+      const n0 = a0 < d0 ? a0 : a0 > d1 ? a0 - n : d0, n1 = a1 > d1 ? a1 - n : a1 < d0 ? a1 : d0 - 1;
+      return peR ? { r0: n0, c0: z.c0, r1: n1, c1: z.c1 } : { r0: z.r0, c0: n0, r1: z.r1, c1: n1 };
+    }
+    function formulaDupaStergere(fx, mod, q) {
+      let tok;
+      try { tok = jetoane(fx.slice(1), 'en'); } catch (e) { return fx; }
+      const parte = s => { const m = /^(\$?)([A-Za-z]{1,3})(\$?)(\d+)$/.exec(s); return { ac: m[1], c: colIdx(m[2]), ar: m[3], r: +m[4] - 1 }; };
+      const scrie = (p, r, c0) => p.ac + colNume(c0) + p.ar + (r + 1);
+      return '=' + tok.map(t => {
+        if (t.t === 'ref') { const p = parte(t.s), n = dupaStergere(mod, q, p.r, p.c); return n ? scrie(p, n.r, n.c) : '#REF!'; }
+        if (t.t === 'zona') {
+          const [x, y] = t.s.split(':'), p = parte(x), p2 = parte(y);
+          const n = zonaDupaStergere(mod, q, { r0: Math.min(p.r, p2.r), c0: Math.min(p.c, p2.c), r1: Math.max(p.r, p2.r), c1: Math.max(p.c, p2.c) });
+          return n ? scrie(p, n.r0, n.c0) + ':' + scrie(p2, n.r1, n.c1) : '#REF!';
+        }
+        return t.s;
+      }).join('');
+    }
+    function stergeUna(f, mod, q) {
+      const muta = o => { const n = {}; Object.keys(o || {}).forEach(a => { const p = pa(a); if (!p) return; const d = dupaStergere(mod, q, p.r, p.c); if (d) n[adr(d.r, d.c)] = o[a]; }); return n; };
+      f.cel = muta(f.cel);
+      f.fmt = muta(f.fmt);
+      Object.keys(f.cel).forEach(a => { const x = f.cel[a]; if (x && x.f) x.f = formulaDupaStergere(x.f, mod, q); });
+      /* îmbinările: mutate / strânse; una rămasă o singură celulă se desface */
+      const mm = {};
+      f.merge = (f.merge || []).map(t => { const z = zonaDin(t), n = z && zonaDupaStergere(mod, q, z); const nt = n && !(n.r0 === n.r1 && n.c0 === n.c1) ? zonaText(n) : null; mm[t] = nt; return nt; }).filter(Boolean);
+      Object.keys(f.fmt).forEach(a => { const x = f.fmt[a]; if (x && x.imbinat) { if (mm[x.imbinat]) f.fmt[a] = Object.assign({}, x, { imbinat: mm[x.imbinat] }); else { const y = Object.assign({}, x); delete y.imbinat; f.fmt[a] = y; } } });
+      /* bordurile (muchii 'h,r,c' = sus, 'v,r,c' = stânga celulei) merg cu celula lor; linia de sus a primului rând șters (= marginea
+         de jos a rândului de deasupra) rămâne dacă nu vine alta în locul ei; la fel linia din stânga primei coloane șterse */
+      const b0 = f.bord || {}, nb = {};
+      Object.keys(b0).forEach(k => { const [t, r, c0] = k.split(','), d = dupaStergere(mod, q, +r, +c0); if (d) nb[t + ',' + d.r + ',' + d.c] = b0[k]; });
+      Object.keys(b0).forEach(k => {
+        const [t, r, c0] = k.split(','), R = +r, C = +c0;
+        if (nb[k]) return;
+        if (t === 'h' && R === q.r0 && R > 0 && (mod === 'randuri' || (mod === 'sus' && C >= q.c0 && C <= q.c1))) nb[k] = b0[k];
+        if (t === 'v' && C === q.c0 && C > 0 && (mod === 'coloane' || (mod === 'stanga' && R >= q.r0 && R <= q.r1))) nb[k] = b0[k];
+      });
+      f.bord = nb;
+      /* numele definite (Name Box) urmează zona lor; unul a cărui zonă e ștearsă de tot dispare [DEDUS: Excel îl lasă =#REF!] */
+      if (f.nume_def) { const n = {}; Object.keys(f.nume_def).forEach(K => { const d = f.nume_def[K], z = zonaDin(d.zona), nz = z && zonaDupaStergere(mod, q, z); if (nz) n[K] = { nume: d.nume, zona: zonaText(nz) }; }); f.nume_def = n; }
+      /* lățimile coloanelor (doar la coloane întregi): coloanele din dreapta își iau lățimea cu ele */
+      if (mod === 'coloane') ['lat', 'latSet'].forEach(k => { const o = f[k] || {}, n = {}; Object.keys(o).forEach(c => { const C = +c; if (C < q.c0) n[C] = o[c]; else if (C > q.c1) n[C - (q.c1 - q.c0 + 1)] = o[c]; }); f[k] = n; });
+    }
+    /* zonele selecției întinse pe rânduri / coloane întregi (Entire row / column, Delete Sheet Rows / Columns), suprapunerile unite */
+    function zoneDeSters(mod) {
+      const zs = F().sel.zone.map(q => mod === 'randuri' ? { r0: q.r0, c0: 0, r1: q.r1, c1: MAXC - 1 } : mod === 'coloane' ? { r0: 0, c0: q.c0, r1: MAXR - 1, c1: q.c1 } : Object.assign({}, q));
+      if (mod !== 'randuri' && mod !== 'coloane') return zs;
+      const k0 = mod === 'randuri' ? 'r0' : 'c0', k1 = mod === 'randuri' ? 'r1' : 'c1';
+      zs.sort((x, y) => x[k0] - y[k0]);
+      const out = [];
+      zs.forEach(z => { const u = out[out.length - 1]; if (u && z[k0] <= u[k1] + 1) u[k1] = Math.max(u[k1], z[k1]); else out.push(z); });
+      return out;
+    }
+    function stergeSelectia(mod) {
+      if (!mod) return 'fara_efect';
+      if (M.edit && !confirma()) return 'fara_efect';
+      const f = F(), zs = zoneDeSters(mod);
+      /* de jos în sus / de la dreapta la stânga: o zonă ștearsă nu mută zonele încă neșterse de deasupra ei */
+      zs.sort((x, y) => (mod === 'coloane' || mod === 'stanga') ? y.c0 - x.c0 : y.r0 - x.r0);
+      schimba('stergere_celule', () => zs.forEach(q => stergeUna(f, mod, q)));
+      /* ștergerea oprește copierea (excel-b-F122); selecția rămâne pe loc, ca în Excel */
+      M.clip = null;
+      actualizeaza();
+      deseneazaSelectia();
+      return 'stergere_' + mod;
+    }
+    /* Home › Delete (pictograma) și Ctrl+- pe rânduri / coloane întregi: rândurile / coloanele selectate; altfel după forma
+       zonei, ca Range.Delete fără Shift: mai înaltă decât lată → la stânga, altfel (și o celulă) în sus (excel-a-F036, b-F116) */
+    function felStergere(q) {
+      if (randuriIntregi(q)) return 'randuri';
+      if (coloaneIntregi(q)) return 'coloane';
+      return (q.r1 - q.r0) > (q.c1 - q.c0) ? 'stanga' : 'sus';
+    }
+    const zonaUltima = () => { const s = F().sel; return s.zone[s.zone.length - 1]; };
+    /* lot 1 (excel-b-F128): în Name Box, un text care nu e adresă devine NUMELE zonei selectate (Excel: Defined Names); scris din
+       nou, selectează zona (și foaia ei). Numele stau pe foaia lor (f.nume_def: NUME MARE → {nume, zona}), ca să le ia cu ele
+       Ctrl+Z, Save și al doilea registru; se caută în toate foile registrului. Regula numelui valid = cea din Excel (literă, _
+       sau \ la început, fără spații, nu o adresă); un nume nevalid nu face nimic [DEDUS: mesajul Excel, de_capturat L1-5] */
+    function cautaNume(t) {
+      const K = String(t || '').toUpperCase();
+      for (let i = 0; i < M.foi.length; i++) { const d = (M.foi[i].nume_def || {})[K]; if (d) return { fi: i, d }; }
+      return null;
+    }
+    function numeDinCaseta(t) {
+      if (!t) return null;
+      const g = cautaNume(t);
+      if (g) {
+        const q = zonaDin(g.d.zona);
+        if (!q) return null;
+        if (g.fi !== M.fi) { if (M.edit && !confirma()) return null; M.fi = g.fi; }
+        F().sel = { activa: { r: q.r0, c: q.c0 }, zone: [q] };
+        actualizeaza(); vedeCelula(q.r0, q.c0);
+        return 'salt_la_nume';
+      }
+      if (!/^[A-Za-z_\\À-ɏ][A-Za-z0-9_.\\À-ɏ]{0,254}$/.test(t) || /^[A-Za-z]{1,3}\d+$/.test(t) || /^[rRcC]$/.test(t) || /^R\d*C\d*$/i.test(t)) return null;
+      const f = F(), z = zonaText(zonaUltima());
+      f.nume_def = Object.assign({}, f.nume_def || {}, { [t.toUpperCase()]: { nume: t, zona: z } });
+      M.mod = true; M.salvat = false;
+      actualizeazaBare();
+      return 'nume_definit';
+    }
+    /* numele afișat în Name Box când selecția e exact zona unui nume (ca în Excel) */
+    function numeAlSelectiei() {
+      const f = F(), s = f.sel;
+      if (s.zone.length !== 1) return null;
+      const z = zonaText(s.zone[0]), d = Object.values(f.nume_def || {}).find(x => x.zona === z);
+      return d ? d.nume : null;
+    }
+    /* fereastra Delete (dialog.CellsDelete din referință): butonul radio ales stă în dialog.optSterg; OK / Enter șterge */
+    function dialogStergere() {
+      if (M.edit && !confirma()) return 'fara_efect';
+      if (!deschideDialog('dialog.CellsDelete')) return I.nesimulat('Delete');
+      /* [DEDUS: alegerea de pornire după forma zonei (mai înaltă decât lată → Shift cells left), de_capturat L1-1] */
+      const q = zonaUltima();
+      dialog.optSterg = (q.r1 - q.r0) > (q.c1 - q.c0) ? 'Shift cells left' : 'Shift cells up';
+      radioStergere();
+      return 'fereastra';
+    }
+    function radioStergere() {
+      if (!dialog || !dialog.el) return;
+      Object.keys(OPT_STERGERE).forEach(v => bifeaza(dialog.el.querySelector('[data-lh-tip="RadioButton"][data-lh-eticheta="' + v + '"]'), dialog.optSterg === v, true));
+    }
+    function stergeDinDialog() {
+      const v = (dialog && dialog.optSterg) || 'Shift cells up';
+      inchideDialog();
+      return stergeSelectia(OPT_STERGERE[v]);
     }
     /* Ctrl+D / Ctrl+R (excel-ctrl-d): rândul de sus (coloana din stânga) copiat în toată zona; formulele se mută relativ */
     function umpleCu(jos0) {
@@ -2420,17 +2655,25 @@
        referință (de_verificat R29-6); rândurile = cele din Excel 365 (Delete Cells…, Delete Sheet Rows, Delete Sheet Columns,
        Delete Sheet). Delete Sheet = același drum ca meniul filei; Delete Cells… = fereastra din referință; restul = mesajul central */
     const LISTA_STERGERE = ['Delete Cells...', 'Delete Sheet Rows', 'Delete Sheet Columns', 'Delete Sheet'];
-    function listaStergere(anc) {
+    /* lot 1: Home › Editing › Clear ▾ (ClearMenu) și Home › Paste ▾ (PasteMenu_Dropdown). Nici una nu e în referință
+       [DEDUS: rândurile din Excel 365 — Clear: Clear All, Clear Formats, Clear Contents, Clear Comments and Notes, Clear Hyperlinks;
+       Paste ▾ e în Excel o galerie de pictograme în trei grupuri; aici rândurile simulate, cu numele și litera din Excel; de_capturat L1-3].
+       LISTA_LIPIRE: eticheta → felul lipirii (vezi lipeste); null = lipirea întreagă */
+    const LISTA_GOLIRE = ['Clear All', 'Clear Formats', 'Clear Contents', 'Clear Comments and Notes', 'Clear Hyperlinks'];
+    const LISTA_LIPIRE = { 'Paste (P)': null, 'Formulas (F)': 'formule', 'Keep Source Formatting (K)': null, 'Values (V)': 'valori', 'Formatting (R)': 'formate' };
+    function listaStergere(anc, randuri, cheie, eticheta, gri) {
       inchideMeniu();
-      const m = el('div', 'lh-ap-n lh-ap-t-Menu lh-ap-x-meniu lh-ap-x-ref', { 'data-lh-tip': 'Menu', 'data-lh-eticheta': 'Delete', 'data-lh-suprafata': 'lista.TableDeleteRowsAndColumnsMenu', role: 'menu' });
-      const w = 182, hr = 28;
-      LISTA_STERGERE.forEach((v, i) => {
+      randuri = randuri || LISTA_STERGERE;
+      const m = el('div', 'lh-ap-n lh-ap-t-Menu lh-ap-x-meniu lh-ap-x-ref', { 'data-lh-tip': 'Menu', 'data-lh-eticheta': eticheta || 'Delete', 'data-lh-suprafata': cheie || 'lista.TableDeleteRowsAndColumnsMenu', role: 'menu' });
+      const w = cheie === 'lista.PasteMenu' ? 236 : 182, hr = 28;
+      randuri.forEach((v, i) => {
         const x = el('div', 'lh-ap-n lh-ap-t-MenuItem', { 'data-lh-tip': 'MenuItem', 'data-lh-eticheta': v, role: 'menuitem', 'data-lh-tinta': 'meniu:' + v });
+        if (gri && gri(v)) { x.setAttribute('aria-disabled', 'true'); x.classList.add('lh-ap-gri'); }
         x.innerHTML = '<span class="lh-ap-text">' + esc(v) + '</span>';
         Object.assign(x.style, { position: 'absolute', left: '2px', top: (2 + hr * i) + 'px', width: (w - 4) + 'px', height: hr + 'px', paddingLeft: '36px', boxSizing: 'border-box', display: 'flex', alignItems: 'center' });
         m.appendChild(x);
       });
-      const R = root.getBoundingClientRect(), b = (anc.closest('[data-lh-tip="SplitButton"]') || anc).getBoundingClientRect(), h = 4 + hr * LISTA_STERGERE.length;
+      const R = root.getBoundingClientRect(), b = (anc.closest('[data-lh-tip="SplitButton"]') || anc).getBoundingClientRect(), h = 4 + hr * randuri.length;
       Object.assign(m.style, { position: 'absolute', width: w + 'px', height: h + 'px' });
       m.style.left = Math.max(0, Math.min(b.left - R.left, R.width - w - 2)) + 'px';
       m.style.top = Math.max(0, Math.min(b.bottom - R.top, R.height - h - 2)) + 'px';
@@ -2929,7 +3172,8 @@
       if (dialog.baza === 'dialog.ChartChangeType') return aplicaTipGrafic();
       if (dialog.baza === 'dialog.SheetMoveOrCopy' && dialog.mc) return aplicaMutare();
       if (dialog.baza === DLG_STERGE) return stergeAcum(dialog.foaie);
-      if (dialog.baza === DLG_REFUZ || dialog.baza === DLG_NUME) { inchideDialog(); return 'inchidere'; }
+      if (dialog.baza === DLG_REFUZ || dialog.baza === DLG_NUME || dialog.baza === DLG_LIPIRE) { inchideDialog(); return 'inchidere'; }
+      if (dialog.baza === 'dialog.CellsDelete') return stergeDinDialog();
       const b = dialog.baza.replace(/^dialog\./, '');
       inchideDialog();
       return I.nesimulat((date.dialoguri['dialog.' + b] || {}).titlu || b);
@@ -3101,6 +3345,10 @@
         case 'CellFillColorPicker': return umpleCuloare('FFFF00');
         case 'BordersGallery_Dropdown': return SUP['lista.Borders'] ? listaRef('lista.Borders', elx) : meniuBorduri(elx);
         case 'TableDeleteRowsAndColumnsMenu_Dropdown': return listaStergere(elx);
+        /* lot 1: pictograma Delete, Clear ▾, Paste ▾ (Paste Special... = mesajul central: fereastra nu e în referință) */
+        case 'CellsDeleteSmart': return stergeSelectia(felStergere(zonaUltima()));
+        case 'ClearMenu': return listaStergere(elx, LISTA_GOLIRE, 'lista.ClearMenu', 'Clear');
+        case 'PasteMenu_Dropdown': return listaStergere(elx, Object.keys(LISTA_LIPIRE).concat(['Paste Special...']), 'lista.PasteMenu', 'Paste', v => !M.clip);
         case 'AutoSumMenu_Dropdown': return listaRef('lista.AutoSum', elx) || I.nesimulat('AutoSum');
         case 'ChartTypeColumnInsertGallery': return listaRef('lista.ChartTypeColumnInsertGallery', elx) || I.nesimulat(nume);
         case 'ChartTypeLineInsertGallery': return listaRef('lista.ChartTypeLineInsertGallery', elx) || I.nesimulat(nume);
@@ -3695,7 +3943,12 @@
       }
       /* runda 29 (G25-1): întrebarea ștergerii (Delete / Cancel / ✕), refuzul (OK / ✕), Move or Copy (rândul listei, Create a copy) */
       if (fel === 'fereastra' && dialog && dialog.baza === DLG_STERGE) { if (v === 'Delete') return stergeAcum(dialog.foaie); inchideDialog(); return 'anulare'; }
-      if (fel === 'fereastra' && dialog && (dialog.baza === DLG_REFUZ || dialog.baza === DLG_NUME)) { inchideDialog(); return v === 'OK' ? 'inchidere' : 'anulare'; }
+      if (fel === 'fereastra' && dialog && (dialog.baza === DLG_REFUZ || dialog.baza === DLG_NUME || dialog.baza === DLG_LIPIRE)) { inchideDialog(); return v === 'OK' ? 'inchidere' : 'anulare'; }
+      /* lot 1: fereastra Delete — butonul radio ales (clic pe el sau pe textul lui), OK șterge */
+      if (fel === 'fereastra' && dialog && dialog.baza === 'dialog.CellsDelete') {
+        if (OPT_STERGERE[v]) { dialog.optSterg = v; radioStergere(); return 'alegere'; }
+        if (v === 'OK') return stergeDinDialog();
+      }
       if (fel === 'fereastra' && dialog && dialog.baza === 'dialog.SheetMoveOrCopy' && dialog.mc) {
         const li = elx.closest('[data-lh-tip="ListItem"]');
         if (li && dialog.el.contains(li)) return alegeInMutare(li);
@@ -3717,8 +3970,14 @@
         inchideMeniu();
         /* runda 29 (G25-1): culoarea filei, Home › Delete ▾, Delete din meniul filei */
         if (lista === 'lista.TabColor') return coloreazaFila(v);
-        if (lista === 'lista.TableDeleteRowsAndColumnsMenu') return v === 'Delete Sheet' ? stergeFoaia(M.fi) : v === 'Delete Cells...' ? (deschideDialog('dialog.CellsDelete') ? 'fereastra' : I.nesimulat(v)) : I.nesimulat(v);
+        if (lista === 'lista.TableDeleteRowsAndColumnsMenu') return v === 'Delete Sheet' ? stergeFoaia(M.fi) : v === 'Delete Cells...' ? dialogStergere()
+          : v === 'Delete Sheet Rows' ? stergeSelectia('randuri') : v === 'Delete Sheet Columns' ? stergeSelectia('coloane') : I.nesimulat(v);
         if (lista === 'meniu_contextual.fila_foii' && v === 'Delete') return stergeFoaia(M.fi);
+        /* lot 1: Delete din meniul literei / numărului = coloanele / rândurile selectate (excel-a-F032, F033, b-F113) */
+        if (lista === 'meniu_contextual.antet_rand' && v === 'Delete') return stergeSelectia('randuri');
+        if (lista === 'meniu_contextual.antet_coloana' && v === 'Delete') return stergeSelectia('coloane');
+        if (lista === 'lista.ClearMenu') return v === 'Clear All' ? golesteFormat(true) : v === 'Clear Formats' ? golesteFormat(false) : v === 'Clear Contents' ? golesteContinut() : I.nesimulat(v);
+        if (lista === 'lista.PasteMenu') return LISTA_LIPIRE[v] !== undefined ? lipeste(LISTA_LIPIRE[v] || undefined) : I.nesimulat(v);
         if (lista === 'lista.ChartTypeLineInsertGallery') return GR_TIP[v] ? insereazaGrafic(v) : I.nesimulat(v);
         if (/^lista\.AddChartElementMenu#Data Labels/.test(lista || '')) return v === 'More Data Label Options...' ? I.nesimulat(v) : puneEtichete(v);
         if (lista === 'lista.AddChartElementMenu') return I.nesimulat(v);
@@ -3737,7 +3996,7 @@
         if (v === 'Merge & Center') return imbina();
         if (v === 'Format Cells...') return deschideDialog('dialog.FormatCellsDialog') ? 'fereastra' : I.nesimulat(v);
         if (v === 'Insert...' && meniu) return deschideDialog('dialog.CellsInsertDialog') ? 'fereastra' : I.nesimulat(v);
-        if (v === 'Delete...') return deschideDialog('dialog.CellsDelete') ? 'fereastra' : I.nesimulat(v);
+        if (v === 'Delete...') return dialogStergere();
         if (v === 'Column Width...') return deschideDialog('dialog.ColumnWidth') ? 'fereastra' : I.nesimulat(v);
         if (v === 'Row Height...') return deschideDialog('dialog.RowHeight') ? 'fereastra' : I.nesimulat(v);
         if (v === 'Move or Copy...') return deschideDialog('dialog.SheetMoveOrCopy') ? 'fereastra' : I.nesimulat(v);
@@ -3838,7 +4097,13 @@
           return null;
         }
         if (e.target === inNume) {
-          if (k === 'Enter') { e.preventDefault(); const q = zonaDin(inNume.value); inNume.blur(); if (q) { F().sel = { activa: { r: q.r0, c: q.c0 }, zone: [q] }; actualizeaza(); vedeCelula(q.r0, q.c0); I.focus(); return 'salt_la_adresa'; } inNume.value = adr(F().sel.activa.r, F().sel.activa.c); I.focus(); return 'fara_efect'; }
+          if (k === 'Enter') {
+            e.preventDefault(); const q = zonaDin(inNume.value); inNume.blur();
+            if (q) { F().sel = { activa: { r: q.r0, c: q.c0 }, zone: [q] }; actualizeaza(); vedeCelula(q.r0, q.c0); I.focus(); return 'salt_la_adresa'; }
+            const rn = numeDinCaseta(inNume.value.trim());
+            if (rn) { I.focus(); return rn; }
+            inNume.value = adr(F().sel.activa.r, F().sel.activa.c); I.focus(); return 'fara_efect';
+          }
           if (k === 'Escape') { inNume.blur(); actualizeazaBare(); I.focus(); return 'anulare'; }
           return null;
         }
@@ -3923,8 +4188,14 @@
       /* ------------------------------------------------ fără editare */
       if (M.gr) { const rg = tastaGrafic(e, g, ctrl); if (rg) return rg; }
       const f = F(), s = f.sel, a = s.activa;
+      /* lot 1 (excel-b-F125): Shift+Spațiu = rândurile selecției întregi (nu scrie un spațiu) */
+      if (g === 'tastare' && !ctrl && k === ' ' && e.shiftKey && !e.altKey) { e.preventDefault(); return selecteazaIntregi(true); }
       if (g === 'tastare' && !ctrl) { e.preventDefault(); M.clip = M.clip && !M.clip.decupat ? M.clip : M.clip; porneste(adr(a.r, a.c), k, 'Enter'); return 'scriere'; }
       if (g === 'tasta_f2') { e.preventDefault(); porneste(adr(a.r, a.c), textEditare(f, adr(a.r, a.c)), 'Edit'); return 'editare'; }
+      /* lot 1 (excel-a-F049, b-F126): Shift+F10 = meniul de clic dreapta al selecției, lângă celula activă */
+      if (g === 'tasta_f10' && e.shiftKey && !ctrl && !e.altKey) { e.preventDefault(); return meniuTastatura(); }
+      /* lot 1 (excel-a-F041, b-F121): Enter cu o copiere în curs lipește în selecție și oprește copierea (Shift+Enter doar mută) */
+      if (k === 'Enter' && M.clip && !e.shiftKey && !e.altKey && !ctrl) { e.preventDefault(); const r = lipeste(); if (r === 'lipire') { M.clip = null; deseneazaSelectia(); } return r; }
       if (k === 'Backspace') { e.preventDefault(); porneste(adr(a.r, a.c), '', 'Enter'); return 'editare'; }
       if (k === 'Delete') { e.preventDefault(); return golesteContinut(); }
       if (k === 'Enter') { e.preventDefault(); if (M.tabCol != null && unaSingura() && !e.shiftKey) { const c0 = M.tabCol; M.tabCol = null; alege(a.r + 1, c0); return 'mutare'; } inainteaza(e.shiftKey ? -1 : 1, 0); return 'mutare'; }
@@ -4093,7 +4364,43 @@
        aici și emite singur: tasta_acces cu ținta comenzii Sum (§4: tasta e AccessKey-ul ei), ctrl_shift_5 cu ținta comenzii
        Percent Style. Cu o fereastră, Backstage sau un meniu deschis, ori în editare: fara_efect. */
     const tintaCmd = id => { const x = root.querySelector('[data-lh-suprafata="panglica.TabHome"] [data-lh-id-mso="' + id + '"]'); return x ? L._tintaDin(I, x) : 'panglica:Home/' + id; };
+    /* lot 1: tastele pentru care partea comună (gestTasta) nu dă gest: Ctrl+- (ștergerea: rânduri / coloane întregi direct, altfel
+       fereastra Delete — excel-a-F046, b-F124), Ctrl+Spațiu (coloanele selecției — b-F125), tasta Meniu (meniul de clic dreapta —
+       a-F049). Excel le prinde aici și emite singur (ca Alt+= de mai jos); cu o fereastră, Backstage sau un meniu: fara_efect */
+    function scurtaturaFoaie(e) {
+      const ctrl = (e.ctrlKey || e.metaKey) && !e.altKey;
+      const minus = ctrl && !e.shiftKey && (e.key === '-' || e.code === 'Minus' || e.code === 'NumpadSubtract');
+      const spatiu = ctrl && !e.shiftKey && (e.key === ' ' || e.code === 'Space');
+      const meniuT = !ctrl && !e.altKey && e.key === 'ContextMenu';
+      if (!minus && !spatiu && !meniuT) return false;
+      /* într-un câmp (Name Box, bara de formule, câmpurile ferestrelor) tastele rămân ale câmpului */
+      if (e.target && e.target !== intrare && /^(INPUT|TEXTAREA)$/.test(e.target.tagName || '')) return false;
+      e.preventDefault();
+      e.stopPropagation();
+      const ina = I.stare();
+      const liber = !dialog && !backstage && !meniu && !REG.gol && !redenumire && !M.gr && (!M.edit || minus);
+      let act = 'fara_efect';
+      if (liber && minus) { if (!M.edit || confirma()) { const q = zonaUltima(); act = randuriIntregi(q) || coloaneIntregi(q) ? stergeSelectia(felStergere(q)) : dialogStergere(); } }
+      else if (liber && spatiu) act = selecteazaIntregi(false);
+      else if (liber && meniuT) act = meniuTastatura();
+      I.emite(minus ? 'ctrl_minus' : spatiu ? 'ctrl_spatiu' : 'tasta_meniu', act || 'fara_efect', I.zonaTinta, ina);
+      return true;
+    }
+    function selecteazaIntregi(rand) {
+      const s = F().sel, q = zonaUltima();
+      s.zone = [rand ? { r0: q.r0, c0: 0, r1: q.r1, c1: MAXC - 1 } : { r0: 0, c0: q.c0, r1: MAXR - 1, c1: q.c1 }];
+      deseneazaSelectia();
+      return rand ? 'selectare_rand' : 'selectare_coloana';
+    }
+    /* meniul de clic dreapta deschis din tastatură: al rândurilor / coloanelor dacă sunt selectate întregi, altfel al celulei */
+    function meniuTastatura() {
+      const s = F().sel, q = zonaUltima(), ce = celEl[adr(s.activa.r, s.activa.c)];
+      const b = ce ? ce.getBoundingClientRect() : root.getBoundingClientRect();
+      const cheie = randuriIntregi(q) && !coloaneIntregi(q) ? 'meniu_contextual.antet_rand' : coloaneIntregi(q) && !randuriIntregi(q) ? 'meniu_contextual.antet_coloana' : 'meniu_contextual.celula';
+      return meniuContextual(cheie, b.left + b.width / 2, b.top + b.height / 2) || 'fara_efect';
+    }
     function scurtaturaPanglica(e) {
+      if (scurtaturaFoaie(e)) return true;
       const sum = e.altKey && !e.ctrlKey && !e.metaKey && (e.code === 'Equal' || e.key === '=');
       const pr = (e.ctrlKey || e.metaKey) && e.shiftKey && !e.altKey && (e.code === 'Digit5' || e.key === '%');
       if (!sum && !pr) return false;
