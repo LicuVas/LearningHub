@@ -631,7 +631,9 @@
         const n = e.__nod;
         if (!n || (n.a !== 0 && !fara && !e.__gri_fara)) return;
         e.__gri_fara = fara;
-        const pe = fara ? false : n.a !== 0 ? true : filaActiva === 'TabTransitions' ? areTr : areSel;
+        /* Home › Clipboard (activ:false în referință): Copy / Cut / Copy ▾ se aprind și cu o miniatură aleasă (diapozitivul),
+           Paste cu ceva în clipboard (ca în PowerPoint) */
+        const pe = fara ? false : n.a !== 0 ? true : n.id === 'Paste' ? !!M.clip : (n.id === 'Copy' || n.id === 'Cut' || n.id === 'CopySplitButton_Dropdown') ? (areSel || (M.panou === 'miniaturi' && !!D())) : filaActiva === 'TabTransitions' ? areTr : areSel;
         e.classList.toggle('lh-ap-gri', !pe);
         if (pe) e.removeAttribute('aria-disabled'); else e.setAttribute('aria-disabled', 'true');
       });
@@ -863,7 +865,11 @@
     /* Animations › Start ▾ (lista.AnimationStartDropdown, fapte.c_start): On Click / With Previous / After Previous →
        Timing.TriggerType 1 / 2 / 3; caseta arată numele rândului ales */
     const PORNIRI = { 'On Click': 'la_clic', 'With Previous': 'cu_precedenta', 'After Previous': 'dupa_precedenta' };
-    const animSel = () => (formaSel() && sel ? M.dia[sel.d].animatii.find(a => a.s === sel.s) || null : null);
+    const animSel = () => {
+      if (!formaSel() || !sel) return null;
+      const d = M.dia[sel.d], i = animIdx();
+      return i >= 0 && d.animatii[i] && d.animatii[i].s === sel.s ? d.animatii[i] : (d.animatii.find(a => a.s === sel.s) || null);
+    };
     /* Shape Fill / Shape Outline: rândurile = culorile paletei Font Color (aceleași nume), No Fill / No Outline; Weight ▸ = grosimea */
     /* butonul Shape Fill / Shape Outline pune ultima culoare aleasă din listă; la pornire „Blue, Accent 1” (primul rând al
        capturii: „Shape Fill Blue, Accent 1”, „Shape Outline Blue, Accent 1”; după Yellow: „Shape Fill Yellow” — #Home) */
@@ -1350,7 +1356,7 @@
     function animIdx() {
       const d = D();
       if (!d || !d.animatii.length) return -1;
-      if (animAles != null && animAles < d.animatii.length) return animAles;
+      if (animAles != null && d.animatii[animAles] && sel && d.animatii[animAles].s === sel.s) return animAles;
       return sel && sel.d === M.activ ? d.animatii.findIndex(a => a.s === sel.s) : -1;
     }
     function randuriAnimatii() {
@@ -1360,7 +1366,7 @@
       const d = D(), ia = animIdx();
       (d ? d.animatii : []).forEach((a, i) => {
         const f = d.forme[a.s] || { tip: 'forma', forma: 'Shape', text: '' };
-        const nume = 'On Click\n' + categorieEfect(a.efect) + '\n' + a.efect + ' : ' + numeForma(f, a.s) + ': ' + (f.text || '').split('\n')[0] + ' ';
+        const nume = Object.keys(PORNIRI).find(k => PORNIRI[k] === (a.pornire || 'la_clic')) + '\n' + categorieEfect(a.efect) + '\n' + a.efect + ' : ' + numeForma(f, a.s) + ': ' + (f.text || '').split('\n')[0] + ' ';
         const r = el('div', 'lh-ap-p-anim-rand lh-ap-n lh-ap-t-ListItem', { 'data-lh-tip': 'ListItem', 'data-lh-eticheta': nume, 'aria-label': nume, role: 'option',
           'data-lh-tinta': 'fereastra:' + nume, 'aria-selected': i === ia ? 'true' : 'false' });
         if (i === ia) r.setAttribute('data-lh-selectat', '');
@@ -1549,6 +1555,12 @@
         schimba('animatie', () => { const d = M.dia[sel.d]; d.animatii = d.animatii.filter(a => a.s !== sel.s); if (v !== 'None') d.animatii.push({ s: sel.s, efect: v }); });
         return 'animatie';
       }
+      /* Add Animation: un efect NOU pe aceeași casetă (al doilea rând în panou), care devine rândul ales */
+      if (fel === 'animatie_adauga') {
+        if (!formaSel() || v === 'None') return 'fara_efect';
+        schimba('animatie_adauga', () => { const d = M.dia[sel.d]; d.animatii.push({ s: sel.s, efect: v }); animAles = d.animatii.length - 1; });
+        return 'animatie';
+      }
       return 'fara_efect';
     }
     function insereazaTabel(k, r) {
@@ -1661,14 +1673,76 @@
       return 'iesire_expunere';
     }
 
+    /* Clipboard (Ctrl+C/X/V, Home › Clipboard, meniul de clic dreapta): miniatura aleasă = diapozitivul; altfel forma aleasă
+       ca obiect; altfel textul selectat (ca înainte). Cut al diapozitivului îl scoate, Paste îl pune DUPĂ cel ales */
+    function copiazaOp(taie) {
+      const f = formaSel();
+      if (M.panou === 'miniaturi' && D() && !(sel && sel.edit)) { M.clip = { dia: clona(D()) }; if (!taie) return 'copiere'; stergeDiapozitiv(); return 'decupare'; }
+      /* caseta aleasă ca OBIECT: se copiază forma (scenarii_real/powerpoint-ctrl-c-v-caseta.json) — critic 11, GRAV P4 */
+      if (sel && !sel.edit && f) {
+        M.clip = { forma: clona(f) };
+        if (!taie) return 'copiere';
+        const d = sel.d, k = sel.s;
+        schimba('decupare', () => { M.dia[d].forme.splice(k, 1); M.dia[d].animatii = M.dia[d].animatii.filter(x => x.s !== k).map(x => (x.s > k ? Object.assign({}, x, { s: x.s - 1 }) : x)); sel = null; });
+        return 'decupare';
+      }
+      if (sel && sel.edit && f && sel.a !== sel.b) {
+        const a = Math.min(sel.a, sel.b), b = Math.max(sel.a, sel.b);
+        M.clip = { text: f.text.slice(a, b), fm: clona(Array.from({ length: b - a }, (_, k) => fmLa(f, a + k))) };
+        return taie ? sterge(true) && 'decupare' : 'copiere';
+      }
+      return 'fara_efect';
+    }
+    function lipesteOp() {
+      if (!M.clip) return 'fara_efect';
+      /* forma copiată se lipește pe diapozitivul activ, în ACELAȘI loc; un substituent devine casetă de text
+         (powerpoint-ctrl-c-v-caseta: „O stea” → caseta_text la [120, 284, 720, 130] pe diapozitivul 2) */
+      if (M.clip.forma && D()) {
+        schimba('lipire', () => {
+          const f = clona(M.clip.forma);
+          if (!/^(tabel|imagine|forma|caseta)$/.test(f.tip)) f.tip = 'caseta';
+          D().forme.push(f);
+          sel = { d: M.activ, s: D().forme.length - 1, edit: false };
+          M.panou = 'diapozitiv';
+        });
+        return 'lipire';
+      }
+      if (M.clip.text != null && sel) return scrie(M.clip.text, M.clip.fm);
+      if (M.clip.dia) { schimba('lipire', () => { M.dia.splice(M.activ + 1, 0, clona(M.clip.dia)); M.activ++; sel = null; }); return 'lipire'; }
+      return 'fara_efect';
+    }
+    /* Copy ▾ (CopySplitButton_Dropdown): lista lui nu e în referința capturată; are o singură comandă, Duplicate Slide (m1-l05, F007) */
+    function meniuCopiere(anc) {
+      inchideMeniu();
+      if (!D()) return 'indisponibil';
+      const sb = anc.closest('[data-lh-tip="SplitButton"]') || anc;
+      const R = root.getBoundingClientRect(), b = sb.getBoundingClientRect();
+      const m = el('div', 'lh-ap-p-lista-ref', { role: 'menu', 'data-lh-suprafata': 'meniu.CopySplitButton', 'data-lh-lista': 'copia' });
+      m.style.position = 'absolute';
+      m.style.width = '170px';
+      m.style.left = Math.max(0, b.left - R.left) + 'px';
+      m.style.top = (b.bottom - R.top) + 'px';
+      m.style.height = '28px';
+      const it = el('div', 'lh-ap-n lh-ap-t-MenuItem', { 'data-lh-tip': 'MenuItem', 'data-lh-eticheta': 'Duplicate Slide', 'data-lh-tinta': 'meniu:Duplicate Slide', role: 'menuitem' });
+      it.textContent = 'Duplicate Slide';
+      it.style.cssText = 'padding:5px 12px;font:13px Calibri,Arial,sans-serif;color:#201f1e;cursor:default;white-space:nowrap';
+      m.appendChild(it);
+      root.appendChild(m);
+      meniu = m;
+      return 'meniu_derulant';
+    }
+    /* Add Animation (AnimationAddGallery): următoarea alegere din galeria Animations ADAUGĂ un efect, nu-l înlocuiește */
+    let modAdauga = false;
     function idDin(elx) { const x = elx.closest('[data-lh-id-mso]'); return x ? x.getAttribute('data-lh-id-mso') : null; }
     function apasaComanda(elx, tinta, v) {
       inchideMeniu();
+      const adaugaAcum = modAdauga;
+      modAdauga = false;
       const idm = idDin(elx), n = elx.__nod || {};
       if (elx.getAttribute('aria-disabled') === 'true' || faraPrez()) return 'indisponibil';
       const gal = elx.closest('[data-lh-id-mso]') && GALERII[idm];
       if (gal) {
-        if (n.t === 'ListItem') return aplicaGalerie(gal, n.e);
+        if (n.t === 'ListItem') return aplicaGalerie(gal === 'animatie' && adaugaAcum ? 'animatie_adauga' : gal, n.e);
         if (n.t === 'Button') { const c = elx.closest('[data-lh-id-mso]').querySelector('.lh-ap-p-galerie-caseta'); if (c) c.classList.toggle('lh-ap-p-galerie-deschisa'); return 'galerie'; }
         return 'fara_efect';
       }
@@ -1683,6 +1757,17 @@
         return r;
       }
       switch (idm) {
+        /* Home › Clipboard: Copy / Cut / Paste lucrează cu miniatura aleasă sau cu forma / textul ales (copiazaOp, lipesteOp) */
+        case 'Copy': return copiazaOp(false);
+        case 'Cut': return copiazaOp(true);
+        case 'Paste': return lipesteOp();
+        case 'CopySplitButton_Dropdown': return meniuCopiere(elx);
+        /* Animations › Add Animation: următoarea alegere din galeria Animations (rândurile ei din panglică) adaugă un efect, nu-l înlocuiește */
+        case 'AnimationAddGallery': {
+          if (!formaSel()) return 'indisponibil';
+          modAdauga = true;
+          return 'galerie_adauga';
+        }
         case 'Font': {
           const r = listaFont(elx.closest('[data-lh-id-mso="Font"]') || elx);
           /* critic 13 §6 (R13-4): clicul în TEXTUL casetei alege tot textul, ca „Ari” tastat să înlocuiască numele (nu „CalibAriri…”);
@@ -1772,7 +1857,9 @@
       if (lista === 'pornire') {
         const a = animSel();
         if (!PORNIRI[v] || !a) return I.nesimulat(v);
-        schimba('pornire_animatie', () => { const b = M.dia[sel.d].animatii.find(x => x.s === sel.s); if (b) b.pornire = PORNIRI[v]; });
+        /* rândul ALES din panou (nu primul efect al casetei): cu două efecte pe aceeași casetă, Start ▾ schimbă doar pe al lui */
+        const i = animIdx();
+        schimba('pornire_animatie', () => { const b = M.dia[sel.d].animatii[i]; if (b) b.pornire = PORNIRI[v]; });
         return 'pornire_animatie';
       }
       if (lista === 'umplere') return elx.__nod && elx.__nod.t === 'ListItem' ? aplicaUmplere(v) : I.nesimulat(v);
@@ -1793,6 +1880,7 @@
         if (elx.__nod && elx.__nod.t === 'ListItem' && culoareDin(v)) return aplicaCuloare(culoareDin(v));
         return I.nesimulat(v);
       }
+      if (lista === 'copia') return v === 'Duplicate Slide' ? dubleaza() : I.nesimulat(v);
       if (lista === 'aspect') return ASPECTE[v] ? schimbaAspect(v) : I.nesimulat(v);
       if (lista === 'diapozitiv_nou') return ASPECTE[v] ? diapozitivNou(v) : v === 'Duplicate Selected Slides' ? dubleaza() : I.nesimulat(v);
       if (lista === 'tabel') {
@@ -1812,6 +1900,9 @@
       switch (v) {
         case 'New Slide': return diapozitivNou();
         case 'Duplicate Slide': return dubleaza();
+        case 'Cut': return copiazaOp(true);
+        case 'Copy': return copiazaOp(false);
+        case 'Paste': return lipesteOp();
         case 'Delete Slide': return stergeDiapozitiv();
         case 'Format Background...': return panouLateral('panou.LaunchFormatBackground');
         case 'Font...': return deschideDialog('dialog.FontDialogPowerPoint') ? 'fereastra' : I.nesimulat(v);
@@ -1871,7 +1962,8 @@
       if (notaActiva && D()) { if (!D().note) return 'fara_efect'; schimba('note', () => { D().note = D().note.slice(0, -1); }); return 'stergere_note'; }
       const f = formaSel();
       if (filaAnim && panouLat && panouLat.cheie === 'panou.AnimationCustom') return stergeAnimatie();
-      if (!sel) return M.panou === 'miniaturi' ? stergeDiapozitiv() : 'fara_efect';
+      if (M.panou === 'miniaturi' && !(sel && sel.edit)) return stergeDiapozitiv();
+      if (!sel) return 'fara_efect';
       if (!sel.edit) {   // caseta aleasă ca obiect: Delete o șterge (o casetă de aspect goală rămâne — R11-8, [NEVERIFICAT])
         schimba('stergere_forma', () => { M.dia[sel.d].forme.splice(sel.s, 1); M.dia[sel.d].animatii = M.dia[sel.d].animatii.filter(x => x.s !== sel.s).map(x => (x.s > sel.s ? { s: x.s - 1, efect: x.efect } : x)); sel = null; });
         return 'stergere_forma';
@@ -2223,41 +2315,8 @@
           case 'ctrl_a':
             if (sel && sel.edit && formaSel()) { sel.a = 0; sel.b = formaSel().text.length; deseneaza(); return 'selectare_tot'; }
             return I.nesimulat('Select All (Ctrl+A)');
-          case 'ctrl_c': case 'ctrl_x': {
-            const f = formaSel();
-            /* caseta aleasă ca OBIECT: se copiază forma (scenarii_real/powerpoint-ctrl-c-v-caseta.json) — critic 11, GRAV P4 */
-            if (sel && !sel.edit && f) {
-              M.clip = { forma: clona(f) };
-              if (g === 'ctrl_c') return 'copiere';
-              const d = sel.d, k = sel.s;
-              schimba('decupare', () => { M.dia[d].forme.splice(k, 1); M.dia[d].animatii = M.dia[d].animatii.filter(x => x.s !== k).map(x => (x.s > k ? Object.assign({}, x, { s: x.s - 1 }) : x)); sel = null; });
-              return 'decupare';
-            }
-            if (sel && sel.edit && f && sel.a !== sel.b) {
-              const a = Math.min(sel.a, sel.b), b = Math.max(sel.a, sel.b);
-              M.clip = { text: f.text.slice(a, b), fm: clona(Array.from({ length: b - a }, (_, k) => fmLa(f, a + k))) };
-              return g === 'ctrl_x' ? sterge(true) && 'decupare' : 'copiere';
-            }
-            if (M.panou === 'miniaturi' && D()) { M.clip = { dia: clona(D()) }; return g === 'ctrl_x' ? (stergeDiapozitiv(), 'decupare') : 'copiere'; }
-            return 'fara_efect';
-          }
-          case 'ctrl_v':
-            if (!M.clip) return 'fara_efect';
-            /* forma copiată se lipește pe diapozitivul activ, în ACELAȘI loc; un substituent devine casetă de text
-               (powerpoint-ctrl-c-v-caseta: „O stea” → caseta_text la [120, 284, 720, 130] pe diapozitivul 2) */
-            if (M.clip.forma && D()) {
-              schimba('lipire', () => {
-                const f = clona(M.clip.forma);
-                if (!/^(tabel|imagine|forma|caseta)$/.test(f.tip)) f.tip = 'caseta';
-                D().forme.push(f);
-                sel = { d: M.activ, s: D().forme.length - 1, edit: false };
-                M.panou = 'diapozitiv';
-              });
-              return 'lipire';
-            }
-            if (M.clip.text != null && sel) return scrie(M.clip.text, M.clip.fm);
-            if (M.clip.dia) { schimba('lipire', () => { M.dia.splice(M.activ + 1, 0, clona(M.clip.dia)); M.activ++; sel = null; }); return 'lipire'; }
-            return 'fara_efect';
+          case 'ctrl_c': case 'ctrl_x': return copiazaOp(g === 'ctrl_x');
+          case 'ctrl_v': return lipesteOp();
           default: return g && /^ctrl_/.test(g) ? I.nesimulat('Ctrl+' + g.slice(-1).toUpperCase()) : null;
         }
       }

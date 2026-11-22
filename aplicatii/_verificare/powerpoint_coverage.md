@@ -10,16 +10,45 @@ exact cum o cer pașii lecției. Ce NU e sondat e marcat „neprobat”. Lecții
 |---|---|---|---|
 | `lectii/vi/m1-l02/index.html` | simppt-interfata.js + simppt.js | nu | F072 Outline (vederea Schița; Normal din View aduce miniaturile); F076 mesajul butonului nu spune fila și grupul |
 | `lectii/vi/m1-l03/index.html` | simppt-fisier.js | nu | F081 temă la prezentare nouă (Atlas); F083 Ctrl+S la prezentare nesalvată (fereastra „Save this file”); F084 Save As în alt folder; F085 PDF; F086 .ppsx; F089 „înlocuiești?”; F092 închidere ultima prezentare; F093 Open cu foldere; F097 Protected View; F098 deschidere din Explorer |
-| `lectii/vi/m1-l05/index.html` | simppt.js | nu | F007 Copy ▾ › Duplicate; F009 Cut/Copy/Paste pe diapozitive; F022 casetă de aspect cu text (întâi textul, apoi locul); F023 lipire pe același diapozitiv, decalată |
+| `lectii/vi/m1-l05/index.html` | simppt.js | nu | F022 casetă de aspect cu text (întâi textul, apoi locul); F023 lipire pe același diapozitiv, decalată (F007 și F009 acoperite, vezi tabelul de mai jos) |
 | `lectii/vi/m1-l06/index.html` | simppt-formatare.js + simppt.js | nu | F030 lista Font Size ▾ (scrierea 32/54/40 + Enter: neconcludent la sondă); F045 teme Ion și Retrospect (fonturi, culori, poziții nu se schimbă) |
-| `lectii/vi/m1-l07/index.html` | simppt-animatii.js + simppt.js | nu | F053 al doilea efect pe același obiect (un singur efect pe casetă în model); F059 scoate un efect, obiectul rămâne; F055 ▾ On Click / With / After din Animation Pane; F022 (ca m1-l05) |
+| `lectii/vi/m1-l07/index.html` | simppt-animatii.js + simppt.js | nu | F022 (ca m1-l05). F053, F059, F055 acoperite (vezi tabelul de mai jos) |
 | `lectii/vi/m2-l08/index.html` | simppt-estetica.js + simppt-formatare.js + simppt-interfata.js + simppt.js | nu | F033 fontul temei (Headings / Body) nu e legat de temă |
 | `lectii/vi/m2-l09/index.html` | simppt-formatare.js + simppt-interfata.js + simppt-proiect.js + simppt.js | nu | F012 bulițe vizuale în caseta de conținut (modelul are rândurile); F016 imagine aleasă din fișierele lecției (se scrie numele, imaginea nu se desenează) |
 | `lectii/vi/m2-l10/index.html` | simppt-proba.js (învelișul) + simppt-animatii.js + simppt-formatare.js + simppt-proiect.js + simppt.js | da | nimic din lista cerută de pași; F049 săgețile Duration nu sunt legate (scrisul 0,5 + Enter merge) |
 
 **Acoperite: 1 din 8** (m2-l10). Funcțiile care cer doar scris și Enter sunt acoperite; cele care cer o listă sau o fereastră din care alegi nu sunt.
 
-## Funcții adăugate în această sesiune (și sonda care le-a verificat)
+## Funcții verificate în runda 22.11 (`powerpoint_checks2.mjs`, 11 verificări, ultima linie 0)
+
+Clicuri reale ale mouse-ului și taste în Playwright; `run.mjs` rămâne cu ultima linie 0 (PASS 10, FAIL 0).
+
+| funcție (inventar) | ce s-a făcut în powerpoint.js | verificare | rezultat |
+|---|---|---|---|
+| F007 Copy ▾ › Duplicate | meniul Copy ▾ (CopySplitButton_Dropdown) cu „Duplicate Slide”; Copy/Cut/Copy ▾ se aprind și cu o miniatură aleasă | 3 | copia vine după original și devine aleasă |
+| F009 Cut/Copy/Paste pe diapozitive | Home › Copy/Cut/Paste și clicul dreapta pe miniatură folosesc aceleași funcții ca Ctrl+C/X/V (`copiazaOp`, `lipesteOp`) | 1, 2, 4 | 3 → 4 diapozitive (copie după 3); Cut 4 → 3, Paste după 1 |
+| Delete pe miniatură | Delete cu miniatura aleasă șterge diapozitivul | 5 | 3 → 2 |
+| F053 al doilea efect pe același obiect | Animations › Add Animation: alegerea următoare ADAUGĂ un efect; galeria rămâne înlocuitoare | 9 | 1 → 2 efecte pe casetă |
+| F059 scoate un efect | Delete în Animation Pane scoate rândul ales, obiectul rămâne | 11 | 2 → 1 efect, forme 2 → 2 |
+| F055 ▾ pornire în Animation Pane | Start ▾ schimbă rândul ales (nu primul efect); rândurile arată pornirea lor | 10 | [On Click, With Previous] |
+| Layout (existau; verificate) | Section Header, Comparison, Blank: titlul rămâne | 6, 6b | Section Header păstrează „Ce sunt vulcanii” |
+| Font din lista Font (existau; verificate) | Calibri (Body) pe titlu | 7 | Calibri Light → Calibri |
+| Font Color ▾ culoare de temă (existau; verificate) | Blue, Accent 1 | 8 | #4472C4 |
+
+Nu s-a atins: F033 (fontul Headings/Body legat de temă), F045 (teme Ion/Retrospect), F030 (mărimea din lista Font ▾), F012, F016, F072.
+
+## Ce rămâne (după runda 22.11)
+
+1. F022 casetă de aspect cu text (întâi textul, apoi locul) și F023 lipire decalată pe același diapozitiv: m1-l05, m1-l07, m1-l03.
+2. Salvare și deschidere reale: Save As cu folder, confirmarea „înlocuiești?”, PDF/PPSX, Open cu foldere, Protected View (m1-l03).
+3. Teme care schimbă fonturile, culorile și pozițiile (F033, F045, F081): m2-l08, m1-l06, m1-l03.
+4. Mărimea din lista Font Size ▾ (F030): m1-l06.
+5. Bulițe vizuale (F012) și imagine din fișierele lecției (F016): m2-l09.
+6. Vederea Schiță (F072): m1-l02.
+
+
+## Istoric (sesiunea anterioară, 21.11)
+
 
 | funcție (inventar) | ce s-a făcut în powerpoint.js | sondă | rezultat |
 |---|---|---|---|
@@ -34,13 +63,3 @@ exact cum o cer pașii lecției. Ce NU e sondat e marcat „neprobat”. Lecții
 | F049 Duration scris 0,5 + Enter | nu s-a schimbat (exista) | Transitions › Duration | 0,5 |
 
 Aspectele „Title and Vertical Text” / „Vertical Title and Text” nu există în ASPECTE, dar nicio lecție din cele 8 nu le cere.
-
-## Ce rămâne (în ordinea cât de multe lecții atinge)
-
-1. Copy/Cut/Paste pe diapozitive și obiecte, Copy ▾ › Duplicate (m1-l05, m1-l03, m1-l07 pentru F022): 2 lecții.
-2. Salvare și deschidere reale: Save As cu folder, confirmarea „înlocuiești?”, PDF/PPSX, Open cu foldere, Protected View (m1-l03): 1 lecție, dar multe funcții.
-3. Teme care schimbă fonturile, culorile și pozițiile (F033, F045, F081): m2-l08, m1-l06, m1-l03.
-4. Animații multiple pe același obiect și ștergerea unui singur efect (F053, F059), ▾ de pornire în Animation Pane (F055): m1-l07.
-5. Mărimea din lista Font Size ▾ (F030) — de sondat cu o formă aleasă, nu cu titlul din lista de diapozitive.
-6. Bulițe vizuale (F012) și imagine din fișierele lecției (F016): m2-l09.
-7. Vederea Schiță (F072): m1-l02.
