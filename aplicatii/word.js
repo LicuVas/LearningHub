@@ -132,6 +132,21 @@
       for (let p = a; p < b; p++) { const l = loc(p), par = M.P[l.i]; out.push(l.o < par.t.length ? par.f[l.o] : null); }
       return out;
     }
+    /* ---- jurnalul gesturilor (stare().gesturi): fiecare acțiune reală a utilizatorului, în ordine. Tastarea consecutivă
+       face o singură intrare (detalii = textul tastat); selecția curentă înlocuiește ultima intrare „selectie”. */
+    const gesturi = [];
+    function gest(tip, detalii, fuzioneaza) {
+      const ultim = gesturi[gesturi.length - 1];
+      if (fuzioneaza && ultim && ultim.tip === tip) ultim.detalii += String(detalii);
+      else gesturi.push({ tip, detalii: String(detalii || '') });
+    }
+    function gestSelectie() {
+      if (!areSel()) return;
+      const txt = textIntre(selMin(), Math.min(selMax(), maxCaret()));
+      const ultim = gesturi[gesturi.length - 1];
+      if (ultim && ultim.tip === 'selectie') ultim.detalii = txt;
+      else gesturi.push({ tip: 'selectie', detalii: txt });
+    }
     function sterge(a, b) {
       if (b <= a) return;
       const la = loc(a), lb = loc(b);
@@ -341,6 +356,7 @@
       if (!s) return 'fara_efect';
       pune(s);
       M.ultima = null;
+      gest('anulare', '');
       return 'anulare';
     }
     function reface() {
@@ -565,18 +581,20 @@
       return 'stil';
     }
     /* ---- clipboard-ul aplicației (nu cel al calculatorului) */
-    function copiaza() {
+    function copiaza(intern) {
       if (!areSel()) return 'fara_efect';
       const a = selMin(), b = Math.min(selMax(), maxCaret());
       M.clip = { text: textIntre(a, b), f: fmtIntre(a, b) };
       griComenzi();
+      if (!intern) gest('copiere', '');   // decupeaza apelează copiaza(true): la decupare se notează doar „decupare”
       return 'copiere';
     }
     function decupeaza() {
       if (!areSel()) return 'fara_efect';
-      copiaza();
+      copiaza(true);
       schimba('decupare', () => stergeSelectia(true));
       H.rupe();
+      gest('decupare', '');
       return 'decupare';
     }
     /* „Smart cut and paste” (word365): la lipire, Word pune singur spațiul dinaintea textului lipit când acesta începe cu o
@@ -602,6 +620,7 @@
         M.sel = { a: pos, f: pos };
       });
       H.rupe();
+      gest('lipire', M.clip.text);
       return 'lipire';
     }
     function muta(dest) {      // tragerea textului selectat
@@ -615,6 +634,7 @@
         M.sel = { a: d, f: fin };
       });
       H.rupe();
+      gest('mutare', text);
       return 'mutare';
     }
 
@@ -746,6 +766,8 @@
         tabele: M.tab.map(t => ({ randuri: t.randuri, coloane: t.coloane, celule: t.celule.map(r => r.slice()) })),
         imagini: { in_linie: M.img.length, flotante: 0 },
         pagina: JSON.parse(JSON.stringify(M.pag)),
+        /* jurnalul gesturilor, în ordine (copii: cine citește nu poate schimba jurnalul) */
+        gesturi: gesturi.map(g => Object.assign({}, g)),
         cuvinte: cuvinte(),
         /* nume_fisier: null cât documentul n-a fost salvat niciodată (scenarii_real/word-salvare-pdf.json) */
         nume_fisier: M.deschis && M.salvat ? M.nume : null,
@@ -1906,6 +1928,7 @@
     function apasa(elx, tinta) {
       const n = elx.__nod || {};
       if (elx.getAttribute('aria-disabled') === 'true') return 'indisponibil';
+      gest('comanda', n.e || tinta.replace(/^[a-z_]+:/, ''));
       const id = idDe(elx);
       if (id && CMD[id]) {
         const r = CMD[id](elx);
@@ -1995,6 +2018,8 @@
       actualizeaza();
     };
     I.la.sus = (e, j, g) => {
+      /* selecția făcută la apăsare (și la dublu clic, fără tragere: g e null) se notează la eliberare */
+      if (j && j.fel === 'selectie') gestSelectie();
       if (g === 'tragere' && ancora && ancora.mutare) {
         ancora = null;
         if (!eInDocument(document.elementFromPoint(e.clientX, e.clientY) || zona)) return 'fara_efect';
@@ -2315,13 +2340,13 @@
       let r = null;
       const sh = e.shiftKey;
       switch (g) {
-        case 'tastare': e.preventDefault(); r = scrie(e.key, true); break;
+        case 'tastare': e.preventDefault(); r = scrie(e.key, true); gest('tastare', e.key, true); break;
         case 'tasta_enter': e.preventDefault(); r = e.ctrlKey ? I.nesimulat('Ctrl+Enter') : enter(); break;
         /* support.microsoft.com/en-us/office/keyboard-shortcuts-in-word-95ef89dd-7142-4b50-afb2-f762f663ceb2 (citit 21.11.2026),
            „Edit text and graphics”: „Delete one word to the left. | Ctrl+Backspace”, „Delete one word to the right. | Ctrl+Delete”
            (runda 28, unghiul gest_tastatura: Ctrl+Backspace ștergea o literă) */
-        case 'tasta_backspace': e.preventDefault(); r = e.ctrlKey && !M.cel && !areSel() ? stergeCuvant(-1) : backspace(); break;
-        case 'tasta_delete': e.preventDefault(); r = e.ctrlKey && !M.cel && !areSel() ? stergeCuvant(1) : del(); break;
+        case 'tasta_backspace': e.preventDefault(); r = e.ctrlKey && !M.cel && !areSel() ? stergeCuvant(-1) : backspace(); if (r && r !== 'fara_efect') gest('sters', 'inainte'); break;
+        case 'tasta_delete': e.preventDefault(); r = e.ctrlKey && !M.cel && !areSel() ? stergeCuvant(1) : del(); if (r && r !== 'fara_efect') gest('sters', 'dupa'); break;
         case 'tasta_tab': {
           e.preventDefault();
           /* Tab la începutul paragrafului (fără selecție, nu în tabel): retragerea primei linii, nu un caracter Tab */
@@ -2336,6 +2361,7 @@
              Ctrl+Down arrow key” (aceeași pagină; runda 28: Ctrl+↑/↓ mutau un rând) */
           else if (e.ctrlKey && !M.cel) r = mutaParagraf(e.key === 'ArrowUp' ? -1 : 1, sh);
           else r = M.cel ? 'cursor' : mutaRand(e.key === 'ArrowUp' ? -1 : 1, sh);
+          if (sh) gestSelectie();
           break;
         case 'tasta_home_end':
           e.preventDefault();
@@ -2352,7 +2378,7 @@
           else if (e.shiftKey) r = M.salvat ? salveazaPeLoc() : (deschideDialog(p2007 ? 'dialog.FileSaveAs' : SALVARE_NOUA) ? 'dialog_salvare' : I.nesimulat('Shift+F12'));
           else r = deschideDialog('dialog.FileSaveAs') ? 'salvare_ca' : null;
           break;
-        case 'ctrl_a': M.cel = null; M.sel = { a: 0, f: lungime() }; H.rupe(); r = 'selectare_tot'; break;
+        case 'ctrl_a': M.cel = null; M.sel = { a: 0, f: lungime() }; H.rupe(); r = 'selectare_tot'; gestSelectie(); break;
         case 'ctrl_b': r = comuta('b'); break;
         case 'ctrl_i': r = comuta('i'); break;
         case 'ctrl_u': r = comuta('u'); break;
@@ -2361,7 +2387,7 @@
         case 'ctrl_r': r = aliniaza('dreapta'); break;
         case 'ctrl_j': r = aliniaza('stanga-dreapta'); break;
         case 'ctrl_z': r = anuleaza(); break;
-        case 'ctrl_y': r = reface(); break;
+        case 'ctrl_y': r = reface(); if (r && r !== 'fara_efect') gest('refacere', ''); break;
         case 'ctrl_c': r = copiaza(); break;
         case 'ctrl_x': r = decupeaza(); break;
         case 'ctrl_v': r = lipeste(false); break;
@@ -2397,12 +2423,14 @@
     I.la.text = (v, info) => {
       if (dialog || backstage || !M.deschis) return 'fara_efect';
       const r = scrie(v, !/^insertFrom(Paste|Drop)/.test((info && info.tip) || ''));
+      gest('tastare', v, true);
       actualizeaza();
       return r;
     };
     I.la.sterge = g => {
       if (dialog || backstage || !M.deschis) return 'fara_efect';
       const r = g === 'tasta_backspace' ? backspace() : del();
+      if (r && r !== 'fara_efect') gest('sters', g === 'tasta_backspace' ? 'inainte' : 'dupa');
       actualizeaza();
       return r;
     };
