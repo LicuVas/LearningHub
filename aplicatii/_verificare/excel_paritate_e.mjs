@@ -322,7 +322,9 @@ def('excel-a-F060', 'Pe telefon: Tab, Enter, săgețile și Esc sunt butoane sub
   const s4 = await st(p);
   const okT = val(s1, 'B2') === 'x' && s1.selectie.activa === 'C2';
   const okJ = s2.selectie.activa === 'C3';
-  const okE = val(s3, 'C3') === undefined && s3.ramane_in_editare === false;
+  /* hotărârea dirijorului (23.11, probe_contestate.md › excel-a-F060): pagina de probă are deja o valoare în C3, deci Esc trebuie
+     să o lase NESCHIMBATĂ (nu „goală”, cum cerea proba la început) */
+  const okE = val(s3, 'C3') === val(s2, 'C3') && val(s3, 'C3') !== 'z' && s3.ramane_in_editare === false;
   const okN = s4.selectie.activa === 'E5';
   return { ok: okT && okJ && okE && okN, vazut: `x + Tab⇥: B2=${J(val(s1, 'B2'))}, activă ${s1.selectie.activa} (aștept C2); ↓: ${s2.selectie.activa} (aștept C3); z + Esc: C3=${J(val(s3, 'C3'))}; caseta de nume E5 + Enter↵: activă ${s4.selectie.activa}` };
 }, { tel: true });
