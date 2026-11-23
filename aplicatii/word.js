@@ -30,7 +30,17 @@
     /* Mirrored: interior 3,18 / exterior 2,54. Modelul n-are pagini oglindite: interiorul e tratat ca stânga [presupus] */
     'Mirrored Margins': { sus: 2.54, jos: 2.54, stanga: 3.18, dreapta: 2.54 } };
   const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  const egal = (a, b) => a === b || (!!a && !!b && a.b === b.b && a.i === b.i && a.u === b.u && a.sz === b.sz);
+  const egal = (a, b) => a === b || (!!a && !!b && a.b === b.b && a.i === b.i && a.u === b.u && a.sz === b.sz && a.st === b.st && a.fn === b.fn && a.cl === b.cl);
+  /* noaptea Word 23.11, banda A (word-F036): Font Color ▾ — Automatic și cele 10 „Standard Colors” ale Office.
+     [DEDUS] numele și culorile (referința UIA n-are lista deschisă; de_capturat.md A1-8). Butonul pune ultima culoare aleasă;
+     la pornire roșu (referința: butonul se numește „Font Color Red”, uia_word.json › panglica.TabHome). */
+  const CULORI_STD = [['Dark Red', '#C00000'], ['Red', '#FF0000'], ['Orange', '#FFC000'], ['Yellow', '#FFFF00'], ['Light Green', '#92D050'],
+    ['Green', '#00B050'], ['Light Blue', '#00B0F0'], ['Blue', '#0070C0'], ['Dark Blue', '#002060'], ['Purple', '#7030A0']];
+  /* noaptea Word 23.11, banda A (word-F033): lista Font ▾ — fonturile obișnuite din Windows, după fonturile temei.
+     [DEDUS] lista: referința UIA n-are lista deschisă a casetei Font (de_capturat.md A1-7); Word arată „Theme Fonts”
+     (Calibri Light (Headings), Calibri (Body)), apoi „All Fonts” în ordine alfabetică. */
+  const FONTURI = ['Calibri Light', 'Calibri', 'Arial', 'Arial Black', 'Bahnschrift', 'Cambria', 'Candara', 'Comic Sans MS', 'Consolas',
+    'Constantia', 'Corbel', 'Courier New', 'Georgia', 'Impact', 'Segoe UI', 'Tahoma', 'Times New Roman', 'Trebuchet MS', 'Verdana'];
   const ALINIERI = { left: 'stanga', center: 'centru', right: 'dreapta', justify: 'stanga-dreapta' };
   /* stilul propriu al lui Word (doar sub [data-lh-aplicatie="word"], ca explorer.js / windows.js; aplicatii.css rămâne comun):
      - copiii unei casete cu chenar din panglică (Font, Font Size: Edit + butonul ▾) se așază față de colțul casetei, nu față de
@@ -193,7 +203,7 @@
       return par.f[0] || DEF;
     }
     const marimeStil = par => STILURI[par.stil] || 11;
-    const marime = (par, f) => (f && f.sz) || marimeStil(par);
+    const marime = (par, f) => (f && f.sz) || (f && f.st && STILURI[f.st]) || marimeStil(par);
 
     /* cuvântul din jurul unei poziții (pentru dublu clic și pentru Ctrl+B fără selecție) */
     function cuvantLa(pos) {
@@ -229,7 +239,10 @@
     }
 
     /* ============================================================ istoricul (Ctrl+Z / Ctrl+Y) */
-    const grupeaza = (vechi, nou) => !p2007 && vechi === nou && (nou === 'tastare' || nou === 'stergere_inapoi' || nou === 'stergere_inainte');
+    /* noaptea Word 23.11, banda A (word-F027): numai tastarea continuă se adună într-o operație; fiecare ⌫ / Delete e o
+       operație separată, iar ⌫ în mijlocul tastării o rupe în două („abcd”, ⌫⌫, „xy”, 3 × Ctrl+Z → „ab”, „abc”, „abcd”;
+       vechiul lectii/_sim/wordobj-interfata.js:345, probat în Word 16 — felii/felie_c.json › word-F027) */
+    const grupeaza = (vechi, nou) => !p2007 && vechi === nou && nou === 'tastare';
     let H = st.istoric(grupeaza);
     const instantaneu = () => ({ P: M.P, tab: M.tab, img: M.img, pag: M.pag, sel: M.sel, cel: M.cel });
     const pune = s => { M.P = s.P; M.tab = s.tab; M.img = s.img; M.pag = s.pag; M.sel = s.sel; M.cel = s.cel; M.fmtIns = null; M.modificat = true; };
@@ -245,18 +258,36 @@
     function stergeSelectia(inteligent) {
       let a = selMin(), b = selMax();
       if (b > maxCaret()) b = maxCaret();          // semnul de paragraf de la capăt nu se șterge
-      if (inteligent) {
-        /* Word: „Este |foarte| frumos” → Delete → „Este frumos” (un singur spațiu; scenarii_real/word-delete-selectie.json) */
-        const ta = textIntre(Math.max(0, a - 1), a), tb = textIntre(b, Math.min(lungime(), b + 1));
-        const sel = textIntre(a, b);
-        if (ta === ' ' && tb === ' ' && sel && LIT.test(sel[0]) && LIT.test(sel[sel.length - 1])) b++;
+      if (inteligent && b > a) {
+        /* Word („Smart cut and paste”, pornit implicit): „Este |foarte| frumos” → Delete → „Este frumos” (un singur spațiu;
+           scenarii_real/word-delete-selectie.json). Noaptea Word 23.11, banda A (word-F006): regula întreagă a vechiului
+           lectii/_sim/wordobj.js:62 stergeSmart, scoasă din 87 de ștergeri (Delete / ⌫ / Cut) jucate în Word-ul real prin COM
+           (LearningHub/lectii/vii/m1-l05/_proba/cazuri_word.json, 0 diferențe cu proba_sim_vs_word.js): după scoatere, un
+           spațiu rămas la începutul paragrafului sau lângă alt spațiu cade (cel din dreapta); „spațiu + . , ; : ! ?” → cade
+           spațiul. Spațiul rămas la capătul paragrafului rămâne. */
+        const st0 = a <= 0 ? '\r' : textIntre(a - 1, a), dr0 = textIntre(b, b + 1);
+        if ((st0 === '\r' || st0 === ' ') && dr0 === ' ') b++;
+        else if (st0 === ' ' && /^[.,;:!?]$/.test(dr0)) a--;
       }
       sterge(a, b);
       M.sel = { a, f: a };
     }
+    /* noaptea Word 23.11, banda A (word-F007): selecția făcută cu dublu clic (cuvântul + spațiile de după) ține minte că e
+       a dublului clic; tastarea peste ea înlocuiește cuvântul, iar spațiul de după rămâne („Plecăm |mâine |la bunici.” +
+       „joi” → „Plecăm joi la bunici.”: vechiul lectii/_sim/wordobj-interfata.js:379-391, probat de judecător cu dublu clic
+       real, J1). Selecția făcută altfel (tragere, Shift+→, Ctrl+A) se înlocuiește întreagă, ca în Word
+       (LearningHub/lectii/vii/m1-l05/_proba/cazuri_word.json › tastare: „luni ” selectat + „marți” → „marțila munte.”). */
+    let selDublu = null;
     function scrie(text, dinTastatura) {
       if (M.cel) return scrieCelula(text);
       const tip = 'tastare';
+      if (selDublu && areSel() && selDublu.a === M.sel.a && selDublu.f === M.sel.f && loc(selMin()).i === loc(selMax()).i) {
+        const a = selMin();
+        let b = selMax();
+        while (b - 1 > a && textIntre(b - 1, b) === ' ') b--;
+        if (b > a) M.sel = { a, f: b };
+      }
+      selDublu = null;
       schimba(tip, () => {
         if (areSel()) stergeSelectia(false);
         let pos = M.sel.f;
@@ -288,6 +319,7 @@
         M.sel = { a: pos, f: pos };
       });
       H.rupe();
+      M.ultima = { fel: 'comanda', fn: enter };   // word-F026: Ctrl+Y (Repeat) mai face un Enter
       return 'paragraf_nou';
     }
     /* AutoCorect: prima literă a propoziției devine mare când se termină cuvântul („ana are mere. el” → „Ana are mere. El”,
@@ -307,6 +339,12 @@
       if (M.cel) return stergeCelula(-1);
       if (areSel()) { schimba('stergere', () => stergeSelectia(true)); H.rupe(); return 'stergere'; }
       const p = M.sel.f;
+      /* noaptea Word 23.11, banda A (word-F040): ⌫ la începutul unui paragraf cu alineat (pus cu Tab) scoate alineatul, nu
+         unește paragrafele (Word: AutoFormat As You Type › „Set left- and first-indent with tabs and backspaces”, pornit
+         implicit — comentariul probei; vechiul lectii/_sim/wordobj-formatare.js îl scotea la fel). [DEDUS] pasul: câte
+         1,25 cm, ca Tab-ul care l-a pus (de_capturat.md A1-4) */
+      const l0 = loc(p);
+      if (l0.o === 0 && pfDe(M.P[l0.i]).pl > 0) { parAplica(f => ({ pl: Math.max(0, Math.round((f.pl - PAS_RETRAGERE) * 100) / 100) })); return 'retragere_prima_linie'; }
       if (p <= 0) return 'fara_efect';
       schimba('stergere_inapoi', () => {
         const l = loc(p);
@@ -315,12 +353,31 @@
         if (l.o === 0) { /* paragraful de după rămâne cu formatul lui */ }
         M.sel = { a: p - 1, f: p - 1 };
       });
+      M.ultima = { fel: 'comanda', fn: backspace };   // word-F026: Ctrl+Y (Repeat) mai face un ⌫ (felie_c › word-F026, probat în Word)
       return 'stergere';
     }
     /* Ctrl+Backspace / Ctrl+Delete: un cuvânt, cu aceleași granițe ca Ctrl+← / Ctrl+→ (muta1): înapoi până la începutul
        cuvântului dinainte (cu spațiile de după el), înainte până la începutul cuvântului următor. Cum tratează Word real
        punctuația și spațiile la aceste granițe n-avem real [presupus] R28-3. Cu selecție / în tabel: ca Backspace / Delete. */
     function stergeCuvant(dir) {
+      /* noaptea Word 23.11, banda A (word-F005): și în celula unui tabel, cu aceleași granițe (vechiul lectii/_sim/wordobj.js:589,
+         :602 șterge cuvântul și în celulă); cu text selectat în celulă: ca ⌫ / Delete */
+      if (M.cel) {
+        const v = celulaText(), a0 = Math.min(M.cel.a, M.cel.f), b0 = Math.max(M.cel.a, M.cel.f);
+        if (a0 !== b0) return dir > 0 ? del() : backspace();
+        let q = a0;
+        if (dir > 0) { while (q < v.length && LIT.test(v[q])) q++; while (q < v.length && !LIT.test(v[q])) q++; }
+        else { while (q > 0 && !LIT.test(v[q - 1])) q--; while (q > 0 && LIT.test(v[q - 1])) q--; }
+        if (q === a0) return dir > 0 ? del() : backspace();
+        const x = Math.min(a0, q), y = Math.max(a0, q);
+        schimba('stergere', () => {
+          M.tab = JSON.parse(JSON.stringify(M.tab));
+          puneCelula(v.slice(0, x) + v.slice(y));
+          M.cel = Object.assign({}, M.cel, { a: x, f: x });
+        });
+        H.rupe();
+        return 'stergere';
+      }
       const p = M.sel.f, tot = textIntre(0, lungime());
       let q = p;
       if (dir > 0) { while (q < maxCaret() && LIT.test(tot[q])) q++; while (q < maxCaret() && !LIT.test(tot[q]) && tot[q] !== '\r') q++; }
@@ -349,6 +406,7 @@
       const p = M.sel.f;
       if (p >= maxCaret()) return 'fara_efect';
       schimba('stergere_inainte', () => { sterge(p, p + 1); M.sel = { a: p, f: p }; });
+      M.ultima = { fel: 'comanda', fn: del };   // word-F026: Ctrl+Y (Repeat) mai face un Delete
       return 'stergere';
     }
     function anuleaza() {
@@ -375,7 +433,9 @@
         M.ultima = { fel: 'text', text: t };
         return 'repetare';
       }
-      if (M.ultima && M.ultima.fel === 'comanda') { M.ultima.fn(); return 'repetare'; }
+      /* word-F026: comanda repetată rămâne de repetat (schimba() golește M.ultima la orice operație care nu e tastare):
+         Ctrl+Y, Ctrl+Y… repetă din nou, ca F4 / Repeat în Word */
+      if (M.ultima && M.ultima.fel === 'comanda') { const u = M.ultima; u.fn(); M.ultima = u; return 'repetare'; }
       return 'fara_efect';
     }
 
@@ -414,6 +474,35 @@
       M.fmtIns = ins;
       return r;
     }
+    /* word-F033: fontul ales din listă sau scris în casetă se pune pe selecție; fără selecție, pe cuvântul cursorului (ca
+       mărimea, intervalFormat), altfel pe ce se tastează de acum. Fonturile temei se scriu „Calibri (Body)” în casetă. */
+    function puneFont(nume) {
+      const n = String(nume || '').trim().replace(/\s*\((Body|Headings)\)$/, '');
+      if (!n || !M.deschis) return 'fara_efect';
+      const iv = intervalFormat();
+      if (!iv) M.fmtIns = Object.freeze(Object.assign({}, fmtLa(M.sel.f), { fn: n }));
+      else { schimba('format', () => aplica(iv.a, iv.b, f => Object.freeze(Object.assign({}, f, { fn: n })))); H.rupe(); }
+      const ins = M.fmtIns;
+      I.focus();
+      actualizeaza();
+      M.fmtIns = ins;
+      return 'font';
+    }
+    /* word-F036: culoarea literelor pe selecție (fără selecție: pe cuvântul cursorului, altfel pe ce se tastează);
+       null = Automatic (negru) */
+    let ultimaCuloare = '#EE0000';   // butonul la pornire: roșu RGB 238,0,0 (vechiul lectii/_sim/wordobj-formatare.js:20, „probat”)
+    function puneCuloare(cl) {
+      if (!M.deschis) return 'fara_efect';
+      if (cl) ultimaCuloare = cl;
+      const iv = intervalFormat();
+      if (!iv) M.fmtIns = Object.freeze(Object.assign({}, fmtLa(M.sel.f), { cl: cl || null }));
+      else { schimba('format', () => aplica(iv.a, iv.b, f => Object.freeze(Object.assign({}, f, { cl: cl || null })))); H.rupe(); }
+      const ins = M.fmtIns;
+      I.focus();
+      actualizeaza();
+      M.fmtIns = ins;
+      return 'culoare_font';
+    }
     function comuta(camp) {
       const r = intervalFormat();
       const fn = () => {
@@ -421,7 +510,10 @@
         if (!rr) { const f = Object.assign({}, fmtLa(M.sel.f)); f[camp] = !f[camp]; M.fmtIns = Object.freeze(f); return; }
         schimba('format', () => {
           const fm = fmtIntre(rr.a, rr.b).filter(Boolean);
-          const toate = fm.length && fm.every(f => f[camp]);
+          /* noaptea Word 23.11, banda A (word-F028/F029/F030): pe o selecție amestecată hotărăște PRIMUL caracter — „vin” aldin +
+             „eri” normal, Bold → tot normal; invers → tot aldin (Word real prin COM: LearningHub/lectii/vii/m1-l06/_proba/
+             rezultate_word.json › bold_selectie_amestecata; vechiul lectii/_sim/wordobj-formatare.js:12) */
+          const toate = fm.length && !!fm[0][camp];
           aplica(rr.a, rr.b, f => Object.freeze(Object.assign({}, f, { [camp]: !toate })));
         });
       };
@@ -439,13 +531,14 @@
     function marimeFont(dir) {
       const r = intervalFormat();
       if (!r) return 'fara_efect';
+      /* noaptea Word 23.11, banda A (word-F035): peste 72 din 10 în 10 (72 → 80 → 90), sub 8 câte 1 (8 → 7 → … → 1), până la
+         1638 — vechiul lectii/_sim/wordobj-formatare.js:18-19 („probat”), :406-407 cresc / scad */
       schimba('format', () => aplica(r.a, r.b, (f, par) => {
         const m = marime(par, f);
-        let k = MARIMI.findIndex(x => x >= m);
-        if (k < 0) k = MARIMI.length - 1;
         let n;
-        if (dir > 0) n = MARIMI[MARIMI[k] === m ? Math.min(MARIMI.length - 1, k + 1) : k];
-        else n = MARIMI[Math.max(0, (MARIMI[k] === m || MARIMI[k] > m ? k - 1 : k))];
+        if (dir > 0) { const x = MARIMI.find(v => v > m); n = Math.min(1638, x != null ? x : Math.floor(m / 10) * 10 + 10); }
+        else if (m <= 8) n = Math.max(1, Math.ceil(m) - 1);
+        else { const l = MARIMI.filter(v => v < m); n = l.length ? l[l.length - 1] : m; }
         return Object.freeze(Object.assign({}, f, { sz: n }));
       }));
       H.rupe();
@@ -574,7 +667,20 @@
       H.rupe();
       return tip === 'marcatori' ? 'lista_marcatori' : 'lista_numerotata';
     }
+    /* noaptea Word 23.11, banda A (word-F046): un stil LEGAT (Heading 1…, Title, Subtitle, Quote) pus pe o bucată dintr-un
+       paragraf se poartă ca stil de caractere — doar bucata ia aspectul, paragraful rămâne cu stilul lui (comentariul probei
+       word-F046; vechiul lectii/_sim/wordteh-stiluri.js). [DEDUS] lista stilurilor legate = cele implicite din Word 365
+       (de_capturat.md A1-6). Câmpul `st` din formatul caracterului = stilul de caractere (lipsă = niciunul). */
+    const STIL_LEGAT = /^(Heading [1-9]|Title|Subtitle|Quote|Intense Quote)$/;
     function stil(nume) {
+      if (areSel() && STIL_LEGAT.test(nume)) {
+        const a = selMin(), b = Math.min(selMax(), maxCaret()), la = loc(a), lb = loc(b);
+        if (la.i === lb.i && !(la.o === 0 && lb.o >= M.P[la.i].t.length)) {
+          schimba('format', () => aplica(a, b, f => Object.freeze(Object.assign({}, f, { st: nume }))));
+          H.rupe();
+          return 'stil';
+        }
+      }
       const idx = paragrafeSel();
       schimba('format', () => idx.forEach(i => { M.P[i].stil = nume; }));
       H.rupe();
@@ -609,19 +715,71 @@
       const ina = textIntre(pos - 1, pos), dupa = pos < maxCaret() ? textIntre(pos, pos + 1) : '';
       return CAPAT_CUVANT.test(ina) && !LIT.test(dupa);
     }
+    /* Noaptea Word 23.11, banda A (word-F021): spațiile la AMBELE capete ale textului lipit — regula vechiului
+       lectii/_sim/wordobj.js:73 lipesteSmart, scoasă din 48 de lipiri jucate în Word-ul real prin COM (8 texte × 6 locuri:
+       LearningHub/lectii/vii/m1-l05/_proba/cazuri_word.json, 0 diferențe cu proba_sim_vs_word.js; închide și R28-1 pe 365).
+       La început: spațiul de la începutul textului lipit cade la început de paragraf sau după un spațiu; textul care începe
+       cu literă / cifră primește un spațiu după orice alt semn decât spațiu, Tab și ( [ { „ “ « ". La capăt: textul care se
+       termină cu literă / cifră și e urmat de literă / cifră primește un spațiu (după punct NU: „8.Aduceți”); spațiul de la
+       capătul lui cade la capăt de paragraf, înaintea . , ; : ! ? și înaintea unui spațiu, dacă e după literă.
+       word2007: [DEDUS] aceeași regulă — „Use smart cut and paste” e o singură opțiune (Options › Advanced), iar ștergerea
+       inteligentă (stergeSelectia) era deja aceeași pe ambele profiluri; n-avem Word 2007 jucat (R26O-5, de_capturat.md). */
+    const DESCHIDE_SP = /[(\[{„“«"]/;
+    function lipireInteligenta(pos, text, f) {
+      const L = pos <= 0 ? '' : textIntre(pos - 1, pos), R = textIntre(pos, pos + 1);
+      const capatSt = !L || L === '\r', capatDr = !R || R === '\r';
+      let T = String(text), F = f.slice();
+      const prima = T.split('\r')[0], ultima = T.split('\r').pop(), multe = T.indexOf('\r') >= 0;
+      /* începutul (al primului paragraf din textul lipit) */
+      if (/^ /.test(T)) { if (capatSt || L === ' ') { const n = T.length - T.replace(/^ +/, '').length; T = T.slice(n); F = F.slice(n); } }
+      else if (T && LIT.test(T[0]) && !capatSt && L !== ' ' && L !== '\t' && !DESCHIDE_SP.test(L)) { T = ' ' + T; F.unshift(F[0] || DEF); }
+      /* capătul primului paragraf, când textul are mai multe: rămâne la capăt de paragraf → spațiile de la capăt cad */
+      if (multe && / +$/.test(prima)) {
+        const i = T.indexOf('\r'), sus = T.slice(0, i), n = sus.length - sus.replace(/ +$/, '').length;
+        T = T.slice(0, i - n) + T.slice(i); F.splice(i - n, n);
+      }
+      /* începutul ultimului paragraf: stă la început de paragraf → spațiile de la început cad */
+      if (multe && /^ +/.test(ultima)) {
+        const i = T.lastIndexOf('\r') + 1, n = ultima.length - ultima.replace(/^ +/, '').length;
+        T = T.slice(0, i) + T.slice(i + n); F.splice(i, n);
+      }
+      /* capătul */
+      if (/ $/.test(T)) {
+        const ina = T.replace(/ +$/, '').slice(-1);
+        if (capatDr || /^[.,;:!?]$/.test(R) || (R === ' ' && LIT.test(ina))) { const n = T.length - T.replace(/ +$/, '').length; T = T.slice(0, T.length - n); F = F.slice(0, F.length - n); }
+      } else if (T && LIT.test(T[T.length - 1]) && !capatDr && LIT.test(R)) { T = T + ' '; F.push(F[F.length - 1] || DEF); }
+      return { text: T, f: F };
+    }
     function lipeste(doarText) {
       if (!M.clip) return 'fara_efect';
       if (M.cel) return scrieCelula(M.clip.text.replace(/\r/g, ' '));
       schimba('lipire', () => {
-        if (areSel()) stergeSelectia(false);
-        const sp = spatiuInainte(M.sel.f, M.clip.text);
-        if (sp) { const q = insereaza(M.sel.f, ' ', fmtLa(M.sel.f)); M.sel = { a: q, f: q }; }
-        const pos = insereaza(M.sel.f, M.clip.text, doarText ? fmtLa(M.sel.f) : M.clip.f.map(f => f || DEF));
+        /* lipirea peste o selecție: întâi ștergerea inteligentă (rezultate_word.json › lipire_peste_selectie: „Plecăm luni la
+           munte.”, „luni” selectat, lipit „vineri” → „Plecăm vineri la munte.”; vechiul wordobj.js face la fel) */
+        if (areSel()) stergeSelectia(true);
+        const fBaza = doarText ? M.clip.text.split('').map(() => fmtLa(M.sel.f)) : M.clip.f.map(f => f || DEF);
+        const li = lipireInteligenta(M.sel.f, M.clip.text, fBaza);
+        const pos = insereaza(M.sel.f, li.text, li.f);
         M.sel = { a: pos, f: pos };
       });
       H.rupe();
       gest('lipire', M.clip.text);
       return 'lipire';
+    }
+    /* word-F023: Ctrl+tragere = copia textului selectat lăsată la dest (clipboard-ul rămâne cel de dinainte); spațiile ca la
+       lipire (lipireInteligenta). Selecția de după = textul copiat, ca la mutare. [DEDUS] spațiile la tragere = cele de la lipire */
+    function copiazaTragand(dest) {
+      const a = selMin(), b = Math.min(selMax(), maxCaret());
+      if (dest > a && dest < b) return 'fara_efect';
+      const text = textIntre(a, b), f = fmtIntre(a, b).map(x => x || DEF);
+      schimba('copiere_tragere', () => {
+        const li = lipireInteligenta(dest, text, f);
+        const fin = insereaza(dest, li.text, li.f);
+        M.sel = { a: dest, f: fin };
+      });
+      H.rupe();
+      gest('copiere', text);
+      return 'copiere';
     }
     function muta(dest) {      // tragerea textului selectat
       const a = selMin(), b = Math.min(selMax(), maxCaret());
@@ -865,6 +1023,8 @@
         if ((ctx.cheie === 'dialog.FileSaveAs' || ctx.cheie === 'dialog.FileSaveAs_pdf' || ctx.cheie === 'dialog.open' || ctx.cheie === 'dialog.PictureInsertFromFile' || ctx.cheie === SALVARE_NOUA || ctx.cheie === INTREBARE_INCHIDERE) && n.t === 'Edit' && /^File name/.test(n.e)) return true;
         /* caseta Font Size: „type the size you want in the Font Size box” (support.microsoft.com/en-US/Office/fonts/change-the-font-size) */
         if (/^panglica/.test(ctx.cheie || '') && n.t === 'Edit' && n.e === 'Font Size') return true;
+        /* word-F033: numele fontului se poate scrie în caseta Font + Enter (support.microsoft.com/en-US/Office/fonts: „type a font name”) [DEDUS] */
+        if (/^panglica\.TabHome/.test(ctx.cheie || '') && n.t === 'Edit' && n.e === 'Font') return true;
         if (ctx.cheie === 'dialog.TableInsertDialogWord' && n.t === 'Spinner' && /^Number of/.test(n.e)) return true;
         return false;
       }
@@ -901,6 +1061,42 @@
     const sThumb = el('div', 'lh-ap-der-cursor', { 'data-lh-tip': 'Thumb', 'data-lh-eticheta': '' });
     bara.append(sLineUp, sThumb, sPageDown, sLineDown);
     derulare.appendChild(bara);
+    /* noaptea Word 23.11, banda A (word-F010): bara se mișcă cu documentul, ca în Word. Părțile ei din referință
+       (uia_word.json › zona_document › ScrollBar „Vertical”: Line up, Page up, Thumb, Page down, Line down — „Page up” are
+       dreptunghiul 0×0 când documentul e la început): degetul (Thumb) arată cât din document se vede și unde, se trage cu
+       mouse-ul / degetul; pista de deasupra lui = „Page up” (un ecran în sus), cea de dedesubt = „Page down” (vechiul
+       lectii/_sim/wordobj-interfata.js:422-434: săgețile, pista deasupra / dedesubtul degetului, degetul tras) */
+    const sPageUp = btnDer('Page up', null, 'lh-ap-der-pagina-sus');
+    bara.insertBefore(sPageUp, sThumb);
+    const SAG_DER = 17;
+    function deseneazaDerulare() {
+      const h = bara.clientHeight, pista = Math.max(0, h - 2 * SAG_DER), sh = zona.scrollHeight, ch = zona.clientHeight;
+      if (!h || !pista) return;
+      const fr = sh > ch ? ch / sh : 1;
+      const th = Math.max(Math.min(pista, 20), Math.round(pista * fr));
+      const max = Math.max(0, sh - ch), top = SAG_DER + (max ? Math.round((pista - th) * zona.scrollTop / max) : 0);
+      Object.assign(sThumb.style, { top: top + 'px', height: th + 'px' });
+      Object.assign(sPageUp.style, { top: SAG_DER + 'px', height: Math.max(0, top - SAG_DER) + 'px', display: top > SAG_DER ? '' : 'none' });
+      Object.assign(sPageDown.style, { top: (top + th) + 'px', height: Math.max(0, h - SAG_DER - top - th) + 'px', bottom: 'auto' });
+    }
+    zona.addEventListener('scroll', deseneazaDerulare, { passive: true });
+    window.addEventListener('resize', () => { if (root.isConnected) deseneazaDerulare(); });
+    /* degetul tras: documentul se derulează proporțional (pista liberă ↔ partea nevăzută a documentului) */
+    let tragDeget = null;
+    sThumb.addEventListener('pointerdown', e => {
+      if (e.button) return;
+      e.preventDefault();
+      tragDeget = { y: e.clientY, top: zona.scrollTop, id: e.pointerId };
+      try { sThumb.setPointerCapture(e.pointerId); } catch (x) { /* */ }
+    });
+    sThumb.addEventListener('pointermove', e => {
+      if (!tragDeget) return;
+      const pista = bara.clientHeight - 2 * SAG_DER - sThumb.offsetHeight, max = zona.scrollHeight - zona.clientHeight;
+      if (pista > 0 && max > 0) zona.scrollTop = tragDeget.top + (e.clientY - tragDeget.y) * max / pista;
+    });
+    const gataDeget = () => { tragDeget = null; };
+    sThumb.addEventListener('pointerup', gataDeget);
+    sThumb.addEventListener('pointercancel', gataDeget);
     zonaPane.append(zona, derulare);
     zonaSup.appendChild(zonaPane);
 
@@ -910,6 +1106,68 @@
     josIn.appendChild(stare);
     jos.appendChild(josIn);
     root.append(sus, zonaSup, jos);
+    /* ---- noaptea Word 23.11, banda A (word-F024, F025, F009, F016, F074, F076; hotarari_dirijor.md pct. 1): bara de taste
+       pentru deget, SUB fereastra Word, în rădăcina aplicației (`data-lh-ajutor="taste"`). Nu e în Word-ul real: elevul de la
+       tabla cu atingere / de pe telefon n-are tastatură, iar simulatoarele vechi aveau butoanele (lectii/_sim/wordobj.js:419
+       „Ctrl+Z”, wordobj-interfata.js:191-193 „Ctrl+Y”, „←”, „→”, „Shift+←”, „Shift+→”, wordfisier.js:397 „Ctrl+N”, „Ctrl+S”).
+       Apare doar pe ecranele cu atingere sau când gazda o cere (continut.taste = true); pe calculatorul cu tastatură nu ocupă
+       loc. Butonul trimite EXACT tasta (același keydown pe intrarea documentului, același drum prin I.la.tasta). Modelul:
+       excel.js (lot 2, excel-a-F021). Rândul de grilă al barei e cel implicit („auto”), deci documentul se micșorează cu ea. */
+    const TASTE_AJUTOR = [['Ctrl+Z', 'z', 'KeyZ', 1], ['Ctrl+Y', 'y', 'KeyY', 1], ['Ctrl+B', 'b', 'KeyB', 1], ['Ctrl+I', 'i', 'KeyI', 1],
+      ['Ctrl+U', 'u', 'KeyU', 1], ['Ctrl+S', 's', 'KeyS', 1], ['Ctrl+N', 'n', 'KeyN', 1], ['Tab', 'Tab', 'Tab'], ['Enter', 'Enter', 'Enter'],
+      ['⌫', 'Backspace', 'Backspace'], ['Delete', 'Delete', 'Delete'], ['Esc', 'Escape', 'Escape'], ['Home', 'Home', 'Home'], ['End', 'End', 'End'],
+      ['←', 'ArrowLeft', 'ArrowLeft'], ['→', 'ArrowRight', 'ArrowRight'], ['↑', 'ArrowUp', 'ArrowUp'], ['↓', 'ArrowDown', 'ArrowDown'],
+      ['Shift+←', 'ArrowLeft', 'ArrowLeft', 0, 1], ['Shift+→', 'ArrowRight', 'ArrowRight', 0, 1]];
+    const NUME_TASTA = { '⌫': 'Backspace' };
+    const tasteCuAtingere = c.taste === true || (c.taste !== false && ((window.matchMedia && window.matchMedia('(pointer: coarse)').matches) || (navigator.maxTouchPoints || 0) > 0));
+    if (tasteCuAtingere) {
+      if (!document.getElementById('lh-ap-word-taste-css')) {
+        const s = document.createElement('style');
+        s.id = 'lh-ap-word-taste-css';
+        s.textContent = '[data-lh-aplicatie="word"] .lh-ap-w-taste{display:flex;flex-wrap:wrap;justify-content:center;gap:3px;padding:4px;background:#2b2b2b;border-top:1px solid #111}' +
+          '[data-lh-aplicatie="word"] .lh-ap-w-tasta{flex:0 0 auto;min-width:40px;height:34px;padding:0 7px;border:1px solid #555;border-radius:4px;background:#3c3c3c;color:#fff;font:600 13px \'Segoe UI\',system-ui,sans-serif;touch-action:manipulation;cursor:pointer}' +
+          '[data-lh-aplicatie="word"] .lh-ap-w-tasta:active{background:#185abd}' +
+          '@media (max-width:480px){[data-lh-aplicatie="word"] .lh-ap-w-taste{gap:2px;padding:3px 2px}[data-lh-aplicatie="word"] .lh-ap-w-tasta{min-width:32px;height:32px;padding:0 4px;font-size:12px;letter-spacing:-.2px}}';
+        document.head.appendChild(s);
+      }
+      const baraTaste = el('div', 'lh-ap-w-taste', { 'data-lh-ajutor': 'taste', role: 'toolbar', 'aria-label': 'Taste' });
+      TASTE_AJUTOR.forEach(([et, key, code, ctrl, shift]) => {
+        const b = el('button', 'lh-ap-w-tasta', { type: 'button', 'data-lh-tasta': key, 'data-lh-eticheta': et, 'aria-label': NUME_TASTA[et] || et, tabindex: '-1' });
+        b.textContent = et;
+        if (ctrl) b.setAttribute('data-lh-ctrl', '1');
+        if (shift) b.setAttribute('data-lh-shift', '1');
+        b.__tasta = { key, code, ctrlKey: !!ctrl, shiftKey: !!shift };
+        baraTaste.appendChild(b);
+      });
+      /* focusul rămâne în document (sau în caseta în care era): apăsarea pe bară nu-l ia */
+      baraTaste.addEventListener('pointerdown', e => { if (e.target.closest('.lh-ap-w-tasta')) e.preventDefault(); });
+      baraTaste.addEventListener('click', e => {
+        const b = e.target.closest('.lh-ap-w-tasta');
+        if (!b || !b.__tasta) return;
+        /* focusul într-o casetă a aplicației (File name, Font Size, câmpul unei ferestre) rămâne acolo — tasta merge în caseta
+           aceea, ca de la tastatură; altfel (sau cu o fereastră deschisă fără casetă activă) tasta vine pe intrarea documentului */
+        const ae = document.activeElement;
+        const inCaseta = ae && root.contains(ae) && ae !== intrare && /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName);
+        if (!inCaseta && !(dialog && dialog.el && dialog.el.contains(ae))) I.focus();
+        const tinta = (document.activeElement && root.contains(document.activeElement)) ? document.activeElement : root;
+        tinta.dispatchEvent(new KeyboardEvent('keydown', Object.assign({ bubbles: true, cancelable: true }, b.__tasta)));
+        tinta.dispatchEvent(new KeyboardEvent('keyup', Object.assign({ bubbles: true, cancelable: true }, b.__tasta)));
+      });
+      root.appendChild(baraTaste);
+      root.classList.add('lh-ap-w-cu-taste');
+      /* straturile (ferestrele, Backstage: .lh-ap-strat, inset 0) se opresc deasupra barei: cu o fereastră deschisă, Esc / Enter /
+         Tab din bară rămân de atins (pe telefon „Save this file” acoperea bara) */
+      const inaltBara = () => { if (root.isConnected) root.style.setProperty('--lh-ap-w-taste-h', baraTaste.offsetHeight + 'px'); };
+      if (!document.getElementById('lh-ap-word-taste-css2')) {
+        const s2 = document.createElement('style');
+        s2.id = 'lh-ap-word-taste-css2';
+        s2.textContent = '[data-lh-aplicatie="word"].lh-ap-w-cu-taste>.lh-ap-strat{bottom:var(--lh-ap-w-taste-h,0px)}';
+        document.head.appendChild(s2);
+      }
+      inaltBara();
+      requestAnimationFrame(inaltBara);
+      window.addEventListener('resize', inaltBara);
+    }
 
     /* ---- filele panglicii */
     const FILE = date.file;
@@ -979,8 +1237,10 @@
         const f = par.f[k] || DEF, inS = cuSel && s0 + k >= a && s0 + k < b;
         let j = k + 1;
         while (j < par.t.length && egal(par.f[j] || DEF, f) && (cuSel && s0 + j >= a && s0 + j < b) === inS) j++;
-        const cls = (f.b ? ' lh-ap-b' : '') + (f.i ? ' lh-ap-i' : '') + (f.u ? ' lh-ap-u' : '') + (inS ? ' lh-ap-sel' : '');
-        html += '<span data-o="' + k + '" class="lh-ap-bucata' + cls + '"' + (f.sz || albastru ? ' style="' + (f.sz ? 'font-size:' + f.sz + 'pt;' : '') + albastru + '"' : '') + '>' + esc(par.t.slice(k, j)) + '</span>';
+        const fnt = (f.fn ? 'font-family:' + esc(JSON.stringify(f.fn).replace(/"/g, "'")) + ',sans-serif;' : '') + (f.cl ? 'color:' + f.cl + ';' : '');   // word-F033 / F036
+        const cls = (f.b ? ' lh-ap-b' : '') + (f.i ? ' lh-ap-i' : '') + (f.u ? ' lh-ap-u' : '') + (inS ? ' lh-ap-sel' : '') +
+          (f.st ? ' lh-ap-stil-' + f.st.replace(/\s+/g, '-').toLowerCase() : '');   // word-F046: stilul de caractere
+        html += '<span data-o="' + k + '" class="lh-ap-bucata' + cls + '"' + (f.sz || albastru || fnt ? ' style="' + (f.sz ? 'font-size:' + f.sz + 'pt;' : '') + albastru + fnt + '"' : '') + '>' + esc(par.t.slice(k, j)) + '</span>';
         k = j;
       }
       return html;
@@ -1128,7 +1388,7 @@
       const mf = root.querySelector('[data-lh-id-mso="FontSize"] input');
       if (mf && document.activeElement !== mf) mf.value = String(marime(par, f0));
       const ff = root.querySelector('[data-lh-id-mso="Font"] input');
-      if (ff) ff.value = /^Heading|^Title/.test(par.stil) ? 'Calibri Light (Headings)' : 'Calibri (Body)';
+      if (ff && document.activeElement !== ff) ff.value = f0.fn ? f0.fn : /^Heading|^Title/.test(par.stil) ? 'Calibri Light (Headings)' : 'Calibri (Body)';
       /* bara de stare: numărul de cuvinte și zoom-ul (eticheta declarată = textul de pe ecran) */
       const wc = root.querySelector('[data-lh-suprafata="bara_stare"] [data-lh-eticheta^="Word Count"]');
       if (wc) {
@@ -1204,6 +1464,7 @@
         deseneazaPanglica();
       }
       pozitioneazaCaret();
+      deseneazaDerulare();
     }
     I.focus = () => { try { intrare.focus({ preventScroll: true }); } catch (e) { /* */ } pozitioneazaCaret(); };
     intrare.addEventListener('focus', pozitioneazaCaret);
@@ -1869,6 +2130,24 @@
       s.style.left = Math.max(0, Math.min(x - R.left, R.width - r[2])) + 'px';
       s.style.top = Math.max(0, Math.min(y - R.top - dy, R.height - r[3])) + 'px';
       s.contextual = true;
+      /* Noaptea Word 23.11, banda A (word-F020): cu textul copiat din Word, Paste Options are în față „Keep Source Formatting”
+         (lipește cu formatarea copiată, ca Ctrl+V) și „Merge Formatting”, apoi „Keep Text Only”. Referința UIA a fost luată cu
+         clipboard-ul gol de Word (doar „Keep Text Only”). [DEDUS] numele și ordinea: support.microsoft.com/en-us/office/
+         control-the-formatting-when-you-paste-text-20156a41-520e-48a6-8680-fb9ce15bf1d1 („Keep Source Formatting”, „Merge
+         Formatting”, „Keep Text Only”); pictogramele în același rând, câte 32 px (de_capturat.md). Merge Formatting → R12. */
+      const kto = M.clip && s.querySelector('[data-lh-tip="ListItem"][data-lh-eticheta="Keep Text Only"]');
+      if (kto) {
+        const x0 = parseFloat(kto.style.left) || 0;
+        ['Keep Source Formatting', 'Merge Formatting'].forEach((et, k) => {
+          const n = kto.cloneNode(true);
+          n.setAttribute('data-lh-eticheta', et); n.setAttribute('data-lh-tinta', 'meniu:' + et);
+          n.setAttribute('aria-label', et); n.setAttribute('title', et);
+          n.__nod = Object.assign({}, kto.__nod || { t: 'ListItem' }, { e: et });
+          n.style.left = (x0 + k * 32) + 'px';
+          kto.parentNode.insertBefore(n, kto);
+        });
+        kto.style.left = (x0 + 64) + 'px';
+      }
       root.appendChild(s);
       strat = s;
       griComenzi();
@@ -1887,9 +2166,26 @@
         if (document.activeElement !== c) try { c.focus({ preventScroll: true }); } catch (x) { /* */ }
         return 'camp';
       },
+      FontColorPicker: () => puneCuloare(ultimaCuloare),
+      FontColorPicker_Dropdown: elx => {
+        meniuLa(elx.closest('[data-lh-id-mso="FontColorPicker"]') || elx, [{ tinta: 'Automatic', text: 'Automatic', fa: () => puneCuloare(null) }]
+          .concat(CULORI_STD.map(([n, c]) => ({ tinta: n, text: n, fa: () => puneCuloare(c) }))));
+        return 'meniu_culoare';
+      },
+      /* word-F033: săgeata casetei Font → lista fonturilor; caseta → focusul în ea (numele scris + Enter, în I.la.tasta) */
+      Font: elx => {
+        const c = elx.querySelector('input');
+        if (!c) { meniuLa(elx.closest('[data-lh-id-mso="Font"]') || elx, FONTURI.map(f => ({ tinta: f, text: f, fa: () => puneFont(f) }))); return 'meniu_font'; }
+        if (document.activeElement !== c) try { c.focus({ preventScroll: true }); } catch (x) { /* */ }
+        return 'camp';
+      },
       AlignLeft: () => aliniaza('stanga'), AlignCenter: () => aliniaza('centru'), AlignRight: () => aliniaza('dreapta'),
       AlignJustifyMenu: () => aliniaza('stanga-dreapta'),
       BulletsGalleryWord: () => lista('marcatori'), NumberingGalleryWord: () => lista('numerotare'),
+      /* noaptea Word 23.11, banda A (word-F045): Home › Paragraph › Show/Hide ¶ comută semnele de paragraf (desenate de
+         `.lh-ap-semne .lh-ap-par::after`, butonul apăsat din actualizeazaPanglica); nu e o operație de anulat. Punctele pentru
+         spații nu sunt desenate (ar cere noduri în paragraf, capcana 9) */
+      ParagraphMarks: () => { M.semne = !M.semne; return M.semne ? 'arata_semne' : 'ascunde_semne'; },
       Paste: () => lipeste(false), Cut: () => decupeaza(), Copy: () => copiaza(),
       FontDialog: () => (deschideDialog('dialog.FontDialog') && 'dialog_font'),
       ParagraphDialog: () => (paragrafDialog() && 'dialog_paragraf'),
@@ -1938,11 +2234,13 @@
         return r;
       }
       /* galeria de stiluri din panglică: un stil = clic pe dala lui; săgeata „Styles” deschide galeria întreagă */
-      if (/^meniu:/.test(tinta) && elx.closest('[data-lh-id-mso="QuickStylesGallery"]')) return stil(tinta.slice(6));
+      /* noaptea Word 23.11, banda A (word-F046): desenul se face acum (stilul se vedea abia la următoarea tastă, capcana 4) */
+      if (/^meniu:/.test(tinta) && elx.closest('[data-lh-id-mso="QuickStylesGallery"]')) { const r = stil(tinta.slice(6)); actualizeaza(); return r; }
       if (n.t === 'Button' && n.e === 'Styles' && elx.closest('[data-lh-id-mso="QuickStylesGallery"]')) { galerieStiluri(elx); return 'galerie_stiluri'; }
       if (elx.__fa) { const r = elx.__fa(); inchideMeniu(); actualizeaza(); return r; }
       if (strat && strat.contextual && strat.contains(elx)) {
         if (n.e === 'Keep Text Only') { inchideMeniuContextual(); return lipeste(true); }
+        if (n.e === 'Keep Source Formatting') { inchideMeniuContextual(); return lipeste(false); }   // word-F020
       }
       let et = String(n.e || tinta.replace(/^[a-z_]+:/, '')).replace(/^.*\//, '');
       if (/^(Open|More Options)$/.test(n.e || '')) {     // săgeata unei liste: mesajul numește comanda, nu „More Options”
@@ -1994,7 +2292,28 @@
         const a = selMin(), b = selMax();
         if ((pos >= a && pos < b) || (a === b - 1 && pos === a)) { ancora = { mutare: true }; return 'tragere'; }
       }
-      if (numarClic === 2) { const w = cuvantCuSpatii(pos); M.sel = { a: w.a, f: w.b }; ancora = { cuvant: w }; }
+      /* word-F015: Ctrl+clic = propoziția (până la . ! ? urmat de spațiu sau de capăt, cu spațiile de după) — vechiul
+         lectii/_sim/wordobj.js:96 unitPropozitie, probat în Word real prin COM (LearningHub/lectii/vii/m1-l05/_proba/
+         rezultate_word.json › expand_propozitie_paragraf: „Mâine vine vine și echipa de la Bicaz. ”) */
+      if (numarClic === 1 && (e.ctrlKey || e.metaKey) && !e.shiftKey) {
+        const i = loc(pos).i, s0 = inceput(i), t = M.P[i].t, o = pos - s0;
+        let a = 0, b = t.length;
+        for (let k = 0; k < t.length; k++) {
+          if (/[.!?]/.test(t[k]) && (k + 1 >= t.length || t[k + 1] === ' ' || /[.!?]/.test(t[k + 1]))) {
+            let x = k + 1;
+            while (x < t.length && /[.!?]/.test(t[x])) x++;
+            while (x < t.length && t[x] === ' ') x++;
+            if (o < x) { b = x; break; }
+            a = x; k = x - 1;
+          }
+        }
+        M.sel = { a: s0 + a, f: s0 + b };
+        ancora = null; selDublu = null;
+        actualizeaza();
+        return 'selectie';
+      }
+      selDublu = null;
+      if (numarClic === 2) { const w = cuvantCuSpatii(pos); M.sel = { a: w.a, f: w.b }; ancora = { cuvant: w }; selDublu = { a: w.a, f: w.b }; }
       else if (numarClic === 3) { const i = loc(pos).i, s0 = inceput(i); M.sel = { a: s0, f: s0 + M.P[i].t.length + 1 }; ancora = null; }
       else { M.sel = { a: pos, f: pos }; ancora = { pos }; }
       actualizeaza();
@@ -2023,7 +2342,9 @@
       if (g === 'tragere' && ancora && ancora.mutare) {
         ancora = null;
         if (!eInDocument(document.elementFromPoint(e.clientX, e.clientY) || zona)) return 'fara_efect';
-        const r = muta(clamp(pozDinPunct(e.clientX, e.clientY)));
+        /* word-F023: Ctrl ținut la eliberare = copiere (originalul rămâne; vechiul lectii/_sim/wordobj.js:19, :874 „Ctrl ținut
+           la eliberare = copiere; clipboardul nu se schimbă”) */
+        const r = (e.ctrlKey || e.metaKey) ? copiazaTragand(clamp(pozDinPunct(e.clientX, e.clientY))) : muta(clamp(pozDinPunct(e.clientX, e.clientY)));
         actualizeaza();
         return r;
       }
@@ -2118,7 +2439,7 @@
       if (fel === 'camp') return 'camp';
       if (dialog && dialog.strat.contains(elx)) return I.nesimulat(v);
       if (fel === 'zoom') return zoomClic(elx, e, v);
-      if (fel === 'bara_derulare') { zona.scrollBy({ top: v === 'Line up' ? -40 : v === 'Line down' ? 40 : zona.clientHeight * 0.9 }); return 'derulare'; }
+      if (fel === 'bara_derulare') { zona.scrollBy({ top: v === 'Line up' ? -40 : v === 'Line down' ? 40 : (v === 'Page up' ? -1 : 1) * zona.clientHeight * 0.9 }); deseneazaDerulare(); return 'derulare'; }
       /* fără document, comenzile panglicii sunt gri în Word real (com_r5.json › activ_fara_document) → fără efect, fără
          mesajul „funcționează” (critic 5, GRAV T5; înainte: mesajul central, critic runda 4) */
       if (fel === 'panglica' || fel === 'meniu_derulant' || fel === 'lansator' || fel === 'meniu') return M.deschis ? apasa(elx, tinta) : 'indisponibil';
@@ -2214,6 +2535,31 @@
       interlinie(m[1] === '1' ? 1 : m[1] === '2' ? 2 : 1.5);
       actualizeaza();
     }, true);
+    /* noaptea Word 23.11, banda A: Ctrl+Shift+> / Ctrl+Shift+< (word-F035, Grow / Shrink Font) și Ctrl+Space (word-F037, scoate
+       formatarea caracterelor: aldin, cursiv, subliniat, mărime, font, culoare, stilul de caractere). gestTasta nu face gest din
+       ele (nu sunt litere), deci le luăm pe rădăcină, în faza de captură, ca Ctrl+1/2/5. Sursa: vechiul
+       lectii/_sim/wordobj-formatare.js:717 (Ctrl+Shift+> / <) și `reset`; [DEDUS] rândurile din support.microsoft.com ›
+       Keyboard shortcuts in Word („Increase the font size. | Ctrl+Shift+>”, „Remove manual character formatting. |
+       Ctrl+Spacebar”, de_capturat.md A1-9) */
+    root.addEventListener('keydown', e => {
+      if (!e.ctrlKey || e.altKey || e.metaKey || !M.deschis || dialog || backstage) return;
+      if (e.target && e.target.closest && e.target.closest('input,select') ) return;
+      let r = null;
+      if (e.shiftKey && (e.code === 'Period' || e.key === '>')) r = marimeFont(1);
+      else if (e.shiftKey && (e.code === 'Comma' || e.key === '<')) r = marimeFont(-1);
+      else if (!e.shiftKey && (e.code === 'Space' || e.key === ' ')) {
+        const iv = intervalFormat();
+        if (iv) { schimba('format', () => aplica(iv.a, iv.b, () => DEF)); H.rupe(); r = 'scoate_format_caractere'; }
+        else { M.fmtIns = DEF; r = 'scoate_format_caractere'; }
+      }
+      if (!r) return;
+      e.preventDefault();
+      e.stopPropagation();
+      gest('comanda', e.code === 'Space' ? 'Ctrl+Space' : e.shiftKey && (e.code === 'Period' || e.key === '>') ? 'Ctrl+Shift+>' : 'Ctrl+Shift+<');
+      const ins = M.fmtIns;
+      actualizeaza();
+      M.fmtIns = ins;
+    }, true);
     I.la.tasta = (e, g, inCamp) => {
       /* Enter într-o fereastră apasă butonul ei implicit: Save (Save As, „Save this file”, „Save your changes…”) */
       const activatEnter = () => !dialog ? null : (dialog.baza === 'dialog.FileSaveAs' || dialog.baza === SALVARE_NOUA) ? 'dialog_salvare:Save' :
@@ -2276,6 +2622,7 @@
       if (inCamp) {
         if (dialog && e.key === 'Escape') { inchideDialog(); return 'anulare'; }
         if (e.key === 'Enter' && e.target.closest && e.target.closest('[data-lh-id-mso="FontSize"]')) { e.preventDefault(); return marimeScrisa(e.target); }
+        if (e.key === 'Enter' && e.target.closest && e.target.closest('[data-lh-id-mso="Font"]')) { e.preventDefault(); return puneFont(e.target.value); }   // word-F033
         /* Alt+↓ deschide lista casetei (support.microsoft.com/en-us/office/keyboard-shortcuts-in-word-95ef89dd-7142-4b50-
            afb2-f762f663ceb2: „Open the menu for the selected button. | Alt+Down arrow key”); rândurile ei: uia_word.json ›
            lista.FontSize. În Save As, caseta Save as type are același gest (referința: Button „Deschidere”, tasta_acces
@@ -2345,8 +2692,8 @@
         /* support.microsoft.com/en-us/office/keyboard-shortcuts-in-word-95ef89dd-7142-4b50-afb2-f762f663ceb2 (citit 21.11.2026),
            „Edit text and graphics”: „Delete one word to the left. | Ctrl+Backspace”, „Delete one word to the right. | Ctrl+Delete”
            (runda 28, unghiul gest_tastatura: Ctrl+Backspace ștergea o literă) */
-        case 'tasta_backspace': e.preventDefault(); r = e.ctrlKey && !M.cel && !areSel() ? stergeCuvant(-1) : backspace(); if (r && r !== 'fara_efect') gest('sters', 'inainte'); break;
-        case 'tasta_delete': e.preventDefault(); r = e.ctrlKey && !M.cel && !areSel() ? stergeCuvant(1) : del(); if (r && r !== 'fara_efect') gest('sters', 'dupa'); break;
+        case 'tasta_backspace': e.preventDefault(); r = e.ctrlKey && (M.cel || !areSel()) ? stergeCuvant(-1) : backspace(); if (r && r !== 'fara_efect') gest('sters', 'inainte'); break;
+        case 'tasta_delete': e.preventDefault(); r = e.ctrlKey && (M.cel || !areSel()) ? stergeCuvant(1) : del(); if (r && r !== 'fara_efect') gest('sters', 'dupa'); break;
         case 'tasta_tab': {
           e.preventDefault();
           /* Tab la începutul paragrafului (fără selecție, nu în tabel): retragerea primei linii, nu un caracter Tab */
@@ -2407,6 +2754,20 @@
         /* Ctrl+W: „Close the document. | Ctrl+W” (support.microsoft.com/en-us/office/keyboard-shortcuts-in-word-95ef89dd-
            7142-4b50-afb2-f762f663ceb2); modificat → „Save your changes to this file?” (scenarii_real/word-ctrl-w-nesalvat.json) */
         case 'ctrl_n': r = documentNou(); break;
+        /* noaptea Word 23.11, banda A (word-F039): Ctrl+M / Ctrl+Shift+M = Increase / Decrease Indent (câte 1,25 cm, ca butoanele):
+           support.microsoft.com/en-us/office/keyboard-shortcuts-in-word-95ef89dd-7142-4b50-afb2-f762f663ceb2, „Format
+           paragraphs” [DEDUS] textul rândului: „Indent the paragraph. | Ctrl+M”, „Remove a paragraph indent. | Ctrl+Shift+M” */
+        case 'ctrl_m': r = indenteaza(PAS_RETRAGERE); break;
+        /* word-F044: Ctrl+Q scoate formatarea paragrafului (alinierea, retragerile, spațierea) — înapoi la a stilului.
+           [DEDUS] rândul sursei: „Remove paragraph formatting. | Ctrl+Q” (Keyboard shortcuts in Word); listele rămân */
+        case 'ctrl_q': {
+          const idx = paragrafeSel();
+          schimba('format', () => idx.forEach(i => { M.P[i].al = 'stanga'; M.P[i].pf = null; }));
+          H.rupe();
+          r = 'scoate_format_paragraf';
+          break;
+        }
+        case 'ctrl_shift_m': r = indenteaza(-PAS_RETRAGERE); break;
         case 'ctrl_w': r = cerereInchidere('ctrlw'); break;
         case 'tasta_esc': r = 'fara_efect'; break;
         case 'tasta_windows': r = 'fara_efect'; break;
