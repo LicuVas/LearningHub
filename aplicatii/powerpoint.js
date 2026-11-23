@@ -41,6 +41,18 @@
   function creeaza(I, c) {
     const root = I.root, date = I.date, pang = L._module.panglica, esc = pang.esc, clona = L._clona;
     const SUP = date.suprafete, ZR = ((date.zona || {}).desktop || {}).r || [1, 181, 1364, 564];
+    /* F045: tema Retrospect în Design › Themes — lectii/vi/m1-l06/surse.md:39 („e instalată aici”, cerută la atelierul m1-l06);
+       captura galeriei (DataGrid Themes) are doar 19 dale. Locul ei (după Mesh) și fonturile/culorile ei: [DEDUS] (de_capturat.md) */
+    (function adaugaRetrospect(n) {
+      if (!n) return;
+      if (n.t === 'DataGrid' && n.e === 'Themes' && Array.isArray(n.c) && n.c.length) {
+        if (n.c.some(x => x.e === 'Retrospect')) return;
+        const u = n.c[n.c.length - 1];
+        n.c.push(Object.assign({}, u, { e: 'Retrospect', r: [u.r[0] + u.r[2], u.r[1], u.r[2], u.r[3]] }));
+        return;
+      }
+      (n.c || []).forEach(adaugaRetrospect);
+    })(SUP['panglica.TabDesign']);
     /* F077: pictogramele barei Acces rapid lipsesc din date (date/powerpoint.json › fara_icoana: FileSave, Undo, RedoOrRepeat) →
        Fluent UI System Icons (Microsoft, MIT), @fluentui/svg-icons@1.1.343 (save, arrow_undo, arrow_redo) — aceleași căi ca la
        excel.js › ICO_QAT (aceeași sursă și versiune ca _cercetare/office_comenzi/icoane_build.py) */
@@ -125,6 +137,8 @@
     /* fundalul implicit: alb plin — panou.LaunchFormatBackground#Solid fill arată „Fill Color RGB(255, 255, 255)” (acoperire_r11);
        tipul „solid” al fundalului NEatins de elev = [presupus] R12-7 */
     const FUNDAL_IMPLICIT = { tip: 'solid', culoare: '#FFFFFF' };
+    /* F045: fundalul diapozitivului fara fundal pus de mana = al temei (TEME_INFO, mai jos) */
+    const fundalTema = () => ({ tip: 'solid', culoare: temaInfo().fond });
     const felForma = f => (f.tip === 'tabel' ? 'tabel' : f.tip === 'imagine' ? 'imagine' : f.tip === 'caseta' ? 'caseta_text' : f.tip === 'forma' ? 'forma' : 'substituent');
     const inst = () => clona({ dia: M.dia, activ: M.activ, tema: M.tema });
     function puneInst(x) { M.dia = x.dia; M.activ = Math.min(x.activ, M.dia.length - 1); M.tema = x.tema; sel = null; }
@@ -193,10 +207,26 @@
     }
     /* fontul: numele din lista Font ▾ (Theme Fonts: „Calibri Light (Headings)”, „Calibri (Body)”); fără font ales, titlul are fontul
        titlurilor temei, restul fontul corpului ([presupus] R13-2: tema Office din referința lista.Font › Theme Fonts) */
-    const fontImplicit = f => (f.tip === 'titlu' ? 'Calibri Light (Headings)' : 'Calibri (Body)');
+    /* F033/F045: fonturile, fundalul și culoarea literelor fiecărei teme. Office Theme = referința (lista.Font › Theme Fonts,
+       FUNDAL_IMPLICIT, culoareText). Celelalte [DEDUS] (de_capturat.md, runda 2: Design › Themes › Ion, apoi caseta Font și
+       Format Background). Fontul temei e o LEGĂTURĂ: „… (Headings)” / „… (Body)” pus pe text se citește mereu cu fonturile temei
+       de acum (rezolvaFont), așa că o temă nouă îl schimbă, iar un font din All Fonts rămâne. */
+    const TEME_INFO = {
+      'Office Theme': { h: 'Calibri Light', b: 'Calibri', fond: '#FFFFFF', text: '#000000' },
+      Ion: { h: 'Century Gothic', b: 'Century Gothic', fond: '#1A6A6F', text: '#FFFFFF' },
+      'Dark Gradient': { h: 'Calibri Light', b: 'Calibri', fond: '#3A3A3A', text: '#FFFFFF' }
+    };
+    const temaInfo = () => TEME_INFO[M.tema] || TEME_INFO['Office Theme'];
+    const rezolvaFont = n => {
+      const s = String(n || ''), t = temaInfo();
+      if (/ \(Headings\)$/.test(s)) return t.h + ' (Headings)';
+      if (/ \(Body\)$/.test(s)) return t.b + ' (Body)';
+      return n;
+    };
+    const fontImplicit = f => (f.tip === 'titlu' ? temaInfo().h + ' (Headings)' : temaInfo().b + ' (Body)');
     function fontText(f) {
-      for (let p = 0; p < f.text.length; p++) if (f.text[p] !== '\n') return fmLa(f, p).f || f.font || fontImplicit(f);
-      return f.font || fontImplicit(f);
+      for (let p = 0; p < f.text.length; p++) if (f.text[p] !== '\n') return rezolvaFont(fmLa(f, p).f || f.font || fontImplicit(f));
+      return rezolvaFont(f.font || fontImplicit(f));
     }
     const numeFontCom = n => String(n || '').replace(/ \((Headings|Body)\)$/, '');
     /* umplerea: forma din Shapes = Accent 1 (#4472C4, c_shape_fill_outline › stea_la_inceput), casetele = fără umplere */
@@ -233,7 +263,7 @@
            (indicele formei, de la 1, în ordinea din Animation Pane); umplerea fundalului fiecărui diapozitiv */
         durata_tranzitie: M.dia.map(d => Math.round((d.durata != null ? d.durata : 2) * 100) / 100),
         ordine_animatii: D() ? D().animatii.map(a => a.s + 1) : [],
-        fundal_diapozitive: M.dia.map(d => clona(d.fundal || FUNDAL_IMPLICIT)),
+        fundal_diapozitive: M.dia.map(d => clona(d.fundal || fundalTema())),
         /* Format Background › Hide background graphics, pe fiecare diapozitiv (cheie nouă la nivelul de sus) */
         grafica_fundal_ascunsa: M.dia.map(d => !!d.faraGrafica),
         /* Outline View: panoul din stânga arată schița în loc de miniaturi (cheie nouă la nivelul de sus) */
@@ -346,7 +376,7 @@
           e.appendChild(hd);
         }
         if (/^panou\.LaunchFormatBackground/.test(ctx.cheie || '') && n.t === 'MenuItem' && /^Fill Color/.test(n.e || '')) {
-          const c = ((D() && D().fundal) || FUNDAL_IMPLICIT).culoare || '#FFFFFF';
+          const c = ((D() && D().fundal) || fundalTema()).culoare || '#FFFFFF';
           const et = 'Fill Color RGB(' + [1, 3, 5].map(i => parseInt(c.slice(i, i + 2), 16)).join(', ') + ')';
           e.setAttribute('data-lh-eticheta', et);
           e.setAttribute('aria-label', et);
@@ -481,7 +511,8 @@
       const c = numeFontCom(n).replace(/'/g, '');
       return /^Calibri( Light)?$/i.test(c) ? "'" + c + "',Carlito,sans-serif" : "'" + c + "','Segoe UI',sans-serif";
     };
-    const stilFmt = (f, x, z) => 'font-size:' + marimeLa(f, x) * z + 'px;' + ((x.f || f.font) ? 'font-family:' + stivaFont(x.f || f.font) + ';' : '') + (x.b ? 'font-weight:700;' : 'font-weight:400;') + (x.c ? 'color:' + x.c + ';' : '') +
+    const fontDesen = (f, x) => (x.f || f.font) ? rezolvaFont(x.f || f.font) : temaInfo() !== TEME_INFO['Office Theme'] ? fontImplicit(f) : null;
+    const stilFmt = (f, x, z) => 'font-size:' + marimeLa(f, x) * z + 'px;' + (fontDesen(f, x) ? 'font-family:' + stivaFont(fontDesen(f, x)) + ';' : '') + (x.b ? 'font-weight:700;' : 'font-weight:400;') + (x.c ? 'color:' + x.c + ';' : '') +
       (x.i ? 'font-style:italic;' : '') + (x.u ? 'text-decoration:underline;' : '');
     const AL_CSS = { Left: 'left', Centered: 'center', Right: 'right', Justified: 'justify', Distributed: 'justify' };
     function htmlText(f, cuSel, z) {
@@ -686,6 +717,27 @@
         mini.appendChild(r);
       });
     }
+    /* F006: locul în care cade miniatura trasă (indicele de inserare, înainte de scoaterea ei) și linia orizontală care îl arată,
+       între două miniaturi, în panoul vertical (PowerPoint desenează o bară subțire între miniaturi; grosimea/culoarea [DEDUS]) */
+    const TINERE_MS = 350;
+    function locMini(y) {
+      const rs = [...mini.querySelectorAll('.lh-ap-p-mini')];
+      const k = rs.findIndex(r => { const b = r.getBoundingClientRect(); return y < b.top + b.height / 2; });
+      return k < 0 ? rs.length : k;
+    }
+    let linieLoc = null;
+    function liniaLoc(y) {
+      if (y == null) { if (linieLoc) { linieLoc.remove(); linieLoc = null; } return; }
+      const rs = [...mini.querySelectorAll('.lh-ap-p-mini')];
+      if (!rs.length) return;
+      const k = locMini(y), bm = mini.getBoundingClientRect();
+      const ref = rs[Math.min(k, rs.length - 1)].getBoundingClientRect();
+      const sus = k < rs.length ? ref.top - 7 : ref.bottom + 5;
+      if (!linieLoc || !linieLoc.isConnected) { linieLoc = el('div', 'lh-ap-p-loc', { 'aria-hidden': 'true' }); mini.appendChild(linieLoc); }
+      linieLoc.style.cssText = 'top:' + (sus - bm.top + mini.scrollTop) + 'px;left:' + (ref.left - bm.left) + 'px;width:' + ref.width + 'px';
+    }
+    /* cu degetul: miniaturile au touch-action:none (aplicatii.css), ca browserul să nu fure gestul pentru derulare (pointercancel);
+       glisarea rapidă derulează panoul de mână (I.la.misca), iar după TINERE_MS ținut pe loc mișcarea trage diapozitivul */
     function actualizeazaBare() {
       if (elTitlu) { elTitlu.firstChild.textContent = titlu(); elTitlu.setAttribute('data-lh-eticheta', titlu()); }
       /* fără prezentare / fără diapozitive (diapozitiv_activ null) indicatorul rămâne gol, nu „Slide 1 of 0” (MINOR critic 12 §7;
@@ -926,6 +978,15 @@
       const r = listaRef('lista.Font', anc, 'font');
       if (!meniu || r !== 'meniu_derulant') return r;
       const rs = [...meniu.querySelectorAll('[data-lh-tip="ListItem"]')], ult = rs[rs.length - 1];
+      /* F033: rândurile Theme Fonts poartă fonturile temei de acum (captura = Office Theme) */
+      rs.forEach(x => {
+        const v0 = x.getAttribute('data-lh-eticheta') || '', n = rezolvaFont(v0);
+        if (n === v0 || !/ \((Headings|Body)\)$/.test(v0)) return;
+        x.setAttribute('data-lh-eticheta', n); x.setAttribute('aria-label', n); x.setAttribute('data-lh-tinta', 'meniu:' + n);
+        const t = x.querySelector('.lh-ap-text');
+        if (t) t.textContent = n; else x.textContent = n;
+        x.__nod = Object.assign({}, x.__nod || { t: 'ListItem' }, { e: n });
+      });
       const are = new Set(rs.map(x => x.getAttribute('data-lh-eticheta')));
       if (ult) {
         const y0 = parseFloat(ult.style.top) || 0, pas = rs.length > 1 ? (y0 - (parseFloat(rs[rs.length - 2].style.top) || 0)) || 26.4 : 26.4;
@@ -955,7 +1016,7 @@
     function fontAfisat() {
       const f = formaSel();
       if (!f || !textual(f)) return '';
-      if (sel.edit) { const a = Math.min(sel.a, sel.b); return (sel.ins && sel.ins.f) || fmLa(f, Math.max(0, Math.min(f.text.length - 1, a))).f || f.font || fontImplicit(f); }
+      if (sel.edit) { const a = Math.min(sel.a, sel.b); return rezolvaFont((sel.ins && sel.ins.f) || fmLa(f, Math.max(0, Math.min(f.text.length - 1, a))).f || f.font || fontImplicit(f)); }
       return fontText(f);
     }
     function puneFont(n) {
@@ -1067,8 +1128,8 @@
       return rgbHex(h, s2, m[2] === 'Darker' ? l * (1 - k) : l * (1 - k) + k);
     }
     function culoareText(f) {
-      for (let p = 0; p < f.text.length; p++) if (f.text[p] !== '\n') return fmLa(f, p).c || '#000000';
-      return f.culoare || '#000000';
+      for (let p = 0; p < f.text.length; p++) if (f.text[p] !== '\n') return fmLa(f, p).c || temaInfo().text;
+      return f.culoare || temaInfo().text;
     }
     function aplicaCuloare(c) {
       const f = formaSel();
@@ -1552,7 +1613,7 @@
       if (panouLat.cheie === 'panou.LaunchFormatBackground') {
         if (v === 'Solid fill') return variantaFundal('panou.LaunchFormatBackground#Solid fill');
         if (v === 'Color') return listaRef('lista.FormatBackground_Color', elx, 'fundal');
-        if (v === 'Apply to All') { const f = clona((D() && D().fundal) || FUNDAL_IMPLICIT); schimba('fundal_toate', () => M.dia.forEach(d => { d.fundal = clona(f); })); return 'fundal_toate'; }
+        if (v === 'Apply to All') { const f = clona((D() && D().fundal) || fundalTema()); schimba('fundal_toate', () => M.dia.forEach(d => { d.fundal = clona(f); })); return 'fundal_toate'; }
         /* Reset Background: diapozitivul activ ia iar fundalul temei (fundalul pus de mână se scoate). Gri în referință cât
            fundalul n-a fost schimbat (r Reset Background a:0); se aprinde din stareFundalPanou */
         if (v === 'Reset Background') {
@@ -2225,10 +2286,30 @@
       if (notaActiva) { sel = null; M.panou = 'diapozitiv'; deseneaza(); return null; }
       if (eraNota) deseneazaNote();
       if (fel === 'miniatura' && M.vedere === 'sortare') { M.activ = +v - 1; M.panou = 'miniaturi'; sel = null; deseneaza(); return null; }
-      if (fel === 'schita') { M.activ = Math.max(0, Math.min(M.dia.length - 1, (+v || 1) - 1)); M.panou = 'miniaturi'; sel = null; deseneaza(); return null; }
+      if (fel === 'schita') {
+        M.activ = Math.max(0, Math.min(M.dia.length - 1, (+v || 1) - 1)); sel = null;
+        /* G1-1 (critic runda 1): în schiță, clicul pe TEXTUL unui rând (titlul sau un rând de conținut) = cursorul la capătul acelui
+           rând, în caseta diapozitivului: tastarea scrie acolo, Delete / Backspace / Enter / Ctrl+X lucrează pe text, nu pe
+           diapozitiv. Clicul pe număr / pictogramă / locul gol alege diapozitivul întreg (abia atunci Delete îl șterge).
+           [DEDUS] cursorul se vede pe diapozitivul mare, nu în schiță (de_capturat.md, runda 2) */
+        const tg = e.target, peT = tg && tg.closest && tg.closest('.lh-ap-p-schita-t,.lh-ap-p-schita-rand');
+        if (peT) {
+          const d = M.dia[M.activ], tx = d.forme.map((f, s) => ({ f, s })).filter(o => textual(o.f));
+          let o = null, k = 0;
+          if (peT.classList.contains('lh-ap-p-schita-t')) { o = tx.find(x => x.f.tip === 'titlu'); if (o) k = o.f.text.length; }
+          else {
+            const rand = peT.textContent;
+            o = tx.find(x => x.f.tip !== 'titlu' && x.f.tip !== 'caseta' && x.f.text.split('\n').includes(rand));
+            if (o) { const i = ('\n' + o.f.text + '\n').indexOf('\n' + rand + '\n'); k = Math.max(0, i) + rand.length; }
+          }
+          if (o) { M.panou = 'diapozitiv'; sel = { d: M.activ, s: o.s, edit: true, a: k, b: k }; deseneaza(); return null; }
+        }
+        M.panou = 'miniaturi'; deseneaza(); return null;
+      }
       if (fel === 'miniatura') {
         M.activ = +v - 1; M.panou = 'miniaturi'; sel = null; deseneaza();
-        ancora = { mini: M.activ, y0: e.clientY };
+        /* F006: cu degetul, tragerea mută diapozitivul doar după ce ții apăsat (TINERE_MS); o glisare rapidă derulează panoul */
+        ancora = { mini: M.activ, y0: e.clientY, atinge: e.pointerType === 'touch', t0: Date.now() };
         return 'tragere';
       }
       M.panou = 'diapozitiv';
@@ -2265,6 +2346,17 @@
     };
     I.la.misca = (e) => {
       if (!ancora) return;
+      if (ancora.mini != null) {
+        if (ancora.atinge && !ancora.tinut && (ancora.derulat || Date.now() - ancora.t0 < TINERE_MS)) {
+          if (ancora.st0 == null) ancora.st0 = mini.scrollTop;
+          ancora.derulat = true;
+          mini.scrollTop = ancora.st0 - (e.clientY - ancora.y0);
+          return;
+        }
+        ancora.tinut = true;
+        liniaLoc(e.clientY);
+        return;
+      }
       if (ancora.muta) {
         const f = formaSel();
         if (!f) return;
@@ -2282,6 +2374,9 @@
     I.la.sus = (e, j, g) => {
       const an = ancora;
       ancora = null;
+      if (an && an.mini != null) liniaLoc(null);
+      if (an && an.mini != null && an.meniu && !an.tinut && !an.derulat) { meniuContextual('miniatura', an.meniu.x, an.meniu.y); return g ? 'meniu_contextual' : null; }
+      if (an && an.mini != null && an.derulat) return g ? 'derulare' : null;
       if (!g || !an) return null;
       if (an.muta) {
         /* al doilea clic, fără tragere, în interiorul unei casete de text / forme DEJA alese ca obiect = cursorul în textul ei, la
@@ -2303,9 +2398,8 @@
       }
       if (an.text) { deseneaza(); return 'selectare_text'; }
       if (an.mini != null) {
-        const rs = [...mini.querySelectorAll('.lh-ap-p-mini')];
-        let k = rs.findIndex(r => { const b = r.getBoundingClientRect(); return e.clientY < b.top + b.height / 2; });
-        if (k < 0) k = rs.length;
+        liniaLoc(null);
+        let k = locMini(e.clientY);
         if (k > an.mini) k--;
         if (k === an.mini) return 'fara_efect';
         schimba('mutare_diapozitiv', () => { const [d] = M.dia.splice(an.mini, 1); M.dia.splice(k, 0, d); M.activ = k; });
@@ -2419,6 +2513,8 @@
     I.la.dreapta = (tinta, e) => {
       const fel = (tinta || '').split(':')[0], v = (tinta || '').slice(fel.length + 1);
       if (M.expunere || dialog || backstage || faraPrez()) return 'fara_efect';
+      /* F006: degetul ținut pe miniatură poate începe o tragere; meniul vine abia la ridicare, dacă degetul nu s-a mișcat [DEDUS] */
+      if (fel === 'miniatura' && ancora && ancora.mini != null && ancora.atinge) { ancora.meniu = { x: e.clientX, y: e.clientY }; return 'fara_efect'; }
       if (fel === 'miniatura') { M.activ = +v - 1; M.panou = 'miniaturi'; sel = null; deseneaza(); return meniuContextual('miniatura', e.clientX, e.clientY) ? 'meniu_contextual' : 'fara_efect'; }
       if (fel === 'forma' || fel === 'margine_forma') {
         const [d, s] = v.split('/').map(x => +x - 1);
@@ -2481,7 +2577,7 @@
           e.preventDefault();
           if (meniu && meniu.querySelector('.lh-ap-p-tasta') && meniu.querySelector('.lh-ap-p-tasta').getAttribute('data-lh-eticheta') !== fontAfisat()) { const r = navigaLista('Enter'); I.focus(); return r; }
           const tx = String(e.target.value || '').trim().toLowerCase();
-          const toate = ['Calibri Light (Headings)', 'Calibri (Body)'].concat(date.fonturi_toate || []);
+          const toate = [temaInfo().h + ' (Headings)', temaInfo().b + ' (Body)'].concat(date.fonturi_toate || []);
           const n = toate.find(x => x.toLowerCase() === tx) || toate.find(x => numeFontCom(x).toLowerCase() === tx);
           inchideMeniu();
           I.focus();

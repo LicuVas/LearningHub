@@ -364,6 +364,135 @@ v('R1-15 F077 telefon (390x844, atingere): bara de taste — Ctrl+M, F5, →, Es
   } finally { await ctx.close(); }
 });
 
+// ---- runda 2
+async function trage(p, n1, n3, jos = 0.9, liniaCb) {
+  const a = await p.locator(APP + ' ' + mini(n1)).first().boundingBox(), b = await p.locator(APP + ' ' + mini(n3)).first().boundingBox();
+  await p.mouse.move(a.x + a.width / 2, a.y + a.height / 2); await p.mouse.down();
+  await p.mouse.move(b.x + b.width / 2, b.y + b.height * jos, { steps: 8 }); await pauza(150);
+  const r = liniaCb ? await liniaCb() : null;
+  await p.mouse.up(); await pauza(300);
+  return r;
+}
+const nrLinii = p => p.evaluate(app => [...document.querySelectorAll(app + ' .lh-ap-p-loc')].filter(e => e.getBoundingClientRect().height > 0).length, APP);
+async function cdpAtinge(t, x0, y0, x1, y1, tinere) {
+  const cdp = await t.context().newCDPSession(t);
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: x0, y: y0 }] });
+  await pauza(tinere);
+  for (let i = 1; i <= 10; i++) { await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: x0 + (x1 - x0) * i / 10, y: y0 + (y1 - y0) * i / 10 }] }); await pauza(30); }
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  await cdp.detach(); await pauza(350);
+}
+v('R2-01 F006 tragerea 3 -> deasupra lui 1 (sus): linia apare in timpul tragerii, dispare la ridicare; ordinea 3,1,2, ales 1; Ctrl+Z reface', async p => {
+  const t0 = titluri(await stare(p));
+  const linii = await trage(p, 3, 1, 0.1, () => nrLinii(p));
+  if (linii !== 1) return `in timpul tragerii: ${linii} linii de loc (trebuia 1)`;
+  if (await nrLinii(p)) return 'linia de loc ramane dupa ridicare';
+  let st = await stare(p);
+  if (JSON.stringify(titluri(st)) !== JSON.stringify([t0[2], t0[0], t0[1]]) || st.diapozitiv_activ !== 1) return `dupa 3->1: ${JSON.stringify(titluri(st))}, ales ${st.diapozitiv_activ}`;
+  await p.keyboard.press('Control+Z'); await pauza(300);
+  st = await stare(p);
+  if (JSON.stringify(titluri(st)) !== JSON.stringify(t0)) return `Ctrl+Z: ${JSON.stringify(titluri(st))}`;
+  // tragere pe loc (2 peste el insusi): nimic nu se muta, linia dispare
+  await trage(p, 2, 2, 0.5);
+  st = await stare(p);
+  if (JSON.stringify(titluri(st)) !== JSON.stringify(t0) || await nrLinii(p)) return `tragere pe loc: ${JSON.stringify(titluri(st))}`;
+  return true;
+});
+v('R2-02 F006 telefon (390x844, deget): tii apasat + tragi 3 -> sus = mutare; glisare rapida (fara tinere) NU muta; tinerea pe loc nu muta', async p => {
+  const ctx = await p.context().browser().newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+  try {
+    const t = await ctx.newPage();
+    const erori = [];
+    t.on('pageerror', e => erori.push(e.message));
+    await t.goto(p.url(), { waitUntil: 'load' });
+    await t.waitForSelector(APP, { timeout: 15000 }); await pauza(1000);
+    const t0 = titluri(await stare(t));
+    const bb = async n => t.locator(APP + ' ' + mini(n)).first().boundingBox();
+    let a = await bb(3), b = await bb(1);
+    await cdpAtinge(t, a.x + a.width / 2, a.y + a.height / 2, b.x + b.width / 2, b.y + 3, 600);
+    let st = await stare(t);
+    if (JSON.stringify(titluri(st)) !== JSON.stringify([t0[2], t0[0], t0[1]])) return `tinere + tragere 3->sus: ${JSON.stringify(titluri(st))}`;
+    a = await bb(1); b = await bb(3);
+    await cdpAtinge(t, a.x + a.width / 2, a.y + a.height / 2, b.x + b.width / 2, b.y + b.height * 0.9, 0);
+    st = await stare(t);
+    if (JSON.stringify(titluri(st)) !== JSON.stringify([t0[2], t0[0], t0[1]])) return `glisarea rapida a mutat: ${JSON.stringify(titluri(st))}`;
+    if (await nrLinii(t)) return 'linia de loc ramane dupa glisare';
+    a = await bb(2);
+    await cdpAtinge(t, a.x + a.width / 2, a.y + a.height / 2, a.x + a.width / 2, a.y + a.height / 2, 900);
+    // (meniul la tinere nu se poate juca aici: Chrome fara fereastra nu trimite contextmenu la tinerea din CDP)
+    st = await stare(t);
+    if (JSON.stringify(titluri(st)) !== JSON.stringify([t0[2], t0[0], t0[1]])) return `tinerea pe loc a mutat: ${JSON.stringify(titluri(st))}`;
+    return erori.length ? 'erori: ' + erori[0] : true;
+  } finally { await ctx.close(); }
+});
+
+const puneTema = async (p, n) => {
+  await clic(p, '[data-lh-tinta="fila:TabDesign"], [data-lh-eticheta="Design"][data-lh-tip="TabItem"]', 0, { dupa: 400 });
+  await p.evaluate(([app, n]) => document.querySelector(app + ' [data-lh-id-mso="SlideThemesGallery"] [data-lh-eticheta="' + n + '"]').click(), [APP, n]);
+  await pauza(400);
+};
+v('R2-03 F033 fontul temei e legatura: titlul 1 (neatins) si titlul 2 cu „(Headings)” iau Century Gothic sub Ion, titlul 3 cu Arial ramane Arial; lista Font arata „Century Gothic (Headings)”; Ctrl+Z -> Calibri Light', async p => {
+  const font = async (d) => { await clic(p, mini(d)); await clic(p, margine(d, 1)); return (await stare(p)).font_text; };
+  const alegeFont = async n => { await clic(p, mso('Font') + ' input'); await clic(p, '[data-lh-tip="ListItem"]' + et(n), -1); };
+  await clic(p, mini(3)); await clic(p, margine(3, 1)); await alegeFont('Arial');
+  await clic(p, mini(2)); await clic(p, margine(2, 1)); await alegeFont('Calibri Light (Headings)');
+  await puneTema(p, 'Ion');
+  if ((await stare(p)).tema !== 'Ion') return 'tema Ion nu s-a pus';
+  const f = [await font(1), await font(2), await font(3)];
+  if (JSON.stringify(f) !== JSON.stringify(['Century Gothic', 'Century Gothic', 'Arial'])) return `sub Ion: ${JSON.stringify(f)}`;
+  await clic(p, '[data-lh-tinta="fila:TabHome"], [data-lh-eticheta="Home"][data-lh-tip="TabItem"]', 0, { dupa: 300 });
+  await clic(p, mini(2)); await clic(p, margine(2, 1)); await clic(p, mso('Font') + ' input');
+  if (!(await exista(p, '[data-lh-tip="ListItem"]' + et('Century Gothic (Headings)')))) return 'lista Font sub Ion n-are „Century Gothic (Headings)”';
+  await p.keyboard.press('Escape'); await pauza(200);
+  await p.keyboard.press('Control+Z'); await pauza(300);
+  const st = await stare(p);
+  if (st.tema !== 'Office Theme') return `Ctrl+Z: tema ${st.tema}`;
+  if (await font(2) !== 'Calibri Light') return `Ctrl+Z: titlul 2 are ${await font(2)}`;
+  return true;
+});
+v('R2-04 F045 tema Ion: fundalul tuturor diapozitivelor (fara cel pus de mana) si literele se schimba; fundalul pus de mana pe 3 ramane; Ctrl+Z le reface', async p => {
+  const s0 = await stare(p);
+  await deschideFundal(p, 3);
+  await clic(p, et('Solid fill'), -1);
+  await clic(p, '[data-lh-eticheta^="Fill Color"]', -1);
+  await clic(p, '[data-lh-tip="ListItem"]' + et('Yellow'), -1);
+  const manual = (await stare(p)).fundal_diapozitive[2];
+  await p.keyboard.press('Escape'); await pauza(200);
+  await puneTema(p, 'Ion');
+  const st = await stare(p);
+  if (st.tema !== 'Ion') return 'tema Ion nu s-a pus';
+  if (st.fundal_diapozitive[0].culoare !== '#1A6A6F' || st.fundal_diapozitive[1].culoare !== '#1A6A6F') return `fundaluri sub Ion: ${JSON.stringify(st.fundal_diapozitive)}`;
+  if (JSON.stringify(st.fundal_diapozitive[2]) !== JSON.stringify(manual)) return `fundalul pus de mana s-a schimbat: ${JSON.stringify(st.fundal_diapozitive[2])} (era ${JSON.stringify(manual)})`;
+  await clic(p, mini(1)); await clic(p, margine(1, 1));
+  if ((await stare(p)).culoare_text !== '#FFFFFF') return `literele sub Ion: ${(await stare(p)).culoare_text}`;
+  await p.keyboard.press('Control+Z'); await pauza(300);
+  const s2 = await stare(p);
+  if (s2.tema !== s0.tema || s2.fundal_diapozitive[0].culoare !== '#FFFFFF') return `Ctrl+Z: tema ${s2.tema}, fundal ${JSON.stringify(s2.fundal_diapozitive[0])}`;
+  return true;
+});
+
+v('R2-05 G1-1 schita: clic pe textul titlului 2 + „abc” scrie in titlu; Delete / Backspace / Enter nu sterg diapozitivul; Ctrl+Z scoate scrisul; clic pe numarul randului 3 + Delete sterge diapozitivul 3', async p => {
+  await clic(p, '[data-lh-tinta="fila:TabView"], [data-lh-eticheta="View"][data-lh-tip="TabItem"]', 0, { dupa: 300 });
+  await clic(p, et('Outline View'), -1, { dupa: 400 });
+  if (!(await stare(p)).panou_schita) return 'schita nu s-a deschis';
+  const t0 = titluri(await stare(p));
+  await clic(p, '[data-lh-tinta="schita"][data-lh-id="2"] .lh-ap-p-schita-t');
+  await p.keyboard.type('abc'); await pauza(300);
+  let st = await stare(p);
+  if (st.diapozitive[1].texte[0] !== t0[1] + 'abc') return `dupa „abc”: titlul 2 = ${JSON.stringify(st.diapozitive[1].texte[0])}`;
+  for (const k of ['Delete', 'Backspace', 'Enter']) { await p.keyboard.press(k); await pauza(200); }
+  st = await stare(p);
+  if (st.diapozitive.length !== 3) return `Delete/Backspace/Enter pe text au schimbat diapozitivele: ${st.diapozitive.length}`;
+  for (let i = 0; i < 4; i++) { await p.keyboard.press('Control+Z'); await pauza(200); }
+  st = await stare(p);
+  if (JSON.stringify(titluri(st)) !== JSON.stringify(t0)) return `Ctrl+Z: ${JSON.stringify(titluri(st))}`;
+  await clic(p, '[data-lh-tinta="schita"][data-lh-id="3"] .lh-ap-p-schita-nr');
+  await p.keyboard.press('Delete'); await pauza(300);
+  st = await stare(p);
+  if (st.diapozitive.length !== 2) return `clic pe numarul 3 + Delete: ${st.diapozitive.length} diapozitive`;
+  return true;
+});
+
 async function main() {
   const srv = await serve();
   const base = `http://127.0.0.1:${srv.address().port}`;
