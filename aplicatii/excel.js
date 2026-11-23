@@ -439,7 +439,7 @@
         const def = FN[t.v];
         /* prea puține argumente: Excel NU primește formula și rămâne în editare (scenarii_real/excel-autocompletare-tab:
            ramane_in_editare true — rezultat neprobat, de_verificat R6-2) */
-        if (def && (args.length < def[0] || args.length > def[1])) throw new Error('argumente');
+        if (def && (args.length < def[0] || args.length > def[1])) throw new Error(args.length > def[1] ? 'argumente_multe' : 'argumente');
         return { k: 'fn', f: t.v, args, cunoscut: !!def };
       }
       throw new Error('neasteptat');
@@ -593,6 +593,21 @@
       SUP[DLG_AV_IMBINARE] = mesajExcel([448, 270, 469, 229], TEXT_AV_IMBINARE, [538, 352, 340, 42],
         [{ t: 'Button', e: 'OK', r: [731, 456, 79, 27] }, { t: 'Button', e: 'Cancel', r: [822, 456, 79, 27] }]);
       date.dialoguri[DLG_AV_IMBINARE] = { titlu: 'Microsoft Excel', file: [{ s: DLG_AV_IMBINARE, fila: null }] };
+    }
+    /* runda 3 (excel-a-F141): Home › Cells › Format › Default Width… (rândul din captura lecției m1-l06/img/SURSE.json ›
+       meniu-format.webp). Fereastra NU e în referință: aceeași formă ca Column Width din referință (dialog.ColumnWidth), cu
+       titlul „Standard Width” și eticheta „Standard column width” [DEDUS: textele și mărimea ferestrei, de_capturat R3-1] */
+    const DLG_LAT_STD = 'dialog.StandardWidth';
+    if (!SUP[DLG_LAT_STD] && SUP['dialog.ColumnWidth']) {
+      SUP[DLG_LAT_STD] = JSON.parse(JSON.stringify(SUP['dialog.ColumnWidth']).replace(/"Column Width"/g, '"Standard Width"').replace(/"Column width"/g, '"Standard column width"').replace(/"ALT\+C"/g, '"ALT+S"'));
+      date.dialoguri[DLG_LAT_STD] = { titlu: 'Standard Width', file: [{ s: DLG_LAT_STD, fila: null }] };
+    }
+    /* runda 3 (excel-b-F068): prea multe argumente (=IF(B2>=5;"a";"b";"c")) = fereastra „You've entered too many arguments for
+       this function.” — aceeași fereastră ca „too few” din referință (dialog.eroare_formula_3), cu „many” [DEDUS: textul, de_capturat R3-5] */
+    const DLG_ARG_MULTE = 'dialog.eroare_formula_multe';
+    if (!SUP[DLG_ARG_MULTE] && SUP['dialog.eroare_formula_3']) {
+      SUP[DLG_ARG_MULTE] = JSON.parse(JSON.stringify(SUP['dialog.eroare_formula_3']).replace(/too few arguments/g, 'too many arguments'));
+      date.dialoguri[DLG_ARG_MULTE] = { titlu: 'Microsoft Excel', file: [{ s: DLG_ARG_MULTE, fila: null }] };
     }
     const MESAJ_FOAIE = { [DLG_STERGE]: TEXT_STERGE, [DLG_REFUZ]: TEXT_REFUZ, [DLG_NUME]: TEXT_NUME, [DLG_LIPIRE]: TEXT_LIPIRE, [DLG_IMBINARE]: TEXT_IMBINARE, [DLG_AV_IMBINARE]: TEXT_AV_IMBINARE };
     /* triunghiul de avertizare al ferestrelor de mai sus (desen propriu, nu o resursă Microsoft — I7) */
@@ -782,7 +797,10 @@
       if (!n.cunoscut) throw ERR('#NAME?');
       if (F2 === 'IF') { const c0 = un(f, A[0]); if (eErr(c0)) throw c0; return num(c0) ? un(f, A[1]) : (A[2] ? un(f, A[2]) : false); }
       if (F2 === 'IFERROR') { try { const v = un(f, A[0]); if (eErr(v)) throw v; return v; } catch (e) { if (eErr(e)) return un(f, A[1]); throw e; } }
-      const V = A.map(a => evalua(f, a));
+      /* runda 3 (excel-b-F070): o parte goală între ; valorează 0 în funcțiile de numărat / adunat (=AVERAGE(9;;7) = 5,33…, ca
+         în Excel și în simulatorul vechi — felii/felie_c.json › excel-b-F070); în celelalte rămâne „lipsă” (null), ca înainte */
+      const GOL0 = /^(SUM|PRODUCT|AVERAGE|AVEDEV|MIN|MAX|MEDIAN|COUNT)$/.test(F2);
+      const V = A.map(a => (GOL0 && a.k === 'gol' ? 0 : evalua(f, a)));
       const toate = (doarNum) => { const o = []; V.forEach(v => { if (v && v.zona) v.vals.forEach(x => { if (eErr(x)) throw x; if (typeof x === 'number') o.push(x); }); else if (v != null) o.push(doarNum ? num(v) : v); }); return o; };
       const s1 = () => un(f, A[0]);
       switch (F2) {
@@ -838,7 +856,8 @@
       return { r, c: c0 };
     }
     const fmtDe = (f, a) => f.fmt[a] || {};
-    const latPx = (f, c0) => (f.lat && f.lat[c0] != null ? f.lat[c0] : 64);
+    /* runda 3 (excel-a-F141): coloanele nelățite au lățimea standard a foii (`f.latStd`, Home › Format › Default Width…; lipsă = 64) */
+    const latPx = (f, c0) => (f.lat && f.lat[c0] != null ? f.lat[c0] : (f.latStd || 64));
     /* câte cifre încap în celulă (celula îmbinată = toate coloanele ei) */
     function unitati(f, r, c0) {
       const m = mergeLa(f, r, c0);
@@ -899,6 +918,7 @@
         if (x.umplere) o.umplere = x.umplere;
         if (x.culoare_font) o.culoare_font = x.culoare_font;
         if (x.marime) o.marime_font = x.marime;
+        if (x.stil) o.stil = x.stil;
         if (x.incadrare) o.incadrare = true;
         if (Object.keys(o).length) fmt[a] = o;
       });
@@ -920,7 +940,9 @@
         fisiere: magazie() ? magazie().stare() : null, dosar_fisier: M.dosar, avertisment_fisier: M.avertisment,
         registru_activ: REG.gol ? null : numeRegistru(), registre: REG.alte.map(r => r.nume ? r.nume.replace(/\.[a-z0-9]{2,5}$/i, '') : r.book).concat(REG.gol ? [] : [numeRegistru()]),
         /* lot 1 (F128): numele definite din Name Box, {nume: 'Foaie!B2:C3'} */
-        nume_definite: Object.fromEntries([].concat(...M.foi.map(x => Object.values(x.nume_def || {}).map(d => [d.nume, x.nume + '!' + d.zona])))) };
+        nume_definite: Object.fromEntries([].concat(...M.foi.map(x => Object.values(x.nume_def || {}).map(d => [d.nume, x.nume + '!' + d.zona])))),
+        /* runda 3: înălțimile puse de mână ({"3": 40} px) și lățimea standard a foii active (px) */
+        inaltimi_manuale: Object.fromEntries(Object.keys(f.inalt || {}).map(r => [String(+r + 1), f.inalt[r]])), latime_standard: f.latStd || 64 };
     };
     /* `dialog` (§5): fereastra deschisă; „Save your changes to this file?” = fereastra care ÎNTREABĂ, în forma din
        scenarii_real/excel-ctrl-w-modificat.json: {titlu: '' (bara de titlu goală), intrebare, butoane: rândul de jos, de la
@@ -1003,6 +1025,8 @@
         /* rândurile unei liste ▾ desenate din referință (lista.AutoSum, lista.Borders) = meniu:<rând> (§3) */
         if (/^lista\./.test(ctx.cheie || '')) return (n.t === 'MenuItem' || n.t === 'ListItem') && n.e ? 'meniu:' + n.e : null;
         if (ctx.cheie === 'dialog.ColumnWidth' && n.t === 'Edit') return 'camp:latime_coloana';
+        if (ctx.cheie === 'dialog.RowHeight' && n.t === 'Edit') return 'camp:inaltime_rand';
+        if (ctx.cheie === DLG_LAT_STD && n.t === 'Edit') return 'camp:latime_standard';
         if (ctx.cheie === 'dialog.FileSaveAs') {
           if (n.t === 'Edit' && /^File name:?$/.test(n.e)) return 'camp:nume_fisier';
           if (n.t === 'ComboBox' && /^File name:?$/.test(n.e)) return null;
@@ -1051,7 +1075,7 @@
           if (bl) { e.setAttribute('data-lh-id-mso', bl[0]); const ic = pang.icoana(I, bl[0], 16); if (ic && /^<svg|^<span/.test(ic)) e.insertAdjacentHTML('afterbegin', ic); }
         }
       },
-      editabil(n, ctx) { return (/^dialog\.(FileSaveAs|save_this_file|save_your_changes_to_this_file)$/.test(ctx.cheie || '') && n.t === 'Edit' && /^File name/.test(n.e)) || (ctx.cheie === 'dialog.ColumnWidth' && n.t === 'Edit'); }
+      editabil(n, ctx) { return (/^dialog\.(FileSaveAs|save_this_file|save_your_changes_to_this_file)$/.test(ctx.cheie || '') && n.t === 'Edit' && /^File name/.test(n.e)) || (/^dialog\.(ColumnWidth|RowHeight|StandardWidth)$/.test(ctx.cheie || '') && n.t === 'Edit'); }
     };
     const desen = (cheie, extra) => pang.deseneaza(I, cheie, Object.assign({}, OPT, extra || {}));
     const titluEl = desen('bara_titlu');
@@ -1393,6 +1417,9 @@
         const h = liniiIncadrate(t, latPx(f, p.c)) * 19;
         if (h > 19) o[p.r] = Math.max(o[p.r] || 0, h);
       });
+      /* runda 3 (excel-a-F135, F138): înălțimea pusă de mână (tragere, Row Height…) bate înălțimea automată, ca în Excel
+         (rândul nu mai crește după font / încadrare până la AutoFit Row Height); `f.inalt` = {rând0: px la 100 %} */
+      Object.keys(f.inalt || {}).forEach(r => { if (f.inalt[r] > 0) o[r] = f.inalt[r]; });
       return o;
     }
     function geomRand() {
@@ -1478,6 +1505,8 @@
         const h = el('div', 'lh-ap-x-ant lh-ap-x-ant-rand', { 'data-lh-tip': 'DataItem', 'data-lh-eticheta': String(r + 1), 'data-lh-tinta': 'antet_rand', 'data-lh-id': String(r + 1) });
         h.style.top = yRand(r) + 'px'; h.style.height = hRand(r) + 'px'; h.style.width = LA() + 'px';
         h.textContent = String(r + 1);
+        /* runda 3 (excel-a-F135, F136): linia de sub număr — tragerea schimbă înălțimea, dublul clic o potrivește */
+        h.appendChild(el('div', 'lh-ap-x-ant-margine-r', { 'data-lh-tinta': 'antet_rand_margine', 'data-lh-id': String(r + 1), 'aria-hidden': 'true' }));
         antRin.appendChild(h);
       }
       const frag = document.createDocumentFragment();
@@ -1666,6 +1695,16 @@
       /* antetele rândurilor și coloanelor selectate (ca în Excel: colorate) */
       antCin.querySelectorAll('.lh-ap-x-ant').forEach((h, k) => h.classList.toggle('lh-ap-x-ant-sel', s.zone.some(q => C0 + k >= q.c0 && C0 + k <= q.c1)));
       antRin.querySelectorAll('.lh-ap-x-ant').forEach((h, k) => h.classList.toggle('lh-ap-x-ant-sel', s.zone.some(q => R0 + k >= q.r0 && R0 + k <= q.r1)));
+      /* runda 3 (excel-a-F133, F134, F135): pe ecranul tactil, după ce degetul alege o coloană / un rând întreg, pe linia din
+         dreapta literei / de sub număr apare un cerc ⇔ / ⇕ de tras (lățimea / înălțimea) și de atins de două ori (potrivirea).
+         Cercul e al simulatorului vechi (lectii/_sim/excelx-formatare.js), ca ajutor pentru deget: pe calculator nu apare */
+      root.querySelectorAll('.lh-ap-x-cerc').forEach(x => x.remove());
+      const uz = s.zone[s.zone.length - 1], colI = uz.r0 === 0 && uz.r1 === MAXR - 1, randI = uz.c0 === 0 && uz.c1 === MAXC - 1;
+      if (ecranTactil() && !M.edit && colI !== randI) {
+        const id = colI ? colNume(uz.c1) : String(uz.r1 + 1);
+        const h = (colI ? antCin : antRin).querySelector('.lh-ap-x-ant[data-lh-id="' + id + '"]');
+        if (h) h.appendChild(el('div', 'lh-ap-x-cerc ' + (colI ? 'lh-ap-x-cerc-c' : 'lh-ap-x-cerc-r'), { 'data-lh-tinta': (colI ? 'cerc_latime' : 'cerc_inaltime'), 'data-lh-id': id, 'aria-label': colI ? 'Column width ⇔' : 'Row height ⇕', role: 'button' }));
+      }
       const a = adr(s.activa.r, s.activa.c);
       I.zonaTinta = 'celula:' + a;
       /* tastatura stă în celula activă (ținta focusului la taste, §4) */
@@ -1919,19 +1958,56 @@
       deseneazaSelectia();
     }
     /* Enter: Excel primește conținutul; o formulă greșită NU e primită (rămâne în editare — de_verificat R6-2) */
+    /* runda 3 (excel-a-F209, F228): la Enter, × și ÷ din afara ghilimelelor devin * și /, iar o zonă scrisă invers (B6:B2) se
+       întoarce (B2:B6) — Excel 365, probat de judecătorul lecției 7 (vechiul: lectii/_sim/excelx-formule.js:54-56,
+       excelx-functii.js:310-316, _verificare/j_excel_semne.json) */
+    function normalizeazaFormula(s) {
+      let q = false, o = '';
+      for (const ch of s) { if (ch === '"') q = !q; o += q ? ch : ch === '×' ? '*' : ch === '÷' ? '/' : ch; }
+      return o.replace(/("[^"]*"?)|(\$?)([A-Za-z]{1,3})(\$?)(\d+):(\$?)([A-Za-z]{1,3})(\$?)(\d+)/g, (tot, str, d1, c1, d2, r1, d3, c2, d4, r2) => {
+        if (str) return str;
+        const A = { c: colIdx(c1.toUpperCase()), r: +r1 }, B = { c: colIdx(c2.toUpperCase()), r: +r2 };
+        if (A.c < 0 || B.c < 0 || (A.c <= B.c && A.r <= B.r)) return tot;
+        const [cs, csD, ce, ceD] = A.c <= B.c ? [c1, d1, c2, d3] : [c2, d3, c1, d1], [rs, rsD, re, reD] = A.r <= B.r ? [r1, d2, r2, d4] : [r2, d4, r1, d2];
+        return csD + cs.toUpperCase() + rsD + rs + ':' + ceD + ce.toUpperCase() + reD + re;
+      });
+    }
     function confirma() {
       const e = M.edit;
       if (!e) return true;
-      const f = F(), p = pa(e.a), s = e.text;
+      const f = F(), p = pa(e.a);
+      let s = e.text;
+      /* runda 3 (excel-a-F210): „+A2*B2” / „-A2” fără = devine formula =+A2*B2 (Excel real: =+A2*B2 = 600; vechiul:
+         lectii/_sim/excelx-formule.js:118-121 — doar când nu e un număr și formula se poate citi) */
+      if (fmtDe(f, e.a).format_numar !== '@') {
+        if ((s.charAt(0) === '+' || s.charAt(0) === '-') && s.length > 1 && typeof constanta(s).v !== 'number' && laForma('=' + s, 'ro', 'en')) s = '=' + s;
+        if (s.charAt(0) === '=') s = normalizeazaFormula(s);
+      }
       let nou = null, fn = null, ok = true;
       /* lot 2: în celula cu formatul Text (@) tot ce se scrie rămâne text, și „=…”, și numerele (cu triunghiul verde) */
       if (s !== '' && fmtDe(f, e.a).format_numar === '@') nou = s.charAt(0) === "'" ? { v: s.slice(1), ap: true } : { v: s };
       else if (s.charAt(0) === '=' && s.length > 1) {
         const en = laForma(s, 'ro', 'en');
         if (!en) ok = false;
-        else nou = { f: en };
+        else {
+          nou = { f: en };
+          /* critic G2-2 (runda 3): formatarea automată a formulelor — o adunare / scădere tastată într-o celulă General, a cărei
+             primă referință e o dată / o oră, ia formatul acelei celule (=A1+1 → 28.09.2026, =B2-B1 cu ore → 1:45). Doar + și -
+             fără funcții; la * / și la lei / procent formatul Excel nu e sigur [DEDUS, de_capturat R3-4] */
+          const fc = fmtDe(f, e.a).format_numar, corp = en.slice(1), r1 = /\$?([A-Z]{1,3})\$?(\d+)/i.exec(corp);
+          if ((!fc || fc === 'General') && r1 && /^[\s\d.$A-Za-z+\-()]+$/.test(corp) && !/[A-Za-z]\s*\(/.test(corp)) {
+            const fr = fmtDe(f, r1[1].toUpperCase() + r1[2]).format_numar;
+            if (/^(data|ora|data_ora)$/.test(felFmt(fr))) fn = fr;
+          }
+        }
       } else if (s === '=') ok = false;
-      else if (s !== '') { const k = constanta(s); nou = { v: k.v }; if (k.ap) nou.ap = true; fn = k.fn || null; }
+      else if (s !== '') {
+        const k = constanta(s); nou = { v: k.v }; if (k.ap) nou.ap = true; fn = k.fn || null;
+        /* critic G2-1 (runda 3): „Enable automatic percent entry” (bifat implicit în Excel) — într-o celulă formatată deja ca
+           procent, un număr ≥ 1 tastat fără % devine procentul lui (5 → 5%, valoarea 0,05); sub 1 rămâne (0,5 → 50%)
+           [DEDUS: documentația Microsoft „Format numbers as percentages”, nu e în referinte/; de_capturat R3-3] */
+        if (!fn && typeof k.v === 'number' && !/%/.test(s) && Math.abs(k.v) >= 1 && felFmt(fmtDe(f, e.a).format_numar) === 'procent') nou.v = k.v / 100;
+      }
       if (!ok) { if (!fereastraEroare(s)) mesajFormula(); return false; }
       M.edit = null;
       schimba('scriere', () => {
@@ -1972,6 +2048,7 @@
       if (!mo) return false;
       let cheie = null, corectat = null;
       if (mo === 'argumente') cheie = 'dialog.eroare_formula_3';
+      else if (mo === 'argumente_multe') cheie = DLG_ARG_MULTE;
       else if (mo === 'rest') {
         const re = /\)\s*(?=\$?[A-Za-z]{1,3}\$?\d)/g;
         let m;
@@ -2101,6 +2178,86 @@
     const CULOARE_NUME = {};
     TEMA.forEach(t => { CULOARE_NUME[t[0]] = t[1]; t.slice(2).forEach(([n, h]) => { CULOARE_NUME[t[0] + ', ' + n] = h; }); });
     STANDARD.forEach(([n, h]) => { CULOARE_NUME[n] = h; });
+    /* runda 3 (excel-a-F131): Home › Styles › Cell Styles ▾ — galeria stilurilor de celulă. Grupurile = captura lecției
+       (lectii/viii/m1-l06/img/SURSE.json › galerie-stiluri.webp: Good, Bad and Neutral; Data and Model; Titles and Headings;
+       Themed Cell Styles); ce pune fiecare stil = tabelul simulatorului vechi, „aplicat prin COM” în Excel (lectii/_sim/
+       excelx-formatare.js › STILURI, cu i* = categoriile incluse în stil). Bordurile stilurilor se pun doar ca grosime (biblioteca
+       nu ține culoarea bordurii); fontul ușor al lui Title (Calibri Light) nu se schimbă. Cheia nouă pe format: `stil` (în stare: stil) */
+    const B_SUB = 'subtire', B_GR = 'groasa', B_DB = 'dubla';
+    const B4 = v => ({ t: v, b: v, l: v, r: v });
+    const STILURI = {
+      'Normal': { g: 0, f: {}, iF: 1, iU: 1, iB: 1, iN: 1, iA: 1 },
+      'Bad': { g: 0, f: { color: '9C0006', fill: 'FFC7CE' }, iF: 1, iU: 1 }, 'Good': { g: 0, f: { color: '006100', fill: 'C6EFCE' }, iF: 1, iU: 1 },
+      'Neutral': { g: 0, f: { color: '9C5700', fill: 'FFEB9C' }, iF: 1, iU: 1 },
+      'Calculation': { g: 1, f: { b: 1, color: 'FA7D00', fill: 'F2F2F2' }, bd: B4(B_SUB), iF: 1, iU: 1, iB: 1 },
+      'Check Cell': { g: 1, f: { b: 1, color: 'FFFFFF', fill: 'A5A5A5' }, bd: B4(B_DB), iF: 1, iU: 1, iB: 1 },
+      'Explanatory Text': { g: 1, f: { i: 1, color: '7F7F7F' }, iF: 1 }, 'Input': { g: 1, f: { color: '3F3F76', fill: 'FFCC99' }, bd: B4(B_SUB), iF: 1, iU: 1, iB: 1 },
+      'Linked Cell': { g: 1, f: { color: 'FA7D00' }, bd: { b: B_DB }, iF: 1, iB: 1 }, 'Note': { g: 1, f: { fill: 'FFFFCC' }, bd: B4(B_SUB), iU: 1, iB: 1 },
+      'Output': { g: 1, f: { b: 1, color: '3F3F3F', fill: 'F2F2F2' }, bd: B4(B_SUB), iF: 1, iU: 1, iB: 1 }, 'Warning Text': { g: 1, f: { color: 'FF0000' }, iF: 1 },
+      'Heading 1': { g: 2, f: { b: 1, fs: 15, color: '44546A' }, bd: { b: B_GR }, iF: 1, iB: 1 }, 'Heading 2': { g: 2, f: { b: 1, fs: 13, color: '44546A' }, bd: { b: B_GR }, iF: 1, iB: 1 },
+      'Heading 3': { g: 2, f: { b: 1, color: '44546A' }, bd: { b: B_GR }, iF: 1, iB: 1 }, 'Heading 4': { g: 2, f: { b: 1, color: '44546A' }, iF: 1 },
+      'Title': { g: 2, f: { fs: 18, color: '44546A' }, iF: 1 }, 'Total': { g: 2, f: { b: 1 }, bd: { t: B_SUB, b: B_DB }, iF: 1, iB: 1 },
+      'Comma': { g: 4, nf: COD_VIRGULA, iN: 1 }, 'Comma [0]': { g: 4, nf: COD_VIRGULA.replace(/0\.00/g, '0').replace(/"-"\?\?/g, '"-"'), iN: 1 },
+      'Currency': { g: 4, nf: COD_CONTABIL, iN: 1 }, 'Currency [0]': { g: 4, nf: COD_CONTABIL.replace(/0\.00/g, '0').replace(/"-"\?\?/g, '"-"'), iN: 1 },
+      'Percent': { g: 4, nf: '0%', iN: 1 }
+    };
+    [['20%', ['D9E1F2', 'FCE4D6', 'EDEDED', 'FFF2CC', 'DDEBF7', 'E2EFDA'], '000000'], ['40%', ['B4C6E7', 'F8CBAD', 'DBDBDB', 'FFE699', 'BDD7EE', 'C6E0B4'], '000000'],
+      ['60%', ['8EA9DB', 'F4B084', 'C9C9C9', 'FFD966', '9BC2E6', 'A9D08E'], '000000'], ['', ['4472C4', 'ED7D31', 'A5A5A5', 'FFC000', '5B9BD5', '70AD47'], 'FFFFFF']]
+      .forEach(([pr, cul, txt]) => cul.forEach((fl, k) => { STILURI[(pr ? pr + ' - ' : '') + 'Accent' + (k + 1)] = { g: 3, f: { fill: fl, color: txt }, iF: 1, iU: 1 }; }));
+    const GRUPE_STIL = ['Good, Bad and Neutral', 'Data and Model', 'Titles and Headings', 'Themed Cell Styles', 'Number Format'];
+    function galerieStiluri(anc) {
+      inchideMeniu();
+      const R = root.getBoundingClientRect(), w = Math.min(560, R.width - 4);
+      const m = el('div', 'lh-ap-n lh-ap-t-Menu lh-ap-x-meniu lh-ap-x-ref lh-ap-x-stiluri', { 'data-lh-tip': 'Menu', 'data-lh-eticheta': 'Cell Styles', 'data-lh-suprafata': 'lista.CellStyles', role: 'menu' });
+      Object.assign(m.style, { position: 'absolute', width: w + 'px', boxSizing: 'border-box', padding: '4px', background: '#fff', overflowY: 'auto' });
+      GRUPE_STIL.forEach((g, gi) => {
+        const t = el('div', 'lh-ap-n lh-ap-t-Text lh-ap-x-meniu-titlu', { 'data-lh-tip': 'Text', 'data-lh-eticheta': g });
+        t.textContent = g;
+        Object.assign(t.style, { position: 'relative', left: 'auto', top: 'auto', fontWeight: '600', background: '#f0f0f0', color: '#444', padding: '3px 8px', margin: '2px 0' });
+        m.appendChild(t);
+        const rand = el('div', 'lh-ap-x-stiluri-rand');
+        Object.assign(rand.style, { display: 'flex', flexWrap: 'wrap', gap: '4px', padding: '2px 4px 6px' });
+        Object.keys(STILURI).filter(n => STILURI[n].g === gi).forEach(n => {
+          const S = STILURI[n], f0 = S.f || {}, x = el('div', 'lh-ap-n lh-ap-t-MenuItem', { 'data-lh-tip': 'MenuItem', 'data-lh-eticheta': n, role: 'menuitem', 'data-lh-tinta': 'meniu:' + n, title: n });
+          x.textContent = n;
+          Object.assign(x.style, { position: 'relative', left: 'auto', top: 'auto', width: '100px', height: '26px', boxSizing: 'border-box', display: 'flex', alignItems: 'center', padding: '0 4px', overflow: 'hidden', whiteSpace: 'nowrap', cursor: 'default',
+            border: '1px solid #d0d0d0', fontSize: Math.min(15, (f0.fs || 11) * 1.1) + 'px', fontWeight: f0.b ? '700' : '400', fontStyle: f0.i ? 'italic' : 'normal',
+            background: f0.fill ? '#' + f0.fill : '#fff', color: f0.color ? '#' + f0.color : '#000' });
+          rand.appendChild(x);
+        });
+        m.appendChild(rand);
+      });
+      root.appendChild(m);
+      const bA = anc.getBoundingClientRect(), h = Math.min(m.scrollHeight + 2, R.height - 4);
+      m.style.height = h + 'px';
+      m.style.left = Math.max(2, Math.min(bA.left - R.left, R.width - w - 2)) + 'px';
+      m.style.top = Math.max(2, Math.min(bA.bottom - R.top, R.height - h - 2)) + 'px';
+      meniu = m;
+      return 'meniu_derulant';
+    }
+    function aplicaStil(nume) {
+      const S = STILURI[nume];
+      if (!S) return I.nesimulat(nume);
+      const f = F(), toate = celuleZone(f, true);
+      schimba('format', () => {
+        if (!f.bord) f.bord = {};
+        toate.forEach(a => {
+          const x = f.fmt[a] = Object.assign({}, f.fmt[a] || {}), s0 = S.f || {};
+          if (S.iF) { ['bold', 'italic', 'underline', 'marime', 'culoare_font'].forEach(k => delete x[k]); if (s0.b) x.bold = true; if (s0.i) x.italic = true; if (s0.fs) x.marime = s0.fs; if (s0.color) x.culoare_font = s0.color; }
+          if (S.iU) { delete x.umplere; if (s0.fill) x.umplere = s0.fill; }
+          if (S.iN) { if (S.nf) x.format_numar = S.nf; else delete x.format_numar; }
+          if (S.iA) { delete x.aliniere; delete x.aliniere_v; delete x.incadrare; }
+          if (S.iB) {
+            const p0 = pa(a), bd = S.bd || {}, pune = (k, v) => { if (v) f.bord[k] = v; else delete f.bord[k]; };
+            pune('h,' + p0.r + ',' + p0.c, bd.t); pune('h,' + (p0.r + 1) + ',' + p0.c, bd.b); pune('v,' + p0.r + ',' + p0.c, bd.l); pune('v,' + p0.r + ',' + (p0.c + 1), bd.r);
+          }
+          if (nume === 'Normal') delete x.stil; else x.stil = nume;
+          if (!Object.keys(x).length) delete f.fmt[a];
+        });
+      });
+      actualizeaza();
+      return 'stil_celula';
+    }
     function paletaCulori(anc, fel) {
       inchideMeniu();
       const cheie = fel === 'font' ? 'lista.FontColor' : 'lista.FillColor';
@@ -3076,7 +3233,7 @@
          istoricului să nu readucă ordinea veche (contra.md; de_verificat R29-3);
        - Move or Copy: lista Before sheet = foile registrului + „(move to end)”; OK mută; Create a copy face „Nume (2)”, activă;
        - tragerea filei mută foaia, Ctrl + tragere o copiază (:240, :244); Tab Color › o culoare (:202, :220). */
-    const foaieGoala = f => !Object.keys(f.cel).length && !Object.keys(f.fmt).length && !(f.merge || []).length && !Object.keys(f.bord || {}).length && !Object.keys(f.latSet || {}).length && !(f.grafice || []).length;
+    const foaieGoala = f => !Object.keys(f.cel).length && !Object.keys(f.fmt).length && !(f.merge || []).length && !Object.keys(f.bord || {}).length && !Object.keys(f.latSet || {}).length && !(f.grafice || []).length && !Object.keys(f.inalt || {}).length && !f.latStd;
     function dupaFoi() {
       H = istoricNou(); M.clip = null; M.mod = true; M.salvat = false;
       if (M.gr) { M.gr = null; M.grTitlu = null; }
@@ -3259,15 +3416,23 @@
       inchideMeniu();
       randuri = randuri || LISTA_STERGERE;
       const m = el('div', 'lh-ap-n lh-ap-t-Menu lh-ap-x-meniu lh-ap-x-ref', { 'data-lh-tip': 'Menu', 'data-lh-eticheta': eticheta || 'Delete', 'data-lh-suprafata': cheie || 'lista.TableDeleteRowsAndColumnsMenu', role: 'menu' });
-      const w = cheie === 'lista.PasteMenu' ? 236 : 182, hr = 28;
-      randuri.forEach((v, i) => {
+      const w = cheie === 'lista.PasteMenu' || cheie === 'lista.FormatCellsMenu' ? 236 : 182, hr = 28, ht = 24;
+      let y = 2;
+      randuri.forEach(v => {
+        /* runda 3: „§Titlu” = titlul unui grup (Format ▾: Cell Size, Visibility…), text gri-închis pe fond gri, nu se apasă */
+        if (v.charAt(0) === '§') {
+          const t = el('div', 'lh-ap-n lh-ap-t-Text lh-ap-x-meniu-titlu', { 'data-lh-tip': 'Text', 'data-lh-eticheta': v.slice(1) });
+          t.textContent = v.slice(1);
+          Object.assign(t.style, { position: 'absolute', left: '2px', top: y + 'px', width: (w - 4) + 'px', height: ht + 'px', paddingLeft: '10px', boxSizing: 'border-box', display: 'flex', alignItems: 'center', fontWeight: '600', background: '#f0f0f0', color: '#444' });
+          m.appendChild(t); y += ht; return;
+        }
         const x = el('div', 'lh-ap-n lh-ap-t-MenuItem', { 'data-lh-tip': 'MenuItem', 'data-lh-eticheta': v, role: 'menuitem', 'data-lh-tinta': 'meniu:' + v });
         if (gri && gri(v)) { x.setAttribute('aria-disabled', 'true'); x.classList.add('lh-ap-gri'); }
         x.innerHTML = '<span class="lh-ap-text">' + esc(v) + '</span>';
-        Object.assign(x.style, { position: 'absolute', left: '2px', top: (2 + hr * i) + 'px', width: (w - 4) + 'px', height: hr + 'px', paddingLeft: '36px', boxSizing: 'border-box', display: 'flex', alignItems: 'center' });
-        m.appendChild(x);
+        Object.assign(x.style, { position: 'absolute', left: '2px', top: y + 'px', width: (w - 4) + 'px', height: hr + 'px', paddingLeft: '36px', boxSizing: 'border-box', display: 'flex', alignItems: 'center' });
+        m.appendChild(x); y += hr;
       });
-      const R = root.getBoundingClientRect(), b = (anc.closest('[data-lh-tip="SplitButton"]') || anc).getBoundingClientRect(), h = 4 + hr * randuri.length;
+      const R = root.getBoundingClientRect(), b = (anc.closest('[data-lh-tip="SplitButton"]') || anc).getBoundingClientRect(), h = y + 2;
       Object.assign(m.style, { position: 'absolute', width: w + 'px', height: h + 'px' });
       m.style.left = Math.max(0, Math.min(b.left - R.left, R.width - w - 2)) + 'px';
       m.style.top = Math.max(0, Math.min(b.bottom - R.top, R.height - h - 2)) + 'px';
@@ -3568,10 +3733,14 @@
            Cancel să rămână pe ecran (proba/telefon.py: Cancel ieșea la x 350-429) */
         if (R.width && R.width < r[2] + 4) { s.style.transformOrigin = '0 0'; s.style.transform = 'scale(' + ((R.width - 4) / r[2]).toFixed(3) + ')'; s.style.left = '2px'; }
       }
-      const lc = s.querySelector('[data-lh-tinta="camp:latime_coloana"] input');
+      const lc = s.querySelector('[data-lh-tinta="camp:latime_coloana"] input, [data-lh-tinta="camp:inaltime_rand"] input, [data-lh-tinta="camp:latime_standard"] input');
       if (lc) {
-        const c0 = F().sel.zone[F().sel.zone.length - 1].c0;
-        lc.value = String(Math.round(caractereDin(latPx(F(), c0)) * 100) / 100).replace('.', ',');
+        const f0 = F(), q0 = f0.sel.zone[f0.sel.zone.length - 1], camp = lc.closest('[data-lh-tinta]').getAttribute('data-lh-tinta');
+        /* runda 3: Row Height arată punctele rândului ales (nelățit = 14,4, valoarea din referință › dialog.RowHeight › Edit);
+           Standard Width = lățimea standard a foii în caractere */
+        const n0 = camp === 'camp:inaltime_rand' ? ((f0.inalt || {})[q0.r0] ? f0.inalt[q0.r0] * 0.75 : 14.4)
+          : caractereDin(camp === 'camp:latime_standard' ? (f0.latStd || 64) : latPx(f0, q0.c0));
+        lc.value = String(Math.round(n0 * 100) / 100).replace('.', ',');
         setTimeout(() => { try { lc.focus({ preventScroll: true }); lc.select(); } catch (e) { /* */ } }, 0);
         return;
       }
@@ -3627,6 +3796,69 @@
       schimba('format', () => cols.forEach(c0 => { f.lat[c0] = n === 0 ? 0 : pxDinCaractere(n); f.latSet[c0] = true; }));
       actualizeaza();
       return 'latime_coloana';
+    }
+    /* runda 3: rândurile selecției (o coloană întreagă / toată foaia = până la ultimul rând folosit sau vizibil, nu 1 048 576) */
+    function randuriSel(f) {
+      let ult = R0 + NR;
+      Object.keys(f.cel).forEach(a => { const p = pa(a); if (p && p.r + 1 > ult) ult = p.r + 1; });
+      const o = new Set();
+      f.sel.zone.forEach(q => { for (let r = q.r0; r <= Math.min(q.r1, ult - 1); r++) o.add(r); });
+      return [...o];
+    }
+    /* Row Height… (meniul numărului / Home › Format): 0-409 puncte, ca în Excel (old: lectii/_sim/excelx-formatare.js › formatCmd 'rh');
+       0 = rândul ascuns, încă nesimulat */
+    function inaltimeDinDialog() {
+      const x = dialog && dialog.el.querySelector('[data-lh-tinta="camp:inaltime_rand"] input');
+      const n = parseFloat(String(x ? x.value : '').trim().replace(',', '.'));
+      if (!isFinite(n) || n < 0 || n > 409) return 'fara_efect';
+      if (n === 0) { inchideDialog(); return I.nesimulat('Row Height 0 (rândul ascuns)'); }
+      const f = F(), rs = randuriSel(f);
+      inchideDialog();
+      schimba('format', () => { f.inalt = Object.assign({}, f.inalt); rs.forEach(r => { f.inalt[r] = Math.max(1, Math.round(n * 4 / 3)); }); });
+      actualizeaza();
+      return 'inaltime_rand';
+    }
+    /* Default Width…: lățimea standard a foii; coloanele lățite de mână (f.lat) rămân cum sunt */
+    function latimeStdDinDialog() {
+      const x = dialog && dialog.el.querySelector('[data-lh-tinta="camp:latime_standard"] input');
+      const n = parseFloat(String(x ? x.value : '').trim().replace(',', '.'));
+      if (!isFinite(n) || n < 0 || n > 255) return 'fara_efect';
+      const f = F();
+      inchideDialog();
+      if (n === 0) return I.nesimulat('Default Width 0 (coloanele ascunse)');
+      schimba('format', () => { f.latStd = pxDinCaractere(n); });
+      actualizeaza();
+      return 'latime_standard';
+    }
+    /* AutoFit Row Height / dublu clic pe linia de sub număr: înălțimea pusă de mână se scoate, rândul revine la cea automată */
+    function potrivesteRanduri(rs) {
+      const f = F(), cu = rs.filter(r => (f.inalt || {})[r] != null);
+      if (!cu.length) return 'fara_efect';
+      schimba('format', () => { f.inalt = Object.assign({}, f.inalt); cu.forEach(r => { delete f.inalt[r]; }); });
+      actualizeaza();
+      return 'potrivire_inaltime';
+    }
+    /* Home › Cells › Format ▾ (FormatCellsMenu). Rândurile și titlurile grupurilor = captura lecției (lectii/viii/m1-l06/img/SURSE.json ›
+       meniu-format.webp: Row Height…, AutoFit Row Height, Column Width…, AutoFit Column Width, Default Width…) și meniul vechi
+       (lectii/_sim/excelx-formatare.js › meniuFormat: Cell Size, Visibility, Organize Sheets, Protection) */
+    const LISTA_FORMAT = ['§Cell Size', 'Row Height...', 'AutoFit Row Height', 'Column Width...', 'AutoFit Column Width', 'Default Width...',
+      '§Visibility', 'Hide & Unhide', '§Organize Sheets', 'Rename Sheet', 'Move or Copy Sheet...', 'Tab Color', '§Protection', 'Protect Sheet...', 'Lock Cell', 'Format Cells...'];
+    function comandaFormat(v) {
+      const f = F();
+      if (v === 'Row Height...') return deschideDialog('dialog.RowHeight') ? 'fereastra' : I.nesimulat(v);
+      if (v === 'Column Width...') return deschideDialog('dialog.ColumnWidth') ? 'fereastra' : I.nesimulat(v);
+      if (v === 'Default Width...') return deschideDialog(DLG_LAT_STD) ? 'fereastra' : I.nesimulat(v);
+      if (v === 'AutoFit Row Height') return potrivesteRanduri(randuriSel(f));
+      if (v === 'AutoFit Column Width') {
+        /* după celulele SELECTATE (Microsoft, „Change the column width”; vechiul: potrivesteColoane cu zona); coloana întreagă = tot */
+        const t = [];
+        f.sel.zone.forEach(q => { for (let c0 = q.c0; c0 <= Math.min(q.c1, C0 + NC - 1); c0++) t.push({ c: c0, r0: q.r0, r1: q.r1 }); });
+        return potrivesteColoane(t, false);
+      }
+      if (v === 'Rename Sheet') return pornesteRedenumire(f.nume);
+      if (v === 'Move or Copy Sheet...') return deschideDialog('dialog.SheetMoveOrCopy') ? 'fereastra' : I.nesimulat(v);
+      if (v === 'Format Cells...') return deschideDialog('dialog.FormatCellsDialog') ? 'fereastra' : I.nesimulat(v);
+      return I.nesimulat(v);
     }
     /* ---- tastatura în ferestre (critic runda 7, GRAV K1 + K2) ----
        Focusul la deschidere, din referință: Sort → OK (uia_excel.json › acoperire_r7.fapte.d_sort.focus_la_deschidere);
@@ -3759,6 +3991,8 @@
       if (dialog.baza === 'dialog.FileSaveAs' || dialog.baza === SALVARE_NOUA) return salveazaDinDialog();
       if (dialog.baza === INTREBARE_INCHIDERE) return raspunsInchidere('Save');
       if (dialog.baza === 'dialog.ColumnWidth') return latimeDinDialog();
+      if (dialog.baza === 'dialog.RowHeight') return inaltimeDinDialog();
+      if (dialog.baza === DLG_LAT_STD) return latimeStdDinDialog();
       if (dialog.baza === 'dialog.SortDialog') return sortDinDialog();
       if (dialog.baza === 'dialog.SortWarning') return sortDinAvertizare();
       if (/^dialog\.eroare_formula/.test(dialog.baza)) return raspunsEroare(dialog.baza === 'dialog.eroare_formula' ? 'Yes' : 'OK');
@@ -3928,6 +4162,7 @@
       if (tinta === 'meniu_derulant:Home/Font/Font Color') return paletaCulori(elx, 'font');
       /* lot 2 (excel-a-F125): săgeata casetei Number Format deschide lista formatelor */
       if (elx.closest('[data-lh-tip="ComboBox"][data-lh-eticheta="Number Format"]')) return listaFormat(elx);
+      if (id === 'CellStylesGallery') return galerieStiluri(elx);
       switch (id) {
         case 'InternationalCurrency': return puneFormat(COD_CONTABIL);
         case 'CommaStyle': return puneFormat(COD_VIRGULA);
@@ -3963,6 +4198,7 @@
         /* lot 1: pictograma Delete, Clear ▾, Paste ▾ (Paste Special... = mesajul central: fereastra nu e în referință) */
         case 'CellsDeleteSmart': return stergeSelectia(felStergere(zonaUltima()));
         case 'ClearMenu': return listaStergere(elx, LISTA_GOLIRE, 'lista.ClearMenu', 'Clear');
+        case 'FormatCellsMenu': return listaStergere(elx, LISTA_FORMAT, 'lista.FormatCellsMenu', 'Format');
         case 'PasteMenu_Dropdown': return listaStergere(elx, Object.keys(LISTA_LIPIRE).concat(['Paste Special...']), 'lista.PasteMenu', 'Paste', v => !M.clip);
         case 'AutoSumMenu_Dropdown': return listaRef('lista.AutoSum', elx) || I.nesimulat('AutoSum');
         case 'ChartTypeColumnInsertGallery': return listaRef('lista.ChartTypeColumnInsertGallery', elx) || I.nesimulat(nume);
@@ -4370,8 +4606,24 @@
       return { r: Math.max(R0, Math.min(R0 + NR - 1, randLa(cy))), c: Math.max(C0, Math.min(C0 + NC - 1, colLa(cx))) };
     }
     const inGrila = tg => corp.contains(tg) || antC.contains(tg) || antR.contains(tg) || colt.contains(tg);
+    /* runda 3: cercul ⇔ / ⇕ pentru deget = linia antetului (aceleași drumuri: tragere, două atingeri) */
+    const dinCerc = t => (t || '').replace(/^cerc_latime:/, 'antet_coloana_margine:').replace(/^cerc_inaltime:/, 'antet_rand_margine:');
+    function ecranTactil() { return (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) || (navigator.maxTouchPoints || 0) > 0; }
     I.la = {};
-    let ancora = null, josFacut = false, atingere = null;
+    let ancora = null, josFacut = false, atingere = null, cercAtins = null;
+    /* runda 3 (excel-a-F133, F135): bula de lângă indicator în timpul tragerii liniei unui antet, „Width: 8,11 (64 pixels)” /
+       „Height: 30,00 (40 pixels)” — forma din simulatorul vechi (lectii/_sim/excelx-formatare.js:644-645, arataBula); textul și
+       locul din Excel 365 NU sunt în referință [DEDUS, de_capturat R3-2] */
+    let bulaEl = null;
+    const nrBula = n => (Math.round(n * 100) / 100).toFixed(2).replace('.', ',');
+    function bulaTragere(e, text) {
+      if (!e) { if (bulaEl) { bulaEl.remove(); bulaEl = null; } return; }
+      if (!bulaEl) { bulaEl = el('div', 'lh-ap-x-bula', { role: 'tooltip', 'data-lh-tip': 'ToolTip' }); root.appendChild(bulaEl); }
+      bulaEl.textContent = text;
+      const R = root.getBoundingClientRect();
+      bulaEl.style.left = Math.max(0, Math.min(e.clientX - R.left + 12, R.width - 170)) + 'px';
+      bulaEl.style.top = Math.max(0, e.clientY - R.top - 34) + 'px';
+    }
     /* runda 21 (critic 17, G17-2): pe ecranul tactil degetul pus pe o celulă / un antet poate porni o DERULARE a grilei; browserul o
        preia și trimite pointercancel, deci nu mai vine ridicarea care emite evenimentul. Apăsarea degetului nu alege nimic (nici nu
        deselectează graficul): ce făcea apăsarea se face la ATINGEREA scurtă (ridicarea fără tragere → I.la.clic, cu evenimentul
@@ -4380,6 +4632,7 @@
       (!!celulaDin(tinta) || /^antet_(coloana|rand):/.test(tinta || '') || tinta === 'selecteaza_tot');
     I.la.jos = (e, tinta) => {
       const tg = e.target;
+      tinta = dinCerc(tinta);
       if (meniu && !meniu.contains(tg)) inchideMeniu();
       josFacut = false;
       atingere = null;
@@ -4416,7 +4669,16 @@
       if (am) {
         if (M.edit && !confirma()) return null;
         const c0 = colIdx(am[1]);
-        ancora = { latime: c0, x0: e.clientX, w0: latPx(F(), c0), ina: instantaneu() };
+        ancora = { latime: c0, x0: e.clientX, w0: latPx(F(), c0), ina: instantaneu(), toate: coloaneCu(c0) };
+        josFacut = true;
+        return 'tragere';
+      }
+      /* runda 3 (excel-a-F135): linia de sub numărul rândului — tragerea schimbă înălțimea (toate rândurile selectate întregi) */
+      const rmg = /^antet_rand_margine:(\d+)$/.exec(tinta || '');
+      if (rmg) {
+        if (M.edit && !confirma()) return null;
+        const r0 = +rmg[1] - 1;
+        ancora = { inaltime: r0, y0: e.clientY, h0: (INALT[r0] || 19), ina: instantaneu(), toate: randuriCu(r0) };
         josFacut = true;
         return 'tragere';
       }
@@ -4452,8 +4714,16 @@
       if (ancora.fila != null) { marcajFila(e.clientX); return; }
       if (ancora.latime != null) {
         const f = F(), w = Math.max(0, Math.round(ancora.w0 + (e.clientX - ancora.x0) / z()));
-        if (f.lat[ancora.latime] !== w) { f.lat[ancora.latime] = w; ancora.schimbat = true; deseneazaGrila(); }
+        if (f.lat[ancora.latime] !== w) { (ancora.toate || [ancora.latime]).forEach(c => { f.lat[c] = w; }); ancora.schimbat = true; deseneazaGrila(); }
         M.trageInfo = null;
+        bulaTragere(e, 'Width: ' + nrBula(caractereDin(w)) + ' (' + w + ' pixels)');
+        return;
+      }
+      if (ancora.inaltime != null) {
+        const f = F(), h = Math.max(2, Math.round(ancora.h0 + (e.clientY - ancora.y0) / z()));
+        if ((f.inalt || {})[ancora.inaltime] !== h) { f.inalt = Object.assign({}, f.inalt); (ancora.toate || [ancora.inaltime]).forEach(r => { f.inalt[r] = h; }); ancora.schimbat = true; deseneazaGrila(); }
+        M.trageInfo = null;
+        bulaTragere(e, 'Height: ' + nrBula(h * 0.75) + ' (' + h + ' pixels)');
         return;
       }
       const p = celulaLa(e.clientX, e.clientY);
@@ -4498,10 +4768,20 @@
       if (an && an.grafic != null) return susGrafic(an);
       if (an && an.fila != null) { const i = M.foi.findIndex(x => x.nume === an.fila); return i < 0 ? 'fara_efect' : mutaFoaia(i, locFila(e.clientX).k, !!(e.ctrlKey || e.metaKey)); }
       if (g === 'umplere_tragere' && an && an.umplere) { const p = celulaLa(e.clientX, e.clientY); return umple(p.r, p.c); }
+      bulaTragere(null);
+      if (an && an.inaltime != null) {
+        if (!an.schimbat) return 'fara_efect';
+        H.inainte('format', an.ina);
+        M.salvat = false;
+        M.mod = true;
+        invalid();
+        actualizeaza();
+        return 'inaltime_rand';
+      }
       if (an && an.latime != null) {
         if (!an.schimbat) return 'fara_efect';
         H.inainte('format', an.ina);
-        F().latSet[an.latime] = true;
+        (an.toate || [an.latime]).forEach(c => { F().latSet[c] = true; });
         M.salvat = false;
         M.mod = true;
         invalid();
@@ -4513,6 +4793,7 @@
     };
     I.la.clic = (tinta, e, n, g) => {
       const tg = e.target;
+      tinta = dinCerc(tinta);
       const elx = tg && tg.closest ? tg.closest('[data-lh-tinta]') : null;
       if (!tinta) return null;
       /* runda 21 (G17-2): atingerea scurtă cu degetul face acum ce făcea apăsarea (alegerea celulei / a rândului / a coloanei),
@@ -4530,7 +4811,15 @@
         return e.shiftKey ? 'extindere_selectie' : (e.ctrlKey || e.metaKey) ? 'adaugare_selectie' : 'selectare_celula';
       }
       josFacut = false;
-      if (fel === 'antet_coloana_margine') return 'fara_efect';
+      if (fel === 'antet_coloana_margine' || fel === 'antet_rand_margine') {
+        /* runda 3 (excel-a-F134): două atingeri pe cercul ⇔ / ⇕ (sub 500 ms) = dublul clic pe linie (potrivirea) */
+        if (tg && tg.closest && tg.closest('.lh-ap-x-cerc')) {
+          const acum = Date.now(), dublu = cercAtins && cercAtins.t === tinta && acum - cercAtins.ms < 500;
+          cercAtins = dublu ? null : { t: tinta, ms: acum };
+          if (dublu) return I.la.dublu(tinta);
+        }
+        return 'fara_efect';
+      }
       if (/^antet_(coloana|rand)$/.test(fel) || tinta === 'selecteaza_tot') return fel === 'antet_coloana' ? 'selectare_coloana' : fel === 'antet_rand' ? 'selectare_rand' : 'selectare_tot';
       if (tinta === 'grila' || tinta === 'maner_umplere') return 'fara_efect';
       if (!elx || !root.contains(elx)) return null;
@@ -4603,6 +4892,8 @@
         /* lot 1: Delete din meniul literei / numărului = coloanele / rândurile selectate (excel-a-F032, F033, b-F113) */
         if (lista === 'meniu_contextual.antet_rand' && v === 'Delete') return stergeSelectia('randuri');
         if (lista === 'meniu_contextual.antet_coloana' && v === 'Delete') return stergeSelectia('coloane');
+        if (lista === 'lista.FormatCellsMenu') return comandaFormat(v);
+        if (lista === 'lista.CellStyles') return aplicaStil(v);
         if (lista === 'lista.ClearMenu') return v === 'Clear All' ? golesteFormat(true) : v === 'Clear Formats' ? golesteFormat(false) : v === 'Clear Contents' ? golesteContinut() : I.nesimulat(v);
         if (lista === 'lista.ErrorChecking') return clicAvertizare(v);
         if (lista === 'lista.FillColor' || lista === 'lista.FontColor') return clicPaleta(lista, v);
@@ -4650,12 +4941,12 @@
       return I.nesimulat(v || tinta);
     };
     /* potrivirea automată a lățimii (dublu clic pe linia dintre litere): cea mai lată valoare din coloană */
-    function potriveste(c0) {
-      const f = F();
+    function latimePotrivita(f, c0, r0, r1) {
       let px = 0;
       Object.keys(f.cel).forEach(a => {
         const q = pa(a);
         if (!q || q.c !== c0 || mergeLa(f, q.r, q.c)) return;
+        if (r0 != null && (q.r < r0 || q.r > r1)) return;
         const v = valoare(f, q.r, q.c), fm = fmtDe(f, a);
         const t = afisat(v, fm.format_numar);
         /* runda 25: textul se măsoară la 15 px (11 pt la 96 dpi, înălțimea rotunjită la pixel, ca fontul lui Excel), + 5 px marginea
@@ -4664,16 +4955,44 @@
         const w = typeof v === 'number' ? latNecesar(t) : Math.ceil(latimeText(t, 15) / z() + 5 + (fm.bold ? 1 : 0));
         px = Math.max(px, w);
       });
-      if (!px || px === latPx(f, c0)) return 'fara_efect';
-      schimba('format', () => { f.lat[c0] = px; f.latSet[c0] = true; });
+      return px;
+    }
+    function potriveste(c0) { return potrivesteColoane(coloaneCu(c0).map(c => ({ c })), true); }
+    /* runda 3 (excel-a-F134, F139): mai multe coloane deodată; `t` = [{c, r0?, r1?}] (r0/r1 = doar celulele selectate, Format ›
+       AutoFit Column Width). `golStandard`: o coloană fără conținut revine la lățimea standard (dublu clic pe linia ei; vechiul:
+       lectii/_sim/excelx-formatare.js › potrivesteColoane, „coloana goală → lățimea standard”); totul într-un singur pas de Ctrl+Z */
+    function potrivesteColoane(t, golStandard) {
+      const f = F(), nou = {};
+      t.forEach(x => { const px = latimePotrivita(f, x.c, x.r0, x.r1); nou[x.c] = Math.max(nou[x.c] || 0, px); });
+      const sch = Object.keys(nou).filter(c => nou[c] ? nou[c] !== latPx(f, +c) : (golStandard && f.lat[c] != null));
+      if (!sch.length) return 'fara_efect';
+      schimba('format', () => sch.forEach(c => { if (nou[c]) { f.lat[c] = nou[c]; f.latSet[c] = true; } else { delete f.lat[c]; delete f.latSet[c]; } }));
       actualizeaza();
       return 'potrivire_latime';
     }
+    /* coloanele / rândurile care se schimbă împreună cu cea trasă: toate cele selectate întregi, dacă ea e printre ele (Excel) */
+    function coloaneCu(c0) {
+      const intregi = F().sel.zone.filter(q => q.r0 === 0 && q.r1 === MAXR - 1);
+      if (!intregi.some(q => c0 >= q.c0 && c0 <= q.c1)) return [c0];
+      const o = new Set();
+      intregi.forEach(q => { for (let c = q.c0; c <= Math.min(q.c1, C0 + NC + 50); c++) o.add(c); });
+      return [...o];
+    }
+    function randuriCu(r0) {
+      const intregi = F().sel.zone.filter(q => q.c0 === 0 && q.c1 === MAXC - 1);
+      if (!intregi.some(q => r0 >= q.r0 && r0 <= q.r1)) return [r0];
+      const o = new Set();
+      intregi.forEach(q => { for (let r = q.r0; r <= Math.min(q.r1, R0 + NR + 200); r++) o.add(r); });
+      return [...o];
+    }
     I.la.dublu = tinta => {
+      tinta = dinCerc(tinta);
       const fm = /^fila_foii:(.+)$/.exec(tinta || '');
       if (fm && !dialog && !backstage && !REG.gol) return pornesteRedenumire(fm[1]);
       const am = /^antet_coloana_margine:([A-Z]+)$/.exec(tinta || '');
       if (am && !dialog && !backstage) return potriveste(colIdx(am[1]));
+      const rm = /^antet_rand_margine:(\d+)$/.exec(tinta || '');
+      if (rm && !dialog && !backstage) return potrivesteRanduri(randuriCu(+rm[1] - 1));
       const p = celulaDin(tinta);
       if (p && !dialog && !backstage) {
         const f = F(), a = adr(p.r, p.c);

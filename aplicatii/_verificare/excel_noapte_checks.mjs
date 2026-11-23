@@ -362,6 +362,159 @@ const VERIFICARI = [
     const u = (await h.fmt('C3')).umplere;
     return { ok: u === 'FF0000' && inc.stanga >= 0 && inc.dreapta <= inc.w && inc.jos <= inc.h, det: `paleta ${j(inc)}; umplere C3=${j(u)}` };
   } },
+  // ---------------- runda 3 (lotul r3: latime si inaltime)
+  { nume: 'r3 randurile 5:6 › Home › Format › Row Height… 25 = amandoua 33 px; Ctrl+Z le readuce, Ctrl+Y le pune la loc; AutoFit Row Height le scoate', fn: async (p, h) => {
+    await h.antetRand(5); await h.antetRand(6, { modifiers: ['Shift'] });
+    await h.mso('FormatCellsMenu', { pauza: 250 });
+    if (!await h.clicEt('Row Height...', 'MenuItem')) return { ok: false, det: 'meniul Format n-are Row Height...' };
+    const inp = p.locator(`${APP} [data-lh-tinta="camp:inaltime_rand"] input`).first();
+    const v0 = await inp.inputValue();
+    await inp.click(); await p.keyboard.press('Control+A'); await p.keyboard.type('25'); await p.keyboard.press('Enter'); await pauza(200);
+    const ir = s => [(s.inaltimi_randuri || {})['5'], (s.inaltimi_randuri || {})['6']];
+    const a = ir(await h.st());
+    await p.keyboard.press('Control+z'); await pauza(150); const u = ir(await h.st());
+    await p.keyboard.press('Control+y'); await pauza(150); const y = ir(await h.st());
+    await h.mso('FormatCellsMenu', { pauza: 250 });
+    if (!await h.clicEt('AutoFit Row Height', 'MenuItem')) return { ok: false, det: 'meniul Format n-are AutoFit Row Height' };
+    const af = ir(await h.st());
+    return { ok: v0 === '14,4' && j(a) === j([33, 33]) && !u[0] && !u[1] && j(y) === j([33, 33]) && !af[0] && !af[1],
+      det: `valoarea de pornire ${j(v0)}; dupa 25: ${j(a)}; Ctrl+Z ${j(u)}; Ctrl+Y ${j(y)}; AutoFit ${j(af)}` };
+  } },
+  { nume: 'r3 tragerea liniei de sub numarul 8 cu mouse-ul: bula „Height: … (… pixels)”, randul creste; Ctrl+Z; dublu clic pe linie = inaltimea standard', fn: async (p, h) => {
+    const b = await p.locator(`${APP} [data-lh-tinta="antet_rand_margine"][data-lh-id="8"]`).first().boundingBox();
+    const x = b.x + b.width / 2, y = b.y + b.height / 2;
+    await p.mouse.move(x, y); await p.mouse.down(); await p.mouse.move(x, y + 15, { steps: 3 }); await p.mouse.move(x, y + 30, { steps: 3 }); await pauza(100);
+    const bula = await p.evaluate(() => (document.querySelector('[data-lh-aplicatie="excel"] .lh-ap-x-bula') || {}).textContent || '');
+    await p.mouse.up(); await pauza(200);
+    const h8 = ((await h.st()).inaltimi_randuri || {})['8'];
+    await p.keyboard.press('Control+z'); await pauza(150); const u = ((await h.st()).inaltimi_randuri || {})['8'];
+    await p.keyboard.press('Control+y'); await pauza(150);
+    await p.locator(`${APP} [data-lh-tinta="antet_rand_margine"][data-lh-id="8"]`).first().dblclick(); await pauza(250);
+    const d = ((await h.st()).inaltimi_randuri || {})['8'], gata = await p.evaluate(() => !document.querySelector('[data-lh-aplicatie="excel"] .lh-ap-x-bula'));
+    return { ok: /^Height: \d+,\d\d \(\d+ pixels\)$/.test(bula) && h8 >= 45 && !u && !d && gata, det: `bula ${j(bula)}; randul 8=${j(h8)}; Ctrl+Z ${j(u)}; dublu clic ${j(d)}; bula disparuta ${gata}` };
+  } },
+  { nume: 'r3 B:C › Format › Column Width… 12 = amandoua; Default Width… 10 lateste D (nelatita), B:C raman; Ctrl+Z readuce D la 64', fn: async (p, h) => {
+    await h.antetCol('B'); await h.antetCol('C', { modifiers: ['Shift'] });
+    await h.mso('FormatCellsMenu', { pauza: 250 });
+    if (!await h.clicEt('Column Width...', 'MenuItem')) return { ok: false, det: 'meniul Format n-are Column Width...' };
+    let inp = p.locator(`${APP} [data-lh-tinta="camp:latime_coloana"] input`).first();
+    await inp.click(); await p.keyboard.press('Control+A'); await p.keyboard.type('12'); await p.keyboard.press('Enter'); await pauza(200);
+    const w = async c => { const b = await p.locator(`${APP} [data-lh-tinta="antet_coloana"][data-lh-id="${c}"]`).first().boundingBox(); return Math.round(b.width); };
+    const bc = [await w('B'), await w('C')];
+    await h.cel('E2');
+    await h.mso('FormatCellsMenu', { pauza: 250 });
+    if (!await h.clicEt('Default Width...', 'MenuItem')) return { ok: false, det: 'meniul Format n-are Default Width...' };
+    inp = p.locator(`${APP} [data-lh-tinta="camp:latime_standard"] input`).first();
+    const v0 = await inp.inputValue();
+    await inp.click(); await p.keyboard.press('Control+A'); await p.keyboard.type('10'); await p.keyboard.press('Enter'); await pauza(200);
+    const dupa = [await w('B'), await w('D')], std = (await h.st()).latime_standard;
+    await p.keyboard.press('Control+z'); await pauza(200);
+    const d2 = await w('D');
+    return { ok: bc[0] === 92 && bc[1] === 92 && v0 === '8,11' && dupa[0] === 92 && dupa[1] === 78 && std === 78 && d2 === 64, det: `B,C dupa 12: ${j(bc)}; Standard Width arata ${j(v0)}; dupa 10: B,D=${j(dupa)} latime_standard=${j(std)}; Ctrl+Z D=${d2}` };
+  } },
+  { nume: 'r3 B:C selectate, dublu clic pe linia lui B = amandoua dupa textul lor; o coloana goala latita (H) revine la 64; Ctrl+Z', fn: async (p, h) => {
+    await h.scrie('B9', 'Un text destul de lung aici'); await h.scrie('C9', 'Alt text si mai lung decat primul');
+    await h.antetCol('B'); await h.antetCol('C', { modifiers: ['Shift'] });
+    await p.locator(`${APP} [data-lh-tinta="antet_coloana_margine"][data-lh-id="B"]`).first().dblclick(); await pauza(250);
+    const s = await h.st(), lb = (s.latimi_coloane || {}).B, lc = (s.latimi_coloane || {}).C;
+    await p.keyboard.press('Control+z'); await pauza(150);
+    const u = (await h.st()).latimi_coloane || {};
+    await h.cel('J2');
+    const m = await p.locator(`${APP} [data-lh-tinta="antet_coloana_margine"][data-lh-id="H"]`).first().boundingBox();
+    await p.mouse.move(m.x + 4, m.y + 5); await p.mouse.down(); await p.mouse.move(m.x + 40, m.y + 5, { steps: 4 }); await p.mouse.up(); await pauza(200);
+    const lh = ((await h.st()).latimi_coloane || {}).H;
+    await p.locator(`${APP} [data-lh-tinta="antet_coloana_margine"][data-lh-id="H"]`).first().dblclick(); await pauza(250);
+    const lh2 = ((await h.st()).latimi_coloane || {}).H;
+    return { ok: lb > 150 && lc > lb && u.B == null && u.C == null && lh > 90 && lh2 == null, det: `B=${j(lb)} C=${j(lc)}; Ctrl+Z ${j([u.B, u.C])}; H trasa ${j(lh)}, dupa dublu clic ${j(lh2)} (standard)` };
+  } },
+  { nume: 'r3 atingere 390x844: litera B › cercul ⇔ (tras 50 px lateste B); numarul 4 › cercul ⇕ (tras 40 px), doua atingeri pe cerc = inaltimea standard', atingere: true, fn: async (p, h) => {
+    const cerc = async sel => { const l = p.locator(`${APP} .lh-ap-x-cerc${sel}`).first(); if (!(await l.count())) return null; const b = await l.boundingBox(); return b ? { x: b.x + b.width / 2, y: b.y + b.height / 2 } : null; };
+    const trage = async (a, dx, dy) => {
+      const cdp = await p.context().newCDPSession(p);
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: a.x, y: a.y }] });
+      for (let i = 1; i <= 6; i++) { await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: a.x + dx * i / 6, y: a.y + dy * i / 6 }] }); await pauza(25); }
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); await cdp.detach(); await pauza(250);
+    };
+    const nimic = await cerc('');
+    // B, nu C: pe 390 px marginea lui C cade sub bara de derulare verticala (cercul acoperit, vezi raportul runda 3 pct. 4)
+    await h.antetCol('B'); await pauza(200);
+    const cc = await cerc('-c');
+    if (!cc) return { ok: false, det: 'dupa atingerea literei B nu apare cercul ⇔' };
+    await trage(cc, 50, 0);
+    const lc = ((await h.st()).latimi_coloane || {}).B;
+    await h.antetRand(4); await pauza(200);
+    const cr = await cerc('-r');
+    if (!cr) return { ok: false, det: `B=${j(lc)}; dupa atingerea numarului 4 nu apare cercul ⇕` };
+    await trage(cr, 0, 40);
+    const r4 = ((await h.st()).inaltimi_randuri || {})['4'];
+    const cr2 = await cerc('-r');
+    await p.touchscreen.tap(cr2.x, cr2.y); await pauza(80); await p.touchscreen.tap(cr2.x, cr2.y); await pauza(300);
+    const r4b = ((await h.st()).inaltimi_randuri || {})['4'];
+    return { ok: !nimic && lc > 90 && r4 > 40 && !r4b, det: `cerc inainte de atingere: ${j(nimic)}; B dupa tragere ${j(lc)}; randul 4 dupa tragere ${j(r4)}; dupa doua atingeri ${j(r4b)}` };
+  } },
+  { nume: 'r3 Cell Styles › Calculation pe B2:C3 (aldin, FA7D00, F2F2F2, bordura); Ctrl+Z il scoate; Currency pe D2 = formatul contabil; Normal scoate tot', fn: async (p, h) => {
+    await h.cel('B2'); await h.cel('C3', { modifiers: ['Shift'] });
+    const stil = async n => { await h.mso('CellStylesGallery', { pauza: 250 }); return h.clicEt(n, 'MenuItem'); };
+    if (!await stil('Calculation')) return { ok: false, det: 'galeria n-are Calculation' };
+    const s = await h.st(), b2 = (s.format_celule || {}).B2 || {}, c3 = (s.format_celule || {}).C3 || {}, bd = ((s.format_celule || {}).C3 || {}).borduri || {};
+    await p.keyboard.press('Control+z'); await pauza(150);
+    const u = (await h.fmt('B2'));
+    await h.cel('D2');
+    if (!await stil('Currency')) return { ok: false, det: 'galeria n-are Currency' };
+    const d2 = (await h.fmt('D2')).format_numar || '';
+    if (!await stil('Normal')) return { ok: false, det: 'galeria n-are Normal' };
+    const d2n = await h.fmt('D2');
+    const ok = b2.bold && b2.culoare_font === 'FA7D00' && b2.umplere === 'F2F2F2' && c3.stil === 'Calculation' && bd.jos && !u.bold && !u.umplere && /lei/.test(d2) && !d2n.format_numar && !d2n.stil;
+    return { ok, det: `B2=${j(b2)}; borduri C3=${j(bd)}; Ctrl+Z B2=${j(u)}; Currency D2=${j(d2)}; Normal D2=${j(d2n)}` };
+  } },
+  { nume: 'r3 formule: -B2 (fara =) devine =-B2, -5 ramane numar, „×” intre ghilimele ramane, =SUM(B4:A2) devine =SUM(A2:B4); Ctrl+Z', fn: async (p, h) => {
+    await h.scrie('B2', '7'); await h.scrie('B3', '5'); await h.scrie('B4', '3');
+    await h.scrie('D2', '-B2'); await h.scrie('D3', '-5'); await h.scrie('D4', '=IF(B2>1;"2×3";B3÷B4)'); await h.scrie('D5', '=SUM(B4:A2)');
+    const s = await h.st(), c = a => s.celule[a] || {};
+    const r = [normF(c('D2').formula), c('D2').valoare, c('D3').formula, c('D3').valoare, normF(c('D4').formula), c('D4').valoare, normF(c('D5').formula), c('D5').valoare];
+    await p.keyboard.press('Control+z'); await pauza(150);
+    const u = await h.v('D5');
+    const ok = r[0] === '=-B2' && r[1] === -7 && !r[2] && r[3] === -5 && r[4] === '=IF(B2>1,"2×3",B3/B4)' && r[5] === '2×3' && r[6] === '=SUM(A2:B4)' && r[7] === 15 && u === undefined;
+    return { ok, det: `D2..D5 = ${j(r)}; Ctrl+Z D5=${j(u)}` };
+  } },
+  { nume: 'r3 partea goala intre ; = 0: =MAX(-5;;-3) = 0, =AVERAGE(9;;7) = 5,33, =COUNT(1;;2) = 3, =AVERAGE(9;C20;7) cu C20 goala = 8 (referinta goala nu se numara)', fn: async (p, h) => {
+    await h.scrie('E2', '=MAX(-5;;-3)'); await h.scrie('E3', '=AVERAGE(9;;7)'); await h.scrie('E4', '=COUNT(1;;2)'); await h.scrie('E5', '=AVERAGE(9;C20;7)');
+    const r = [await h.v('E2'), await h.v('E3'), await h.v('E4'), await h.v('E5')];
+    return { ok: r[0] === 0 && Math.abs(r[1] - 16 / 3) < 1e-9 && r[2] === 3 && r[3] === 8, det: `E2..E5 = ${j(r)}` };
+  } },
+  { nume: 'r3 G2-1 Percent Style pe C1:C3, apoi 5 → 0,05 (5%), 0,5 → 0,5 (50%), 12% → 0,12; Ctrl+Z', fn: async (p, h) => {
+    await h.cel('C1'); await h.cel('C3', { modifiers: ['Shift'] }); await h.mso('PercentStyle');
+    await h.scrie('C1', '5'); await h.scrie('C2', '0,5'); await h.scrie('C3', '12%');
+    const s = await h.st(), c = a => s.celule[a] || {};
+    const r = [c('C1').valoare, c('C1').text, c('C2').valoare, c('C3').valoare];
+    await p.keyboard.press('Control+z'); await pauza(150);
+    const u = await h.v('C3');
+    return { ok: r[0] === 0.05 && r[1] === '5%' && r[2] === 0.5 && r[3] === 0.12 && u !== 0.12, det: `C1 ${j(r.slice(0, 2))}, C2 ${j(r[2])}, C3 ${j(r[3])}; Ctrl+Z C3=${j(u)} (valoarea de dinainte)` };
+  } },
+  { nume: 'r3 G2-2 =A1+1 si =A1 iau formatul datei din A1, =B2-B1 pe ore ia h:mm; =A1*2 si =SUM(A1;1) raman General; o celula deja formatata nu se schimba', fn: async (p, h) => {
+    await h.scrie('A1', '27.09.2026'); await h.scrie('B1', '12:30'); await h.scrie('B2', '14:15');
+    await h.scrie('A4', '=A1+1'); await h.scrie('A5', '=A1'); await h.scrie('B4', '=B2-B1'); await h.scrie('A6', '=A1*2'); await h.scrie('A7', '=SUM(A1;1)');
+    await h.cel('C8'); await h.mso('PercentStyle'); await h.scrie('C8', '=A1+1');
+    const s = await h.st(), t = a => (s.celule[a] || {}).text;
+    const r = [t('A4'), t('A5'), t('B4'), t('A6'), t('A7'), ((s.format_celule || {}).C8 || {}).format_numar];
+    return { ok: r[0] === '28.09.2026' && r[1] === '27.09.2026' && r[2] === '1:45' && r[3] === '92584' && r[4] === '46293' && r[5] === '0%', det: `A4,A5,B4,A6,A7 = ${j(r.slice(0, 5))}; formatul C8 = ${j(r[5])}` };
+  } },
+  { nume: 'r3 =ROUND(1;2;3) › Enter: fereastra „too many arguments” (OK, formula ramane in editare); =ROUND(1) da tot „too few”', fn: async (p, h) => {
+    const mesaj = () => p.evaluate(() => [...document.querySelectorAll('[data-lh-aplicatie="excel"] [data-lh-tip="Window"]')].filter(e => e.getBoundingClientRect().width > 0).map(e => e.innerText).join(' | '));
+    await h.cel('E9'); await p.keyboard.type('=ROUND(1;2;3)'); await p.keyboard.press('Enter'); await pauza(200);
+    const m1 = await mesaj();
+    await p.keyboard.press('Enter'); await pauza(200);
+    const ed = (await h.st()).ramane_in_editare;
+    await p.keyboard.press('Escape'); await pauza(100); await p.keyboard.press('Escape'); await pauza(100);
+    await h.cel('E10'); await p.keyboard.type('=ROUND(1)'); await p.keyboard.press('Enter'); await pauza(200);
+    const m2 = await mesaj();
+    return { ok: /too many arguments/.test(m1) && ed === true && /too few arguments/.test(m2) && (await h.v('E9')) === undefined, det: `m1=${j(m1.slice(0, 80))}; dupa OK in editare=${ed}; m2=${j(m2.slice(0, 80))}` };
+  } },
+  { nume: 'r3 pe calculator nu apare niciun cerc ⇔ / ⇕ la clic pe litera / numar', fn: async (p, h) => {
+    await h.antetCol('C'); await h.antetRand(4);
+    const n = await p.locator(`${APP} .lh-ap-x-cerc`).count();
+    return { ok: n === 0, det: `cercuri: ${n}` };
+  } },
 ];
 async function apasaTinta(p, tinta) { await p.locator(`${APP} [data-lh-tinta="${tinta}"]:visible`).first().click(); await pauza(250); }
 
@@ -370,7 +523,8 @@ async function main() {
   const base = `http://127.0.0.1:${srv.address().port}`;
   const browser = await chromium.launch({ channel: 'chrome', headless: true });
   try {
-    for (const v of VERIFICARI) {
+    // runda 3: NOAPTE_FILTRU=r3 ruleaza doar verificarile al caror nume incepe asa (fara variabila: toate, ca in --regres)
+    for (const v of VERIFICARI.filter(x => !process.env.NOAPTE_FILTRU || x.nume.startsWith(process.env.NOAPTE_FILTRU))) {
       let ctx = null;
       try {
         ctx = await browser.newContext(v.atingere ? { viewport: { width: 390, height: 844 }, hasTouch: true } : { viewport: { width: 1280, height: 800 } });
