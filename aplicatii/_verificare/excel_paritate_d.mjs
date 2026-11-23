@@ -558,14 +558,22 @@ proba('excel-a-F109', 'Font Color ▾: Automatic, culorile temei cu nuanțe, Sta
 const FORM = { A1: 'a', B1: 'b', A2: 20, B2: 30 };
 const acceptata = (s, a) => !s.ramane_in_editare && s.celule[a] && !s.celule[a].editare;
 
-proba('excel-a-F071', 'Ghilimelele „ ” în formulă: Excel nu le recunoaște → #NAME? (formula e primită)', async ({ p }) => {
-  await scrieIn(p, 'C2', '=LEN(„Ana”)');
-  const s = await st(p);
+/* Proba corectată de dirijor pe 23.11.2026 după ce a întrebat Excelul REAL (16.0, instanță invizibilă prin COM,
+   _campaign/…/runde/noapte_excel_22_11/excel_real_f071.json): =LEN(„Ana”) (ghilimele românești jos-sus) e REFUZATĂ de Excel
+   (excepție la scriere), iar =LEN(“Ana”) (ghilimele englezești curbe) e primită și arată #NAME?. La început proba cerea
+   #NAME? și pentru „ ” (inventarul marcase rândul „de verificat”). */
+proba('excel-a-F071', 'Ghilimelele tipografice în formulă: „ ” → Excel refuză formula; “ ” → formula e primită și arată #NAME?', async ({ p }) => {
   const pr = [];
-  if (!acceptata(s, 'C2')) pr.push('formula nu e primită (rămâne în editare)');
-  else if (s.celule.C2.valoare !== '#NAME?') pr.push(`C2 = ${JSON.stringify(s.celule.C2.valoare)} (aștept #NAME?)`);
-  else if ((await celula(p, 'C2').innerText()).trim() !== '#NAME?') pr.push('pe ecran C2 nu arată #NAME?');
-  return verdict(pr, 'C2 arată #NAME?');
+  await scrieIn(p, 'C2', '=LEN(„Ana”)');
+  const s1 = await st(p);
+  if (acceptata(s1, 'C2')) pr.push(`=LEN(„Ana”) a fost primită (C2 = ${JSON.stringify(s1.celule.C2.valoare)}); Excel o refuză`);
+  for (let i = 0; i < 3; i++) { await p.keyboard.press('Escape'); await pauza(200); }   // închide fereastra de eroare și editarea
+  await scrieIn(p, 'D2', '=LEN(“Ana”)');
+  const s2 = await st(p);
+  if (!acceptata(s2, 'D2')) pr.push('=LEN(“Ana”) nu e primită (rămâne în editare); Excel o primește');
+  else if (s2.celule.D2.valoare !== '#NAME?') pr.push(`D2 = ${JSON.stringify(s2.celule.D2.valoare)} (aștept #NAME?)`);
+  else if ((await celula(p, 'D2').innerText()).trim() !== '#NAME?') pr.push('pe ecran D2 nu arată #NAME?');
+  return verdict(pr, '„ ” refuzată, “ ” → #NAME?');
 }, { continut: { celule: FORM, selectie: 'C2' } });
 
 proba('excel-a-F213', 'Celula cu eroare (#DIV/0!) are triunghiul verde din colț; celula fără eroare nu', async ({ p }) => {
