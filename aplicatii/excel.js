@@ -937,7 +937,16 @@
          values, or text in the array or reference are ignored.” — pagina Microsoft a funcției SUM, citată de criticul 4f);
          doar valorile TASTATE în argumente (=SUM("5";2)) trec prin num() */
       const RF = A.map(a => a.k === 'ref' || a.k === 'isect');
-      const toate = (doarNum) => { const o = []; V.forEach((v, i) => { if (v && v.zona) v.vals.forEach(x => { if (eErr(x)) throw x; if (typeof x === 'number') o.push(x); }); else if (v != null) { if (doarNum && RF[i]) { if (eErr(v)) throw v; if (typeof v === 'number') o.push(v); } else o.push(doarNum ? num(v) : v); } }); return o; };
+      /* runda 6 (G5-1): funcțiile care cer o ZONĂ (COUNTIF / SUMIF / AVERAGEIF / COUNTBLANK / …IFS / MATCH) primesc și o
+         referință la o singură celulă, ca zonă de 1×1 (=COUNTIF(C2;"da") = 1, =SUMIF(B3;">50") = 70, =COUNTBLANK(Z1) = 1 —
+         criticul rundei 5, critici/runda_5/raport.md › G5-1; MATCH și …IFS: [DEDUS], aceeași regulă). Valoarea se ia direct
+         din celulă, fără tăierea la zona folosită din evalua (Z1 dincolo de ultima coloană rămâne o celulă goală, nu nimic) */
+      const zonaDe = i => {
+        const v = V[i]; if (v && v.zona) return v; if (!RF[i]) return v;
+        const z = zonaIsect(f, A[i]); if (z.r0 !== z.r1 || z.c0 !== z.c1) return v;
+        return { zona: true, vals: [valoare(f, z.r0, z.c0)], z };
+      };
+      const toate =(doarNum) => { const o = []; V.forEach((v, i) => { if (v && v.zona) v.vals.forEach(x => { if (eErr(x)) throw x; if (typeof x === 'number') o.push(x); }); else if (v != null) { if (doarNum && RF[i]) { if (eErr(v)) throw v; if (typeof v === 'number') o.push(v); } else o.push(doarNum ? num(v) : v); } }); return o; };
       const s1 = () => un(f, A[0]);
       switch (F2) {
         case 'SUM': return toate(true).reduce((s, x) => s + x, 0);
@@ -949,14 +958,20 @@
         case 'MAX': { const o = toate(true); return o.length ? Math.max(...o) : 0; }
         case 'MEDIAN': { const o = toate(true).sort((a, b) => a - b); if (!o.length) throw ERR('#NUM!'); const k = o.length >> 1; return o.length % 2 ? o[k] : (o[k - 1] + o[k]) / 2; }
         case 'COUNT': { let k = 0; V.forEach((v, i) => { if (v && v.zona) v.vals.forEach(x => { if (typeof x === 'number') k++; }); else if (typeof v === 'number' || (!RF[i] && typeof v === 'string' && textNumeric(v) != null)) k++; }); return k; }
-        case 'COUNTA': { let k = 0; V.forEach(v => { if (v && v.zona) v.vals.forEach(x => { if (x != null && x !== '') k++; }); else k++; }); return k; }
-        case 'COUNTBLANK': { const v = V[0]; if (!(v && v.zona)) throw ERR('#VALUE!'); const z = v.z; const tot = (Math.min(z.r1, MAXR) - z.r0 + 1) * (z.c1 - z.c0 + 1); return tot - v.vals.filter(x => x != null && x !== '').length; }
-        case 'COUNTIF': { const v = V[0]; if (!(v && v.zona)) throw ERR('#VALUE!'); const t = criteriu(un(f, A[1])); return v.vals.filter(t).length; }
+        /* G5-1: o referință la o celulă goală nu se numără (=COUNTA(Z1) = 0, =COUNTA(B2;Z1) = 1), ca în zonă; valorile TASTATE da */
+        case 'COUNTA': { let k = 0; V.forEach((v, i) => { if (v && v.zona) v.vals.forEach(x => { if (x != null && x !== '') k++; }); else if (!RF[i] || (v != null && v !== '')) k++; }); return k; }
+        case 'COUNTBLANK': { const v = zonaDe(0); if (!(v && v.zona)) throw ERR('#VALUE!'); const z = v.z; const tot = (Math.min(z.r1, MAXR) - z.r0 + 1) * (z.c1 - z.c0 + 1); return tot - v.vals.filter(x => x != null && x !== '').length; }
+        case 'COUNTIF': { const v = zonaDe(0); if (!(v && v.zona)) throw ERR('#VALUE!'); const t = criteriu(un(f, A[1])); return v.vals.filter(t).length; }
         case 'SUMIF': case 'AVERAGEIF': {
-          const v = V[0]; if (!(v && v.zona)) throw ERR('#VALUE!');
-          const t = criteriu(un(f, A[1])), s = A[2] ? V[2] : v;
+          const v = zonaDe(0); if (!(v && v.zona)) throw ERR('#VALUE!');
+          const t = criteriu(un(f, A[1])), s = A[2] ? zonaDe(2) : v;
+          /* G5-1: zona de adunat dată ca O celulă pornește din ea și ia forma zonei cu condiția (=SUMIF(C2:C7;"da";B2) adună
+             din B2:B7) [DEDUS: regula din documentația Microsoft a lui SUMIF, nu e în referinte/]; o zonă rămâne ca înainte */
+          const w = Math.max(1, Math.min(v.z.c1, ultim(f).c + 1) - v.z.c0 + 1);
+          const ia = (s && s.zona && s.vals.length === 1 && s.z.r0 === s.z.r1 && s.z.c0 === s.z.c1 && v.vals.length > 1)
+            ? (i => valoare(f, s.z.r0 + Math.floor(i / w), s.z.c0 + i % w)) : (i => (s && s.vals ? s.vals[i] : null));
           let sum = 0, k = 0;
-          v.vals.forEach((x, i) => { if (t(x)) { const y = s.vals ? s.vals[i] : null; if (typeof y === 'number') { sum += y; k++; } } });
+          v.vals.forEach((x, i) => { if (t(x)) { const y = ia(i); if (typeof y === 'number') { sum += y; k++; } } });
           if (F2 === 'SUMIF') return sum;
           if (!k) throw ERR('#DIV/0!');
           return sum / k;
@@ -964,7 +979,7 @@
         /* runda 4a (excel-a-F224): MATCH (1 = cel mai mare ≤ valoarea, în listă crescătoare; 0 = potrivire exactă, cu * ? în text;
            -1 = cel mai mic ≥, listă descrescătoare) și funcțiile cu mai multe condiții (zonele de aceeași mărime, altfel #VALUE!) */
         case 'MATCH': {
-          const cv = s1(), z = V[1], tip = A[2] && A[2].k !== 'gol' ? Math.trunc(num(un(f, A[2]))) : 1;
+          const cv = s1(), z = zonaDe(1), tip = A[2] && A[2].k !== 'gol' ? Math.trunc(num(un(f, A[2]))) : 1;
           if (eErr(cv)) throw cv;
           if (!(z && z.zona) || (z.z.r1 > z.z.r0 && z.z.c1 > z.z.c0)) throw ERR('#N/A');
           const vals = z.vals;
@@ -975,10 +990,10 @@
           return gasit + 1;
         }
         case 'SUMIFS': case 'AVERAGEIFS': case 'MAXIFS': case 'MINIFS': case 'COUNTIFS': {
-          const cnt = F2 === 'COUNTIFS', z0 = cnt ? null : V[0], start = cnt ? 0 : 1;
+          const cnt = F2 === 'COUNTIFS', z0 = cnt ? null : zonaDe(0), start = cnt ? 0 : 1;
           if ((A.length - start) % 2) throw ERR('#VALUE!');
           const perechi = [];
-          for (let i = start; i < A.length; i += 2) { const z = V[i]; if (!(z && z.zona)) throw ERR('#VALUE!'); perechi.push([z, criteriu(un(f, A[i + 1]))]); }
+          for (let i = start; i < A.length; i += 2) { const z = zonaDe(i); if (!(z && z.zona)) throw ERR('#VALUE!'); perechi.push([z, criteriu(un(f, A[i + 1]))]); }
           const ref = cnt ? perechi[0][0] : z0;
           if (!(ref && ref.zona)) throw ERR('#VALUE!');
           const dim = z => [z.z.r1 - z.z.r0, z.z.c1 - z.z.c0].join();

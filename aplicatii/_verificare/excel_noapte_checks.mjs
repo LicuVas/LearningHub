@@ -660,6 +660,26 @@ const VERIFICARI = [
       && c.plus && c.plus[1] <= c.bara + 1 && c.activa === 'Sheet6' && (c.n === 6 || c.stanga === true);
     return { ok, det: `1280: ${j(a)}; 480: ${j(b)}; inapoi 1280: ${j(c)}` };
   } },
+  { nume: 'r6 G5-1 referinta la O celula in COUNTA / COUNTIF / SUMIF / COUNTBLANK / COUNT / AVERAGEIF (numar, text, gol): =COUNTA(Z1)=0, =COUNTA(B2;Z1)=1, =COUNTIF(C2;"da")=1, =SUMIF(B3;">50")=70, =COUNTBLANK(Z1)=1 …; =B1+1 ramane #VALUE!', fn: async (p, h) => {
+    await p.locator(`${APP} [data-lh-tinta="fila_foii_buton:Add Sheet"]`).first().click(); await pauza(300);
+    await h.scrie('B1', 'Punctaj'); await h.scrie('B2', '45'); await h.scrie('B3', '70'); await h.scrie('C2', 'da');
+    const f = ['=COUNTA(Z1)', '=COUNTA(B2;Z1)', '=COUNTIF(C2;"da")', '=SUMIF(B3;">50")', '=COUNTBLANK(Z1)', '=COUNT(Z1)', '=COUNT(B2)', '=COUNT(C2)',
+      '=COUNTA(C2)', '=COUNTBLANK(B2)', '=COUNTBLANK(C2)', '=COUNTIF(B2;">50")', '=AVERAGEIF(B3;">50")', '=AVERAGEIF(B2;">50")', '=B1+1'];
+    for (const [i, t] of f.entries()) await h.scrie('E' + (i + 1), t);
+    const s = await h.st(), r = f.map((_, i) => ((s.celule || {})['E' + (i + 1)] || {}).valoare);
+    const ok = j(r) === j([0, 1, 1, 70, 1, 0, 1, 0, 1, 0, 0, 0, 70, '#DIV/0!', '#VALUE!']);
+    return { ok, det: `E1..E15 ${j(r)}` };
+  } },
+  { nume: 'r6 G5-1 …IFS / SUMIF cu zona de adunat / MATCH pe O celula, zonele neschimbate: =COUNTIFS(C2;"da")=1, =SUMIFS(B3;B3;">50")=70, =SUMIF(C2;"da";B2)=45, =SUMIF(C2:C4;"da";B2)=97, =COUNTIF(C2:C4;"da")=2, =COUNTBLANK(Z1:Z3)=3', fn: async (p, h) => {
+    await p.locator(`${APP} [data-lh-tinta="fila_foii_buton:Add Sheet"]`).first().click(); await pauza(300);
+    for (const [i, [b, c]] of [['45', 'da'], ['70', 'nu'], ['52', 'da']].entries()) { await h.scrie('B' + (i + 2), b); await h.scrie('C' + (i + 2), c); }
+    const f = ['=COUNTIFS(C2;"da")', '=COUNTIFS(C2;"da";B2;">40")', '=COUNTIFS(C2;"da";B2:B3;">40")', '=SUMIFS(B3;B3;">50")', '=SUMIF(C2;"da";B2)', '=SUMIF(C2:C4;"da";B2)',
+      '=COUNTA(Z1:Z3)', '=COUNTIF(C2:C4;"da")', '=SUMIF(B2:B4;">50")', '=COUNTBLANK(Z1:Z3)', '=MATCH(70;B3;0)', '=SUMIF(C2:C4;"da";B2:B4)'];
+    for (const [i, t] of f.entries()) await h.scrie('E' + (i + 1), t);
+    const s = await h.st(), r = f.map((_, i) => ((s.celule || {})['E' + (i + 1)] || {}).valoare);
+    const ok = j(r) === j([1, 1, '#VALUE!', 70, 45, 97, 0, 2, 122, 3, 1, 97]);
+    return { ok, det: `E1..E12 ${j(r)}` };
+  } },
 ];
 async function apasaTinta(p, tinta) { await p.locator(`${APP} [data-lh-tinta="${tinta}"]:visible`).first().click(); await pauza(250); }
 
