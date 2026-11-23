@@ -133,10 +133,13 @@ async function main() {
       const txt = await p.locator('.lh-ap-lista-ref [data-lh-tip="ListItem"]').allInnerTexts();
       return txt.length === 16 && txt[0].trim() === '8' && txt[15].trim() === '72' ? true : `randuri=${txt.length} ${JSON.stringify(txt.slice(0, 3))}`;
     });
+    /* Word real hotărăște după PRIMUL caracter al selecției (COM, LearningHub/lectii/vii/m1-l06/_proba/rezultate_word.json
+       › bold_amestecat_primul_normal / _primul_aldin): aici primul caracter („A”) e normal, deci B îngroașă tot.
+       Varianta veche („Ab” aldin, deci primul aldin) cerea opusul lui Word — corectată de dirijorul nopții Word, 23.11. */
     await verifica(browser, base, '4a B pe selectie mixta: toata selectia, apoi scoate', async p => {
       await p.keyboard.type('Ab cd');
       await p.keyboard.press('Home');
-      await p.keyboard.press('Shift+ArrowRight');
+      await p.keyboard.press('ArrowRight');
       await p.keyboard.press('Shift+ArrowRight');
       await p.keyboard.press('Control+B');
       await p.keyboard.press('Control+A');
