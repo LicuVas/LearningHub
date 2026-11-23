@@ -932,7 +932,12 @@
          în Excel și în simulatorul vechi — felii/felie_c.json › excel-b-F070); în celelalte rămâne „lipsă” (null), ca înainte */
       const GOL0 = /^(SUM|PRODUCT|AVERAGE|AVEDEV|MIN|MAX|MEDIAN|COUNT)$/.test(F2);
       const V = A.map(a => (GOL0 && a.k === 'gol' ? 0 : evalua(f, a)));
-      const toate = (doarNum) => { const o = []; V.forEach(v => { if (v && v.zona) v.vals.forEach(x => { if (eErr(x)) throw x; if (typeof x === 'number') o.push(x); }); else if (v != null) o.push(doarNum ? num(v) : v); }); return o; };
+      /* runda 5 (G4f-2): o referință la O SINGURĂ celulă e tot o referință — textul / TRUE din ea sunt sărite, ca într-o zonă
+         („If an argument is an array or reference, only numbers in that array or reference are counted. Empty cells, logical
+         values, or text in the array or reference are ignored.” — pagina Microsoft a funcției SUM, citată de criticul 4f);
+         doar valorile TASTATE în argumente (=SUM("5";2)) trec prin num() */
+      const RF = A.map(a => a.k === 'ref' || a.k === 'isect');
+      const toate = (doarNum) => { const o = []; V.forEach((v, i) => { if (v && v.zona) v.vals.forEach(x => { if (eErr(x)) throw x; if (typeof x === 'number') o.push(x); }); else if (v != null) { if (doarNum && RF[i]) { if (eErr(v)) throw v; if (typeof v === 'number') o.push(v); } else o.push(doarNum ? num(v) : v); } }); return o; };
       const s1 = () => un(f, A[0]);
       switch (F2) {
         case 'SUM': return toate(true).reduce((s, x) => s + x, 0);
@@ -943,7 +948,7 @@
         case 'MIN': { const o = toate(true); return o.length ? Math.min(...o) : 0; }
         case 'MAX': { const o = toate(true); return o.length ? Math.max(...o) : 0; }
         case 'MEDIAN': { const o = toate(true).sort((a, b) => a - b); if (!o.length) throw ERR('#NUM!'); const k = o.length >> 1; return o.length % 2 ? o[k] : (o[k - 1] + o[k]) / 2; }
-        case 'COUNT': { let k = 0; V.forEach(v => { if (v && v.zona) v.vals.forEach(x => { if (typeof x === 'number') k++; }); else if (typeof v === 'number' || (typeof v === 'string' && textNumeric(v) != null)) k++; }); return k; }
+        case 'COUNT': { let k = 0; V.forEach((v, i) => { if (v && v.zona) v.vals.forEach(x => { if (typeof x === 'number') k++; }); else if (typeof v === 'number' || (!RF[i] && typeof v === 'string' && textNumeric(v) != null)) k++; }); return k; }
         case 'COUNTA': { let k = 0; V.forEach(v => { if (v && v.zona) v.vals.forEach(x => { if (x != null && x !== '') k++; }); else k++; }); return k; }
         case 'COUNTBLANK': { const v = V[0]; if (!(v && v.zona)) throw ERR('#VALUE!'); const z = v.z; const tot = (Math.min(z.r1, MAXR) - z.r0 + 1) * (z.c1 - z.c0 + 1); return tot - v.vals.filter(x => x != null && x !== '').length; }
         case 'COUNTIF': { const v = V[0]; if (!(v && v.zona)) throw ERR('#VALUE!'); const t = criteriu(un(f, A[1])); return v.vals.filter(t).length; }
@@ -1426,7 +1431,20 @@
       sincronDerulare();
       return 'derulare';
     }
-    if (typeof ResizeObserver === 'function') { try { new ResizeObserver(() => aseazaBanda()).observe(paneReg); } catch (e) { /* */ } }
+    /* runda 5 (4c pct. 4.2): la redimensionare / rotirea telefonului și șirul filelor se desenează iar (marginea lui = locul
+       despărțitorului / al barei orizontale, măsurat la desen), cu foaia activă adusă la vedere; altfel + rămânea dincolo de
+       fereastră (480 px: + la 546-578 px). Nu în timpul redenumirii (caseta ar dispărea) */
+    if (typeof ResizeObserver === 'function') {
+      try {
+        let w0 = -1;
+        new ResizeObserver(() => {
+          aseazaBanda();
+          const w = Math.round(paneReg.getBoundingClientRect().width);
+          if (w0 >= 0 && w !== w0 && !redenumire) { tabFoi.__sem = null; tabFoi.__nume = null; tabFoi.__fiVazut = null; foileFile(); }
+          w0 = w;
+        }).observe(paneReg);
+      } catch (e) { /* */ }
+    }
     paneFoaie.appendChild(paneReg);
     zonaSup.append(randF, paneFoaie);
     const golEl = el('div', 'lh-ap-x-gol', { 'data-lh-tip': 'Pane', 'data-lh-eticheta': 'Excel' });
@@ -2274,7 +2292,7 @@
          lectii/_sim/excelx-formule.js:118-121 — doar când nu e un număr și formula se poate citi) */
       if (fmtDe(f, e.a).format_numar !== '@') {
         if ((s.charAt(0) === '+' || s.charAt(0) === '-') && s.length > 1 && typeof constanta(s).v !== 'number' && laForma('=' + s, 'ro', 'en')) s = '=' + s;
-        if (s.charAt(0) === '=') s = normalizeazaFormula(s);
+        if (s.charAt(0) === '=') s = inchideParanteze(normalizeazaFormula(s));
       }
       let nou = null, fn = null, ok = true, g0 = null;
       /* lot 2: în celula cu formatul Text (@) tot ce se scrie rămâne text, și „=…”, și numerele (cu triunghiul verde) */
@@ -2335,6 +2353,19 @@
         else { const nf = fnNecalculata(nou.f); if (nf) mesajFunctie(nf); }
       }
       return true;
+    }
+    /* runda 5 (G4f-1): paranteza de la sfârșit uitată se pune singură, fără fereastră — „=SUM(B2:B6 … Excel o închide singur,
+       fără fereastră (tastat, alerte pornite). La fel =MAX(B2:B6” (lectii/viii/m2-l08/surse.md:21); „Paranteza de la sfârșit
+       uitată se pune singură” (m2-l09/surse.md:33). Doar când formula închisă se citește fără altă corectură; altfel rămâne
+       drumul de dinainte (ferestrele din `greseala` / mesajul) */
+    function inchideParanteze(s) {
+      if (((s.match(/"/g) || []).length) % 2) return s;
+      const m = s.slice(1).replace(/"[^"]*"/g, '');
+      const d = (m.match(/\(/g) || []).length - (m.match(/\)/g) || []).length;
+      /* o formulă care se termină cu un operator / „;” / „(” nu e „doar paranteza uitată” (=SUM(B2:B7; rămâne pe drumul vechi) */
+      if (d <= 0 || /[(;,:+\-*/^&=<>]\s*$/.test(s)) return s;
+      const t = s.replace(/\s+$/, '') + ')'.repeat(d);
+      return !greseala(t) && laForma(t, 'ro', 'en') ? t : s;
     }
     function renunta() { M.edit = null; deseneazaSelectia(); }
     /* runda 4a (lotul 4): ce face Excelul real (Microsoft 365, setări românești) cu o formulă tastată greșit, ÎNAINTE de calcul.
@@ -3005,7 +3036,21 @@
            cuprinde apoi și rezultatele (lectii/viii/m2-l08/surse.md:26 „B2:B6 → B7…, selecția devine B2:B7; B2:B7 cu B7 goală
            + Average → B7 =AVERAGE(B2:B6); B2:D3 → B4:D4”; vechiul lectii/_sim/excelx-functii.js:186-202) */
         const q = s.zone[s.zone.length - 1], tinte = [];
-        if (q.r1 > q.r0 || q.c0 === q.c1) {
+        /* runda 5 (G4f-3): ultima coloană a zonei goală pe toată înălțimea (zona are cel puțin două rânduri și două coloane) =
+           totalurile pe rânduri merg în ea; cu ultimul rând gol și el, totalurile pe coloane merg în rândul gol, iar colțul primește
+           totalul totalurilor (B2:D5 cu D și 5 goale → B5, C5, D2:D4 = SUM(B2:C2)…, D5) [DEDUS: criticul 4f e sigur de cazul cu
+           rândul ȘI coloana goale, dar nu e în referinte/; cazul doar-coloana = simetria cu „ultimul rând gol” (m2-l08/surse.md:27);
+           forma formulei din colț =SUM(D2:D4) e presupusă — de_capturat R5-1] */
+        let ultimaColGoala = q.r1 > q.r0 && q.c1 > q.c0 && q.c1 < MAXC - 1 && q.r1 < MAXR - 1;
+        for (let r = q.r0; r <= q.r1 && ultimaColGoala; r++) if (!gol(r, q.c1)) ultimaColGoala = false;
+        if (ultimaColGoala) {
+          let ultimGol = true;
+          for (let c0 = q.c0; c0 <= q.c1 && ultimGol; c0++) if (!gol(q.r1, c0)) ultimGol = false;
+          const rN = ultimGol ? q.r1 - 1 : q.r1;
+          if (ultimGol) for (let c0 = q.c0; c0 < q.c1; c0++) tinte.push({ r: q.r1, c: c0, f: '=' + FX + '(' + zt(q.r0, c0, rN, c0) + ')' });
+          for (let r = q.r0; r <= rN; r++) tinte.push({ r, c: q.c1, f: '=' + FX + '(' + zt(r, q.c0, r, q.c1 - 1) + ')' });
+          if (ultimGol) tinte.push({ r: q.r1, c: q.c1, f: '=' + FX + '(' + zt(q.r0, q.c1, rN, q.c1) + ')' });
+        } else if (q.r1 > q.r0 || q.c0 === q.c1) {
           let ultimGol = q.r1 > q.r0;
           for (let c0 = q.c0; c0 <= q.c1 && ultimGol; c0++) if (!gol(q.r1, c0)) ultimGol = false;
           const r = ultimGol ? q.r1 : q.r1 + 1, r2 = ultimGol ? q.r1 - 1 : q.r1;
@@ -3119,7 +3164,16 @@
         for (let c0 = q.c0; c0 <= q.c1; c0++) { o.cel.push(f.cel[adr(r, c0)]); o.fmt.push(f.fmt[adr(r, c0)]); }
         randuri.push(o);
       }
-      const una = (a, b, desc) => { if (a == null || a === '') return (b == null || b === '') ? 0 : 1; if (b == null || b === '') return -1; return desc ? -compara(a, b) : compara(a, b); };
+      /* runda 5 (G4g-3): erorile au rangul lor, toate egale între ele — „numere < text < TRUE/FALSE < erori; goalele mereu la
+         sfârșit” (lectii/viii/m2-l10/surse.md:63); descrescător = ordinea inversă, golurile tot la coadă (surse.md:40).
+         Înainte, eroarea primea în `compara` tipul numerelor și `a < b` cu un obiect dădea mereu fals (comparator neconsecvent) */
+      const rangSort = v => eErr(v) ? 3 : typeof v === 'string' ? 1 : typeof v === 'boolean' ? 2 : 0;
+      const una = (a, b, desc) => {
+        if (a == null || a === '') return (b == null || b === '') ? 0 : 1;
+        if (b == null || b === '') return -1;
+        const ra = rangSort(a), rb = rangSort(b), d = ra !== rb ? ra - rb : ra === 3 ? 0 : compara(a, b);
+        return desc ? -d : d;
+      };
       randuri.sort((x, y) => { for (let i = 0; i < niv.length; i++) { const d = una(x.k[i], y.k[i], niv[i].desc); if (d) return d; } return 0; });
       schimba('sortare', () => {
         randuri.forEach((o, i) => o.cel.forEach((x, k) => {
@@ -3747,7 +3801,9 @@
       if (REG.gol || i < 0 || i >= M.foi.length) return 'fara_efect';
       if (M.edit && !confirma()) return 'fara_efect';
       inchideMeniu();
-      if (M.foi.length === 1) return deschideMesajFoaie(DLG_REFUZ) ? 'refuz_stergere' : I.nesimulat('Delete');
+      /* runda 5 (G4g-1): numără foile VIZIBILE — cu o foaie ascunsă, ultima filă vizibilă nu se șterge (TEXT_REFUZ vorbește
+         chiar de „delete”: „To hide, delete, or move the selected sheet(s), you must first insert a new sheet or unhide…”) */
+      if (M.foi.length === 1 || (!M.foi[i].ascunsa && vizibile() <= 1)) return deschideMesajFoaie(DLG_REFUZ) ? 'refuz_stergere' : I.nesimulat('Delete');
       if (!foaieGoala(M.foi[i])) { if (!deschideMesajFoaie(DLG_STERGE)) return I.nesimulat('Delete'); dialog.foaie = i; return 'intrebare_stergere'; }
       return stergeAcum(i);
     }
@@ -3756,7 +3812,13 @@
       if (dialog && dialog.baza === DLG_STERGE) inchideDialog();
       if (i == null || i < 0 || i >= M.foi.length || M.foi.length < 2) return 'fara_efect';
       M.foi.splice(i, 1);
-      if (M.fi > i) M.fi -= 1; else if (M.fi === i) M.fi = Math.min(i, M.foi.length - 1);
+      if (M.fi > i) M.fi -= 1;
+      else if (M.fi === i) {
+        /* runda 5 (G4g-2): o foaie ascunsă nu ajunge activă — prima vizibilă din dreapta, altfel din stânga (ca în ascundeFoaia) */
+        let j = M.foi.findIndex((x, k) => k >= i && !x.ascunsa);
+        if (j < 0) for (let k = Math.min(i, M.foi.length) - 1; k >= 0; k--) if (!M.foi[k].ascunsa) { j = k; break; }
+        M.fi = j < 0 ? Math.min(i, M.foi.length - 1) : j;
+      }
       dupaFoi();
       return 'stergere_foaie';
     }

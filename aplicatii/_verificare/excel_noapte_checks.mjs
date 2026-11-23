@@ -515,6 +515,151 @@ const VERIFICARI = [
     const n = await p.locator(`${APP} .lh-ap-x-cerc`).count();
     return { ok: n === 0, det: `cercuri: ${n}` };
   } },
+  // ---------------- runda 5 (reparatiile criticilor 4g si 4f)
+  { nume: 'r5 G4g-1 cu Sheet2 ascunsa, Delete pe Sheet1 (clic dreapta, apoi Home › Delete ▾ › Delete Sheet) = refuzul „at least one visible worksheet”, nimic sters', fn: async (p, h) => {
+    const fila = n => p.locator(`${APP} [data-lh-tinta="fila_foii"][data-lh-id="${n}"]`);
+    const meniuFila = async (n, rand) => { await fila(n).first().click({ button: 'right' }); await pauza(300); return h.clicEt(rand, 'MenuItem'); };
+    const mesaj = () => p.evaluate(() => [...document.querySelectorAll('[data-lh-aplicatie="excel"] [data-lh-tip="Window"]')].filter(e => e.getBoundingClientRect().width > 0).map(e => e.innerText).join(' | '));
+    await p.locator(`${APP} [data-lh-tinta="fila_foii_buton:Add Sheet"]`).first().click(); await pauza(300);
+    await h.scrie('A1', 'date2');
+    if (!await meniuFila('Sheet2', 'Hide')) return { ok: false, det: 'meniul filei n-are Hide' };
+    await pauza(200);
+    if (!await meniuFila('Sheet1', 'Delete')) return { ok: false, det: 'meniul filei n-are Delete' };
+    await pauza(250);
+    const m1 = await mesaj(), s1 = await h.st();
+    await h.clicEt('OK', 'Button'); await pauza(200);
+    await apasaTinta(p, 'meniu_derulant:Home/Cells/Delete');
+    if (!await h.clicEt('Delete Sheet', 'MenuItem')) return { ok: false, det: 'lista Delete ▾ n-are Delete Sheet' };
+    await pauza(250);
+    const m2 = await mesaj();
+    await h.clicEt('OK', 'Button'); await pauza(200);
+    const s2 = await h.st(), nf = await p.locator(`${APP} [data-lh-tinta="fila_foii"]`).count();
+    const ok = /at least one visible worksheet/.test(m1) && /at least one visible worksheet/.test(m2) && j(s1.foi) === '["Sheet1","Sheet2"]' && j(s2.foi) === '["Sheet1","Sheet2"]'
+      && j(s2.foi_ascunse) === '["Sheet2"]' && s2.foaie_activa === 'Sheet1' && nf === 1 && !s2.dialog;
+    return { ok, det: `clic dreapta: ${j(m1.slice(0, 70))}, foi ${j(s1.foi)}; panglica: ${j(m2.slice(0, 70))}; dupa OK: foi ${j(s2.foi)}, ascunse ${j(s2.foi_ascunse)}, activa ${s2.foaie_activa}, file ${nf}, dialog ${j(s2.dialog || null)}` };
+  } },
+  { nume: 'r5 G4g-1 atingere 390x844: apasare lunga pe Sheet2 › Hide, apasare lunga pe Sheet1 › Delete = refuzul, Sheet1 ramane', atingere: true, fn: async (p, h) => {
+    const fila = n => p.locator(`${APP} [data-lh-tinta="fila_foii"][data-lh-id="${n}"]`);
+    const cdp = await p.context().newCDPSession(p);
+    const lung = async loc => { const b = await loc.first().boundingBox(); if (!b) return false; const x = b.x + b.width / 2, y = b.y + b.height / 2;
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] }); await pauza(900); await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); await pauza(400); return true; };
+    const b = await p.locator(`${APP} [data-lh-tinta="fila_foii_buton:Add Sheet"]`).first().boundingBox();
+    await p.touchscreen.tap(b.x + b.width / 2, b.y + b.height / 2); await pauza(400);
+    await lung(fila('Sheet2'));
+    if (!await h.clicEt('Hide', 'MenuItem')) return { ok: false, det: 'apasarea lunga pe Sheet2 n-a deschis meniul cu Hide' };
+    await pauza(250);
+    await lung(fila('Sheet1'));
+    if (!await h.clicEt('Delete', 'MenuItem')) return { ok: false, det: 'apasarea lunga pe Sheet1 n-a deschis meniul cu Delete' };
+    await pauza(250);
+    const m = await p.evaluate(() => [...document.querySelectorAll('[data-lh-aplicatie="excel"] [data-lh-tip="Window"]')].filter(e => e.getBoundingClientRect().width > 0).map(e => e.innerText).join(' | '));
+    await h.clicEt('OK', 'Button'); await pauza(250);
+    const s = await h.st(), nf = await p.locator(`${APP} [data-lh-tinta="fila_foii"]`).count();
+    return { ok: /at least one visible worksheet/.test(m) && j(s.foi) === '["Sheet1","Sheet2"]' && s.foaie_activa === 'Sheet1' && nf === 1 && !s.dialog,
+      det: `mesaj ${j(m.slice(0, 70))}; foi ${j(s.foi)}, activa ${s.foaie_activa}, file ${nf}, dialog ${j(s.dialog || null)}` };
+  } },
+  { nume: 'r5 G4g-2 Sheet1..3, Sheet2 ascunsa, Delete pe Sheet1 (activa) › activa devine Sheet3 (vizibila), C3 se scrie in Sheet3', fn: async (p, h) => {
+    const fila = n => p.locator(`${APP} [data-lh-tinta="fila_foii"][data-lh-id="${n}"]`);
+    const meniuFila = async (n, rand) => { await fila(n).first().click({ button: 'right' }); await pauza(300); return h.clicEt(rand, 'MenuItem'); };
+    const plus = async () => { await p.locator(`${APP} [data-lh-tinta="fila_foii_buton:Add Sheet"]`).first().click(); await pauza(300); };
+    const pasi = [];
+    try {
+      await plus(); await plus(); pasi.push('+ + ' + j((await h.st()).foi));
+      pasi.push('Hide ' + await meniuFila('Sheet2', 'Hide')); await pauza(200);
+      await fila('Sheet1').first().click(); await pauza(300); pasi.push('clic Sheet1');
+      pasi.push('Delete ' + await meniuFila('Sheet1', 'Delete')); await pauza(250);
+      // '^Button$': butonul Delete din panglica (SplitButton) are aceeasi eticheta si e gasit primul
+      if ((await h.st()).dialog) { pasi.push('fereastra Delete ' + await h.clicEt('Delete', '^Button$')); await pauza(250); }
+    } catch (e) { return { ok: false, det: 'pasi ' + j(pasi) + ' apoi: ' + String(e.message).split(/\r?\n/)[0] }; }
+    const s1 = await h.st();
+    try { await h.scrie('C3', 'unde?'); } catch (e) { return { ok: false, det: `pasi ${j(pasi)}; dupa Delete: foi ${j(s1.foi)}, activa ${s1.foaie_activa}, dialog ${j(s1.dialog || null)}, mesaj ${j(s1.fereastra_mesaj || null)}; clic C3: ${String(e.message).split(/\r?\n/)[0]}` }; }
+    const s2 = await h.st();
+    const act = await p.evaluate(() => [...document.querySelectorAll('[data-lh-aplicatie="excel"] [data-lh-tinta="fila_foii"]')].map(x => x.getAttribute('data-lh-id') + (x.classList.contains('activ') ? '*' : '')));
+    const fc = s2.foi_celule || {};
+    const ok = j(s1.foi) === '["Sheet2","Sheet3"]' && s1.foaie_activa === 'Sheet3' && j(s1.foi_ascunse) === '["Sheet2"]' && ((s2.celule || {}).C3 || {}).valoare === 'unde?' && j(act) === '["Sheet3*"]'
+      && !j(fc.Sheet2 || []).includes('C3');
+    return { ok, det: `dupa Delete: foi ${j(s1.foi)}, activa ${s1.foaie_activa}, ascunse ${j(s1.foi_ascunse)}; file ${j(act)}; C3=${j(((s2.celule || {}).C3 || {}).valoare)}; foi_celule ${j(fc).slice(0, 120)}` };
+  } },
+  { nume: 'r5 G4g-3 Sort Largest to Smallest pe o coloana cu #DIV/0! si #VALUE!: erorile primele (in ordinea lor), apoi 5 | 2,5 | 2; Smallest to Largest: erorile dupa numere; Ctrl+Z', fn: async (p, h) => {
+    await p.locator(`${APP} [data-lh-tinta="fila_foii_buton:Add Sheet"]`).first().click(); await pauza(300);
+    const rows = [['Suma', 'Raport', 'Elev'], ['5', '=10/A2', 'Ana'], ['0', '=10/A3', 'Bogdan'], ['2', '=10/A4', 'Cristi'], ['4', '=10/A5', 'Dana'], ['x', '=10/A6', 'Elena']];
+    for (let r = 0; r < rows.length; r++) for (let c = 0; c < 3; c++) await h.scrie('ABC'[c] + (r + 1), rows[r][c]);
+    const elevi = async () => { const s = await h.st(); return [2, 3, 4, 5, 6].map(r => ((s.celule || {})['C' + r] || {}).valoare); };
+    // coloana cu erori: meniul spune „Z to A” / „A to Z” (numericaCol cere doar numere), Data › Sort are butoanele fixe
+    await h.cel('B4'); await h.mso('SortFilterMenu');
+    if (!await h.clicEt('Sort Largest to Smallest', 'MenuItem') && !await h.clicEt('Sort Z to A', 'MenuItem')) return { ok: false, det: 'meniul n-are sortarea descrescatoare' };
+    await pauza(200);
+    const d = await elevi();
+    await h.cel('B4'); await h.mso('SortFilterMenu');
+    if (!await h.clicEt('Sort Smallest to Largest', 'MenuItem') && !await h.clicEt('Sort A to Z', 'MenuItem')) return { ok: false, det: 'meniul n-are sortarea crescatoare' };
+    await pauza(200);
+    const a = await elevi();
+    await p.keyboard.press('Control+z'); await pauza(200);
+    const u = await elevi();
+    const ok = j(d) === '["Bogdan","Elena","Cristi","Dana","Ana"]' && j(a) === '["Ana","Dana","Cristi","Bogdan","Elena"]' && j(u) === j(d);
+    return { ok, det: `Z→A ${j(d)}; A→Z ${j(a)}; Ctrl+Z ${j(u)}` };
+  } },
+  { nume: 'r5 G4f-1 paranteza de la sfarsit uitata se pune singura: =SUM(B2:B7 / =MAX( / =IF(…;"nu" / =ROUND(AVERAGE(…);1 (Enter si Tab); =SUM(B2:B7; ramane refuzata; Ctrl+Z', fn: async (p, h) => {
+    await p.locator(`${APP} [data-lh-tinta="fila_foii_buton:Add Sheet"]`).first().click(); await pauza(300);
+    for (const [i, n] of [45, 70, 52, 90, 30, 66].entries()) await h.scrie('B' + (i + 2), String(n));
+    await h.scrie('D3', '=SUM(B2:B7'); await h.scrie('D4', '=MAX(B2:B7'); await h.scrie('D5', '=IF(B2>50;"da";"nu"');
+    await h.cel('D6'); await p.keyboard.type('=ROUND(AVERAGE(B2:B7);1'); await p.keyboard.press('Tab'); await pauza(200);
+    const s = await h.st(), c = a => s.celule[a] || {};
+    const r = [normF(c('D3').formula), c('D3').valoare, normF(c('D4').formula), c('D4').valoare, normF(c('D5').formula), c('D5').valoare, normF(c('D6').formula), c('D6').valoare, (s.selectie || {}).activa, s.ramane_in_editare];
+    await p.keyboard.press('Control+z'); await pauza(200);
+    const u = await h.v('D6');
+    await h.cel('D8'); await p.keyboard.type('=SUM(B2:B7;'); await p.keyboard.press('Enter'); await pauza(250);
+    const s8 = await h.st();
+    const ok = r[0] === '=SUM(B2:B7)' && r[1] === 353 && r[2] === '=MAX(B2:B7)' && r[3] === 90 && r[4] === '=IF(B2>50,"DA","NU")' && r[5] === 'nu' && r[6] === '=ROUND(AVERAGE(B2:B7),1)' && Math.abs(r[7] - 58.8) < 1e-9
+      && r[8] === 'E6' && !r[9] && u === undefined && s8.ramane_in_editare === true;
+    return { ok, det: `D3..D6 ${j(r.slice(0, 8))}; activa ${r[8]}, in editare ${r[9]}; Ctrl+Z D6=${j(u)}; =SUM(B2:B7; → D8=${j(((s8.celule || {}).D8 || {}).valoare)}, editare ${s8.ramane_in_editare}` };
+  } },
+  { nume: 'r5 G4f-2 referinta la o singura celula cu text / TRUE e sarita: =SUM(C5)=0, =SUM(B1;B2)=45, =AVERAGE(B1;B2)=45, =MAX(C5;B2)=45, =COUNT(B1;B2)=1, =SUM(C6)=0; =SUM(2;TRUE)=3, =C5+1 = #VALUE!', fn: async (p, h) => {
+    await p.locator(`${APP} [data-lh-tinta="fila_foii_buton:Add Sheet"]`).first().click(); await pauza(300);
+    await h.scrie('B1', 'Punctaj'); await h.scrie('B2', '45'); await h.scrie('C5', 'da'); await h.scrie('C6', 'TRUE');
+    const f = ['=SUM(C5)', '=SUM(B1;B2)', '=AVERAGE(B1;B2)', '=MAX(C5;B2)', '=COUNT(B1;B2)', '=SUM(C6)', '=SUM(2;TRUE)', '=C5+1'];
+    for (const [i, t] of f.entries()) await h.scrie('E' + (i + 1), t);
+    const s = await h.st(), r = f.map((_, i) => ((s.celule || {})['E' + (i + 1)] || {}).valoare);
+    const ok = j(r) === j([0, 45, 45, 45, 1, 0, 3, '#VALUE!']);
+    return { ok, det: `E1..E8 ${j(r)}` };
+  } },
+  { nume: 'r5 G4f-3 AutoSum pe B2:D5 (coloana D si randul 5 goale): B5 9, C5 90, D2:D4 =SUM(B2:C2)… 22/33/44, D5 99; un Ctrl+Z le scoate; pe B2:D4: D2:D4 pe randuri, nimic sub', fn: async (p, h) => {
+    await p.locator(`${APP} [data-lh-tinta="fila_foii_buton:Add Sheet"]`).first().click(); await pauza(300);
+    for (const [i, n] of [2, 3, 4].entries()) { await h.scrie('B' + (i + 2), String(n)); await h.scrie('C' + (i + 2), String(n * 10)); }
+    await h.cel('B2'); await h.cel('D5', { modifiers: ['Shift'] });
+    await apasaTinta(p, 'panglica:Home/Editing/AutoSum');
+    const s = await h.st(), c = a => (s.celule || {})[a] || {};
+    const r = ['B5', 'C5', 'D2', 'D3', 'D4', 'D5'].map(a => c(a).valoare), fd = [normF(c('D2').formula), normF(c('D5').formula)];
+    await p.keyboard.press('Control+z'); await pauza(200);
+    const u = [await h.v('B5'), await h.v('D2'), await h.v('D5')];
+    await h.cel('B2'); await h.cel('D4', { modifiers: ['Shift'] });
+    await apasaTinta(p, 'panglica:Home/Editing/AutoSum');
+    const s2 = await h.st(), c2 = a => (s2.celule || {})[a] || {};
+    const r2 = ['D2', 'D3', 'D4', 'B5', 'C5'].map(a => c2(a).valoare);
+    const ok = j(r) === '[9,90,22,33,44,99]' && fd[0] === '=SUM(B2:C2)' && fd[1] === '=SUM(D2:D4)' && u.every(x => x === undefined) && r2[0] === 22 && r2[1] === 33 && r2[2] === 44 && r2[3] === undefined && r2[4] === undefined;
+    return { ok, det: `B5,C5,D2..D5 ${j(r)}; formule D2,D5 ${j(fd)}; Ctrl+Z ${j(u)}; pe B2:D4: D2,D3,D4,B5,C5 ${j(r2)}` };
+  } },
+  { nume: 'r5 filele la redimensionare (4c pct. 4.2): 6 foi pe 1280 px › fereastra 480 px: + si fila activa (Sheet6) raman inaintea barei de derulare, sageata spre stanga se aprinde › inapoi 1280: + inaintea barei, Sheet6 vizibila', fn: async (p, h) => {
+    for (let i = 0; i < 5; i++) { await p.locator(`${APP} [data-lh-tinta="fila_foii_buton:Add Sheet"]`).first().click(); await pauza(250); }
+    const masura = () => p.evaluate(() => {
+      const R = document.querySelector('[data-lh-aplicatie="excel"]'), q = s => R.querySelector(s), bx = e => e ? e.getBoundingClientRect() : null;
+      const file = [...R.querySelectorAll('[data-lh-tinta="fila_foii"]')], plus = bx(q('[data-lh-tinta="fila_foii_buton:Add Sheet"]'));
+      const bara = [...R.querySelectorAll('[data-lh-tinta^="bara_derulare"], .lh-ap-x-bara-h, [data-lh-tip="ScrollBar"]')].map(bx).filter(b => b && b.width > b.height && b.width > 40 && plus && b.top < plus.bottom && b.bottom > plus.top);
+      const sag = [...R.querySelectorAll('[data-lh-tinta^="fila_foii_buton:Scroll"]')].map(e => [e.getAttribute('data-lh-eticheta'), e.getAttribute('aria-disabled') !== 'true']);
+      const act = R.querySelector('[data-lh-tinta="fila_foii"].activ');
+      return { n: file.length, ultimaDreapta: file.length ? Math.round(Math.max(...file.map(f => bx(f).right))) : 0, plus: plus ? [Math.round(plus.left), Math.round(plus.right)] : null,
+        bara: bara.length ? Math.round(Math.min(...bara.map(b => b.left))) : null, latApp: Math.round(bx(R).right), activa: act ? act.getAttribute('data-lh-id') : null,
+        stanga: sag.some(x => /Left/i.test(x[0]) && x[1]) };
+    });
+    const a = await masura();
+    await p.setViewportSize({ width: 480, height: 800 }); await pauza(700);
+    const b = await masura();
+    await p.setViewportSize({ width: 1280, height: 800 }); await pauza(700);
+    const c = await masura();
+    const lim = b.bara != null ? b.bara : b.latApp;
+    const ok = a.n === 6 && b.plus && b.plus[1] <= lim + 1 && b.ultimaDreapta <= b.plus[0] + 1 && b.n < 6 && b.activa === 'Sheet6' && b.stanga === true
+      && c.plus && c.plus[1] <= c.bara + 1 && c.activa === 'Sheet6' && (c.n === 6 || c.stanga === true);
+    return { ok, det: `1280: ${j(a)}; 480: ${j(b)}; inapoi 1280: ${j(c)}` };
+  } },
 ];
 async function apasaTinta(p, tinta) { await p.locator(`${APP} [data-lh-tinta="${tinta}"]:visible`).first().click(); await pauza(250); }
 
