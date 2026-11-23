@@ -39,7 +39,23 @@
      - antetul unui grup din meniu (Pictures › „Insert Picture From”, capturi_word_brut.json): bandă gri, text îngroșat
        [presupus] R28-2 (UI Automation dă doar numele grupului, nu aspectul) */
   const STIL_WORD = '[data-lh-aplicatie="word"] [data-lh-suprafata^="panglica."] .lh-ap-t-ComboBox>.lh-ap-n{margin:-1px 0 0 -1px}' +
-    '[data-lh-aplicatie="word"] .lh-ap-meniu-antet{padding:4px 12px;margin-bottom:2px;background:#f3f2f1;color:#323130;font-weight:600;font-size:12px;cursor:default}';
+    '[data-lh-aplicatie="word"] .lh-ap-meniu-antet{padding:4px 12px;margin-bottom:2px;background:#f3f2f1;color:#323130;font-weight:600;font-size:12px;cursor:default}' +
+    /* banda C, runda 1c: bara Acces rapid în bara de titlu (word-F099/F100) și rândurile panourilor Clipboard / Styles (F102) [presupus aspectul] */
+    '[data-lh-aplicatie="word"] .lh-ap-qat{position:absolute;left:44px;top:8px;height:32px;display:flex;gap:2px;align-items:center;z-index:2}' +
+    '[data-lh-aplicatie="word"] .lh-ap-qat-btn{position:relative;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:4px;cursor:pointer;color:#323130}' +
+    '[data-lh-aplicatie="word"] .lh-ap-qat-btn:hover{background:rgba(0,0,0,.06)}' +
+    '[data-lh-aplicatie="word"] .lh-ap-qat-btn[aria-disabled="true"]{color:#a19f9d;cursor:default}' +
+    '[data-lh-aplicatie="word"] .lh-ap-panou-rand{position:relative;display:block;padding:5px 8px;font-size:12px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
+    '[data-lh-aplicatie="word"] .lh-ap-panou-rand:hover,[data-lh-aplicatie="word"] .lh-ap-panou-rand.lh-ap-ales{background:#e1dfdd}' +
+    '[data-lh-aplicatie="word"] .lh-ap-prev-foaie{background:#fff;color:#000;font:11pt Calibri,Carlito,sans-serif;box-shadow:0 0 0 1px #c6c6c6}' +
+    '[data-lh-aplicatie="word"] .lh-ap-prev-foaie .lh-ap-par::after{content:none}' +
+    '[data-lh-aplicatie="word"] .lh-ap-prev-nr{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:12px}' +
+    '[data-lh-aplicatie="word"].lh-ap-in-backstage .lh-ap-loc-panglica,[data-lh-aplicatie="word"].lh-ap-in-backstage [data-lh-suprafata="file_panglicii"]{visibility:hidden}' +
+    '[data-lh-aplicatie="word"] .lh-ap-bara-protejat{position:absolute;left:0;right:0;top:0;height:32px;z-index:3;display:flex;align-items:center;gap:10px;padding:0 12px;background:#fff4ce;border-bottom:1px solid #e1c870;font-size:12px;color:#323130;white-space:nowrap;overflow:hidden}' +
+    '[data-lh-aplicatie="word"] .lh-ap-bara-protejat .lh-ap-text{overflow:hidden;text-overflow:ellipsis;flex:1}' +
+    '[data-lh-aplicatie="word"] .lh-ap-bara-protejat-btn{position:relative;flex:none;padding:3px 10px;border:1px solid #8a8886;border-radius:2px;background:#fff;cursor:pointer}' +
+    '[data-lh-aplicatie="word"] .lh-ap-panou-gol{padding:8px;font-size:12px;color:#605e5c}' +
+    '[data-lh-aplicatie="word"] [data-lh-tip="List"]:has(>.lh-ap-panou-rand),[data-lh-aplicatie="word"] [data-lh-tip="List"]:has(>.lh-ap-panou-gol){overflow:auto}';
   function stilWord() {
     if (document.getElementById('lh-ap-word-css')) return;
     const s = document.createElement('style');
@@ -242,6 +258,7 @@
     const instantaneu = () => ({ P: M.P, tab: M.tab, img: M.img, pag: M.pag, sel: M.sel, cel: M.cel });
     const pune = s => { M.P = s.P; M.tab = s.tab; M.img = s.img; M.pag = s.pag; M.sel = s.sel; M.cel = s.cel; M.fmtIns = null; M.modificat = true; M.imgSel = null; };
     function schimba(tip, fn) {
+      if (M.protejat) return undefined;   // PROTECTED VIEW: documentul nu se schimbă până la Enable Editing (word-F092)
       H.inainte(tip, instantaneu());
       M.modificat = true;
       const r = fn();
@@ -1114,7 +1131,7 @@
     const faraExt = n => String(n || '').replace(/\.[a-z0-9]{2,5}$/i, '');
     const FOLDER0 = folderSalvare();
     const fisierNou = f => { const nume = numeCuExt(String(f.nume)); return { nume, folder: f.folder || FOLDER0, tip: tipDupaNume(nume),
-      text: (Array.isArray(f.text) ? f.text : [String(f.text == null ? '' : f.text)]).map(String) }; };
+      text: (Array.isArray(f.text) ? f.text : [String(f.text == null ? '' : f.text)]).map(String), ...((f.internet || f.web) ? { internet: true } : {}) }; };
     /* parametrii de CONȚINUT (lecția alege documentul și fișierele, nu interfața — prompt, pasul 6): documentul poate porni
        deja salvat (`nume`, `folder`, `salvat`, `modificat`); `fisiere: [{nume, folder?, text}]` = fișierele din foldere
        (pentru Recent și pentru verificare); `recente: [{nume, folder?}]` = lista Recent din File › Open. Folderul implicit =
@@ -1185,6 +1202,49 @@
     pozitie(titlu, SUP.bara_titlu.r);
     const BTN_TITLU = [...titlu.querySelectorAll('[data-lh-tinta^="bara_titlu:"][data-lh-tip="Button"]')]
       .find(b => /\s-\s/.test(b.getAttribute('data-lh-eticheta') || '')) || null;
+    /* bara Acces rapid (Quick Access Toolbar): ascunsă în instanța de referință (uia_word.json › acces_rapid: afisat false);
+       „Above the ribbon, on the title bar (default location)” și „Show / Hide Quick Access Toolbar” (surse_microsoft.md S3).
+       Butoanele: Save, Undo, Redo / Repeat, cu numele din Word („Can't Undo”, „Can't Repeat” = uia_word.json, panglica Draw ›
+       Undo; „Undo Typing” / „Redo Typing” / „Repeat Typing” = felie_a word-F100). Lot_5 word-F099 / word-F100. */
+    let qatVizibil = !!date.acces_rapid_afisat;
+    const QAT_ICO = {
+      Save: '<path d="M4 3h10l3 3v11H4zm1.2 1.2v11.6h9.6V6.5L13.5 5.2V8H6.5V4.2zm2.5 0V6.8h4.6V4.2zM7 11h6v4H7z"/>',
+      Undo: '<path d="M7.6 4.2 3.8 8l3.8 3.8.85-.85-2.35-2.35H12a3.4 3.4 0 0 1 0 6.8H9v1.2h3a4.6 4.6 0 0 0 0-9.2H6.1l2.35-2.35z"/>',
+      Redo: '<path d="M12.4 4.2 16.2 8l-3.8 3.8-.85-.85 2.35-2.35H8a3.4 3.4 0 0 0 0 6.8h3v1.2H8a4.6 4.6 0 0 1 0-9.2h5.9l-2.35-2.35z"/>'
+    };
+    const qat = el('div', 'lh-ap-qat', { 'data-lh-tip': 'ToolBar', 'data-lh-eticheta': 'Quick Access Toolbar', role: 'toolbar', 'aria-label': 'Quick Access Toolbar' });
+    const qatBtn = (cheie, fa) => {
+      const b = el('div', 'lh-ap-n lh-ap-qat-btn', { 'data-lh-tip': 'Button', role: 'button', 'data-lh-qat': cheie });
+      b.innerHTML = pang.svg(QAT_ICO[cheie], 16);
+      b.__qat = fa;
+      qat.appendChild(b);
+      return b;
+    };
+    const QAT_SAVE = qatBtn('Save', () => (M.deschis ? (M.salvat ? salveazaPeLoc() : (deschideDialog(p2007 ? 'dialog.FileSaveAs' : SALVARE_NOUA) ? 'dialog_salvare' : I.nesimulat('Save'))) : 'indisponibil'));
+    const QAT_UNDO = qatBtn('Undo', () => { const r = anuleaza(); actualizeaza(); return r; });
+    const QAT_REDO = qatBtn('Redo', () => { const r = reface(); if (r && r !== 'fara_efect') gest('refacere', ''); actualizeaza(); return r; });
+    qat.style.display = 'none';
+    titlu.appendChild(qat);
+    function numeQat(b, et) {
+      b.setAttribute('data-lh-eticheta', et); b.setAttribute('aria-label', et); b.setAttribute('title', et);
+      b.setAttribute('data-lh-tinta', 'bara_titlu:' + et);
+    }
+    function actualizeazaQat() {
+      qat.style.display = qatVizibil ? '' : 'none';
+      if (BTN_TITLU) BTN_TITLU.style.transform = qatVizibil ? 'translateX(112px)' : '';
+      if (!qatVizibil) return;
+      numeQat(QAT_SAVE, 'Save');
+      /* [DEDUS] „Undo <acțiune>” doar pentru tastare (Typing); celelalte acțiuni = „Undo” simplu (de_capturat.md) */
+      const tastare = H.ultimTip() === 'tastare';
+      const poateU = M.deschis && H.poateAnula(), poateR = M.deschis && H.poateReface();
+      numeQat(QAT_UNDO, poateU ? (tastare ? 'Undo Typing' : 'Undo') : "Can't Undo");
+      numeQat(QAT_REDO, poateR ? (tastare ? 'Redo Typing' : 'Redo') : (M.deschis && M.ultima ? (M.ultima.fel === 'text' ? 'Repeat Typing' : 'Repeat') : "Can't Repeat"));
+      QAT_UNDO.setAttribute('aria-disabled', poateU ? 'false' : 'true');
+      QAT_REDO.setAttribute('aria-disabled', poateR || (M.deschis && M.ultima) ? 'false' : 'true');
+      QAT_SAVE.setAttribute('aria-disabled', M.deschis ? 'false' : 'true');
+    }
+    function comutaQat() { qatVizibil = !qatVizibil; actualizeazaQat(); return qatVizibil ? 'acces_rapid_afisat' : 'acces_rapid_ascuns'; }
+    const randQat = () => ({ tinta: qatVizibil ? 'Hide Quick Access Toolbar' : 'Show Quick Access Toolbar', text: qatVizibil ? 'Hide Quick Access Toolbar' : 'Show Quick Access Toolbar', fa: comutaQat });
     const filePl = desen('file_panglicii');
     pozitie(filePl, SUP.file_panglicii.r);
     const loculPanglicii = el('div', 'lh-ap-loc-panglica');
@@ -1214,6 +1274,17 @@
     derulare.appendChild(bara);
     zonaPane.append(zona, derulare);
     zonaSup.appendChild(zonaPane);
+    /* bara galbenă PROTECTED VIEW (lot_5 word-F092): fișierul venit de pe internet (conținutul lecției: fisiere[].internet /
+       .web, ca vechiul wordfisier.js:175) se deschide doar de citit până la Enable Editing. Numele „Protected View” /
+       „Enable Editing”: lectii/vi/m1-l03/surse.md:23 (aceeași bară Office, probată în PowerPoint); [DEDUS] textul din
+       mijlocul barei și că Save nu salvează cât e bara (de_capturat.md) */
+    const baraProt = el('div', 'lh-ap-bara-protejat', { 'data-lh-tip': 'Pane', 'data-lh-eticheta': 'PROTECTED VIEW', role: 'region', 'aria-label': 'PROTECTED VIEW' });
+    baraProt.innerHTML = '<b>PROTECTED VIEW</b><span class="lh-ap-text">Be careful—files from the Internet can contain viruses. Unless you need to edit, it’s safer to stay in Protected View.</span>';
+    const btnProt = el('div', 'lh-ap-n lh-ap-bara-protejat-btn', { 'data-lh-tip': 'Button', 'data-lh-eticheta': 'Enable Editing', role: 'button', 'aria-label': 'Enable Editing', 'data-lh-tinta': 'bara_mesaj:Enable Editing' });
+    btnProt.textContent = 'Enable Editing';
+    baraProt.appendChild(btnProt);
+    baraProt.style.display = 'none';
+    zonaSup.appendChild(baraProt);
 
     const jos = el('div', 'lh-ap-jos'), josIn = el('div', 'lh-ap-jos-in');
     const stare = desen('bara_stare');
@@ -1466,7 +1537,10 @@
       /* bara de stare: numărul de cuvinte și zoom-ul (eticheta declarată = textul de pe ecran) */
       const wc = root.querySelector('[data-lh-suprafata="bara_stare"] [data-lh-eticheta^="Word Count"]');
       if (wc) {
-        const t = s.cuvinte + ' words';
+        /* cu text selectat: „X of N words” (cuvintele atinse de selecție; lot_5 word-F104, felie_a; vechiul
+           wordobj-interfata) — [DEDUS] un cuvânt atins doar pe jumătate se numără întreg (de_capturat.md) */
+        const ns = M.deschis && !M.cel && areSel() ? (textIntre(selMin(), Math.min(selMax(), maxCaret())).match(/\S+/g) || []).length : 0;
+        const t = (ns ? ns + ' of ' : '') + s.cuvinte + ' words';
         wc.setAttribute('data-lh-eticheta', 'Word Count ' + t);
         const sp = wc.querySelector('.lh-ap-text');
         if (sp) sp.textContent = t;
@@ -1489,6 +1563,8 @@
       }
       griFaraDocument();
       griComenzi();
+      actualizeazaQat();
+      baraProt.style.display = M.deschis && M.protejat ? '' : 'none';
     }
     /* Word fără document: comenzile panglicii sunt gri și fără efect; filele și File rămân active (Word real prin COM,
        runde/5/critic_probe/com_r5.json › activ_fara_document: Bold, Italic, FontSize, Paste, FileSave, FileSaveAs, FilePrint,
@@ -1637,6 +1713,69 @@
       meniuLa(anc, lista.map(s => ({ tinta: s, html: '<span class="lh-ap-prev lh-ap-stil-' + s.replace(/\s+/g, '-').toLowerCase() + '" aria-hidden="true">AaBbCcDd</span><span class="lh-ap-text">' + esc(s) + '</span>', fa: () => stil(s) })), 'lh-ap-galerie');
     }
 
+    /* ---- panourile Clipboard și Styles (lansatorul ↘ al grupurilor Clipboard / Styles; Styles și cu Alt+Ctrl+Shift+S, tasta
+       din referință › StylesPane.k). Lot_5 word-F102. În Word sunt panouri de activități (Clipboard în stânga, Styles în
+       dreapta), nu ferestre; aici trec prin drumul ferestrelor (capcanele 1-4), deci au Esc, Tab și focus.
+       [DEDUS] conținutul panourilor nu e în referința UIA (doar lansatoarele „Office Clipboard...” / „Styles...”): Paste All,
+       Clear All, „Click an Item to Paste:”, Options; lista stilurilor = rândurile galeriei Styles din referință (de_capturat.md) */
+    const PANOU_CLIP = 'dialog.panou_Clipboard', PANOU_STIL = 'dialog.panou_Styles';
+    if (!SUP[PANOU_CLIP]) {
+      const panou = (titlu, r, c) => ({ t: 'Window', e: titlu, r, c: [{ t: 'TitleBar', e: '', r: [r[0] + 1, r[1] + 1, r[2] - 2, 30],
+        c: [{ t: 'Button', e: 'Close', r: [r[0] + r[2] - 34, r[1] + 2, 30, 28] }] }].concat(c) });
+      const rc = [1, 180, 280, 560], rs = [1085, 180, 280, 560];
+      SUP[PANOU_CLIP] = panou('Clipboard', rc, [
+        { t: 'Button', e: 'Paste All', r: [rc[0] + 10, rc[1] + 40, 90, 26] },
+        { t: 'Button', e: 'Clear All', r: [rc[0] + 108, rc[1] + 40, 90, 26] },
+        { t: 'Text', e: 'Click an Item to Paste:', r: [rc[0] + 10, rc[1] + 76, rc[2] - 20, 20] },
+        { t: 'List', e: 'Clipboard items', r: [rc[0] + 10, rc[1] + 100, rc[2] - 20, 410] },
+        { t: 'Button', e: 'Options', r: [rc[0] + 10, rc[1] + rc[3] - 36, 80, 26] }]);
+      SUP[PANOU_STIL] = panou('Styles', rs, [
+        { t: 'List', e: 'Styles list', r: [rs[0] + 10, rs[1] + 40, rs[2] - 20, 430] },
+        { t: 'Button', e: 'Options...', r: [rs[0] + rs[2] - 90, rs[1] + rs[3] - 36, 80, 26] }]);
+      date.dialoguri[PANOU_CLIP] = { titlu: 'Clipboard', file: [{ s: PANOU_CLIP, fila: null }] };
+      date.dialoguri[PANOU_STIL] = { titlu: 'Styles', file: [{ s: PANOU_STIL, fila: null }] };
+    }
+    const stiluriGalerie = () => { const o = []; (function cauta(n) { if (n.t === 'ListItem' && n.e) o.push(n.e.replace(/^¶\s*/, '')); (n.c || []).forEach(cauta); })(SUP['panglica.TabHome']); return o; };
+    function umplePanou() {
+      if (!dialog || !dialog.el) return;
+      const ls = dialog.el.querySelector('[data-lh-tip="List"]');
+      if (!ls) return;
+      ls.querySelectorAll('.lh-ap-panou-rand, .lh-ap-panou-gol').forEach(x => x.remove());
+      const rand = (et, ales) => {
+        const b = el('div', 'lh-ap-n lh-ap-panou-rand' + (ales ? ' lh-ap-ales' : ''), { 'data-lh-tip': 'ListItem', 'data-lh-eticheta': et, role: 'option',
+          'aria-label': et, 'aria-selected': ales ? 'true' : 'false', 'data-lh-tinta': 'lista:' + et });
+        b.textContent = et;
+        ls.appendChild(b);
+      };
+      if (dialog.baza === PANOU_CLIP) {
+        if (M.clip && M.clip.text) rand(M.clip.text.replace(/\n/g, ' ').slice(0, 80), false);
+        else { const g = el('div', 'lh-ap-panou-gol'); g.textContent = 'Clipboard empty. Copy or cut to collect items.'; ls.appendChild(g); }   // [DEDUS]
+      } else {
+        const cur = M.P[loc(M.sel.f).i].stil;
+        stiluriGalerie().forEach(s => rand(s, s === cur));
+      }
+    }
+    function panou(cheie) {
+      if (!deschideDialog(cheie)) return I.nesimulat(cheie === PANOU_CLIP ? 'Office Clipboard...' : 'Styles...');
+      umplePanou();
+      return cheie === PANOU_CLIP ? 'panou_clipboard' : 'panou_stiluri';
+    }
+    /* clicurile din panouri: un rând din Clipboard = lipire, Paste All = lipire, Clear All = golește; un stil = stilul
+       paragrafului (ca dala din galerie); Close / ✕ închide; restul = mesajul central */
+    function clicPanou(fel, v, elx) {
+      if (fel === 'fereastra' && /^(Close|Închidere|Cancel)$/.test(v)) { inchideDialog(); return 'anulare'; }
+      if (dialog.baza === PANOU_CLIP) {
+        if ((fel === 'lista' && elx.closest('.lh-ap-panou-rand')) || (fel === 'fereastra' && v === 'Paste All')) {
+          if (!M.clip) return 'fara_efect';
+          const r = lipeste(false); actualizeaza(); umplePanou(); return r;
+        }
+        if (fel === 'fereastra' && v === 'Clear All') { M.clip = null; griComenzi(); umplePanou(); return 'golire_clipboard'; }
+      } else if (fel === 'lista' && elx.closest('.lh-ap-panou-rand')) {
+        const r = stil(v); actualizeaza(); umplePanou(); return r;
+      }
+      return I.nesimulat(v);
+    }
+
     /* cu Backstage sau o fereastră deschisă, tastatura e a lor, nu a documentului (uia_word.json › backstage.nav și
        dialog.FontDialog au tastele lor; critic runda 1, GRAV 2) */
     function focusStrat() {
@@ -1660,7 +1799,8 @@
       const tv = tipAfisatAcum();
       if (tv != null) M.tipAfisat = tv;
       dialog.strat.remove();
-      dialog = null;
+      /* o întrebare deschisă PESTE fereastra de salvare („already exists”, word-F080) o lasă pe aceea în față la închidere */
+      dialog = dialog.sub || null;
       focusStrat();
     }
     function deschideDialog(baza, fila) {
@@ -1754,6 +1894,7 @@
           const x = el('div', 'lh-ap-n lh-ap-t-TreeItem lh-ap-nav-rand', { 'data-lh-tip': 'TreeItem', 'data-lh-eticheta': nume, role: 'treeitem',
             'data-lh-tinta': 'arbore:' + nume });
           if (fold.indexOf(nume) >= 0 || dialog.baza === 'dialog.PictureInsertFromFile') x.__folder = nume;   // Insert Picture: orice folder se deschide (banda B)
+          if (nume === 'Acest PC') x.__pc = true;   // clic = își arată folderele (extindePC, word-F077)
           x.style.left = '4px'; x.style.top = (6 + 24 * i) + 'px'; x.style.width = lat + 'px'; x.style.height = '22px';
           x.innerHTML = '<span class="lh-ap-text">' + esc(nume) + '</span>';
           arb.appendChild(x);
@@ -1782,6 +1923,9 @@
     }
     function implicitDialog() {
       if (!dialog) return null;
+      /* Enter în „already exists” = OK, butonul implicit (vechiul wordfisier.js: OK „pr”; [DEDUS] în Word real, de_capturat.md) */
+      if (dialog.inlocuire) return clicInlocuire('fereastra', 'OK');
+      if (dialog.odt) return clicOdt('fereastra', 'Yes');
       if (dialog.baza === 'dialog.FileSaveAs' || dialog.baza === SALVARE_NOUA) return salveaza();
       if (dialog.baza === 'dialog.open') return deschideDinOpen(valoareCamp('camp:nume_fisier'));
       /* Enter în „Save your changes…” = Save, ca în „Save this file” (butonul apăsat de Enter: NEVERIFICAT, AC-3) */
@@ -1817,7 +1961,7 @@
     function scrieFisier(nume, folder, tip) {
       const f = { nume, folder, tip, text: M.P.map(p => p.t) };
       const v = gasesteFisier(nume, folder);
-      if (v) Object.assign(v, f); else M.fs.push(f);
+      if (v) { Object.assign(v, f); delete v.internet; } else M.fs.push(f);   // [DEDUS] fișierul scris de Word nu mai e „de pe internet”
       if (M.salvari.indexOf(nume) < 0) M.salvari.push(nume);
       /* documentul salvat urcă primul în lista Recent (NEVERIFICAT: AC-7) */
       if (!/\.pdf$/i.test(nume)) {
@@ -1840,7 +1984,94 @@
       I._tMesaj = setTimeout(() => m.remove(), scenariu ? 60000 : 6000);
       return 'nume_interzis';
     }
-    function salveaza() {
+    /* ---- „already exists” (lot_5 word-F080): numele există deja în folder → Word întreabă cu fereastra LUI („Microsoft
+       Word”), peste fereastra de salvare. Probat de judecător în Word real (lectii/vii/m1-l03/surse.md:68, :83; vechiul
+       lectii/_sim/wordfisier.js:14-16, :124-125, :526-536):
+       - documentul: „The file <nume> already exists.” / „Do you want to:” cu „Replace existing file.” (ales), „Save changes
+         with a different name.”, „Merge changes into existing file.”, OK / Cancel;
+       - PDF-ul: „You already have a file named <nume>.pdf. Do you want to replace it with this one?”, OK / Cancel.
+       OK cu Replace → fișierul e înlocuit; OK cu „different name” sau Cancel / Esc → înapoi în fereastra de salvare, cu același
+       nume, fișierul neatins; Merge → mesajul central. [DEDUS] că „Save this file” / „Save your changes…” întreabă la fel ca
+       Save As (judecătorul a probat F12) și locul controalelor (de_capturat.md) */
+    const CONF_DOC = 'dialog.fisier_exista', CONF_PDF = 'dialog.pdf_exista';
+    const RAND_INLOC = ['Replace existing file.', 'Save changes with a different name.', 'Merge changes into existing file.'];
+    if (!SUP[CONF_DOC]) {
+      const mesaj = (r, c) => ({ t: 'Window', e: 'Microsoft Word', r, c: [
+        { t: 'TitleBar', e: '', r: [r[0] + 1, r[1] + 1, r[2] - 2, 30], c: [{ t: 'Button', e: 'Închidere', r: [r[0] + r[2] - 47, r[1], 46, 30] }] },
+        { t: 'Text', e: '', r: [r[0] + 24, r[1] + 44, r[2] - 48, 40] }].concat(c) });
+      SUP[CONF_DOC] = mesaj([443, 260, 480, 250], [
+        { t: 'Group', e: 'Do you want to:', r: [467, 340, 430, 90], c: RAND_INLOC.map((e, i) => ({ t: 'RadioButton', e, r: [477, 346 + 28 * i, 400, 24], b: i === 0 ? 1 : 0 })) },
+        { t: 'Button', e: 'OK', r: [713, 470, 90, 28] }, { t: 'Button', e: 'Cancel', r: [813, 470, 90, 28] }]);
+      SUP[CONF_PDF] = mesaj([443, 300, 480, 170], [{ t: 'Button', e: 'OK', r: [713, 430, 90, 28] }, { t: 'Button', e: 'Cancel', r: [813, 430, 90, 28] }]);
+      date.dialoguri[CONF_DOC] = { titlu: 'Microsoft Word', file: [{ s: CONF_DOC, fila: null }] };
+      date.dialoguri[CONF_PDF] = { titlu: 'Microsoft Word', file: [{ s: CONF_PDF, fila: null }] };
+    }
+    function intreabaInlocuire(nume) {
+      const sub = dialog, pdf = /\.pdf$/i.test(nume);
+      const k = pdf ? CONF_PDF : CONF_DOC;
+      const text = pdf ? 'You already have a file named ' + nume + '. Do you want to replace it with this one?' : 'The file ' + nume + ' already exists.\nDo you want to:';
+      dialog = null;                       // fereastra de salvare rămâne pe ecran, sub întrebare
+      if (!deschideDialog(k)) { dialog = sub; return I.nesimulat(nume + ' already exists'); }
+      dialog.sub = sub;
+      dialog.inlocuire = { nume, pdf, alegere: RAND_INLOC[0] };
+      const tx = dialog.el.querySelector(':scope > [data-lh-tip="Text"], [data-lh-tip="Text"]');
+      if (tx) { const sp = tx.querySelector('.lh-ap-text') || tx; sp.textContent = text; sp.style.whiteSpace = 'pre-line'; tx.setAttribute('data-lh-eticheta', text); }
+      M.intrebare = { titlu: 'Microsoft Word', intrebare: text, butoane: pdf ? ['OK', 'Cancel'] : RAND_INLOC.concat(['OK', 'Cancel']), apasat: null };
+      return 'intrebare_inlocuire';
+    }
+    function clicInlocuire(fel, v, elx) {
+      if (fel !== 'fereastra') return 'fara_efect';
+      const inl = dialog.inlocuire;
+      if (RAND_INLOC.indexOf(v) >= 0) { inl.alegere = v; if (elx) comutaCaseta(elx, 'RadioButton'); return 'alegere_optiune'; }
+      if (M.intrebare) M.intrebare.apasat = v === 'OK' && !inl.pdf ? inl.alegere : v;
+      if (v === 'OK' && !inl.pdf && inl.alegere === RAND_INLOC[2]) return I.nesimulat(RAND_INLOC[2]);
+      inchideDialog();                     // revine fereastra de salvare (dialog.sub)
+      if (v === 'OK' && (inl.pdf || inl.alegere === RAND_INLOC[0])) {
+        const laInchidere = dialog && dialog.baza === INTREBARE_INCHIDERE, cum = M.dupaInchidere;
+        const r = salveaza(true);
+        return laInchidere && r === 'salvare' ? inchideDocument(cum, 'salvare_si_inchidere') : r;
+      }
+      return 'anulare';
+    }
+    /* întrebarea .odt (word-F079): „<document> may contain features that are not compatible with this format. Do you want to
+       continue to save in this format?”, bifa „Don't show this message again”, Yes / No (vechiul wordfisier.js:538-541, probat
+       de judecător); Yes → salvează .odt, No → înapoi în fereastra de salvare [DEDUS: No și locul controalelor, de_capturat.md] */
+    const CONF_ODT = 'dialog.odt_format';
+    if (!SUP[CONF_ODT]) {
+      const r = [433, 280, 500, 200];
+      SUP[CONF_ODT] = { t: 'Window', e: 'Microsoft Word', r, c: [
+        { t: 'TitleBar', e: '', r: [r[0] + 1, r[1] + 1, r[2] - 2, 30], c: [{ t: 'Button', e: 'Închidere', r: [r[0] + r[2] - 47, r[1], 46, 30] }] },
+        { t: 'Text', e: '', r: [r[0] + 24, r[1] + 44, r[2] - 48, 60] },
+        { t: 'CheckBox', e: "Don't show this message again", r: [r[0] + 24, r[1] + 112, 300, 24], b: 0 },
+        { t: 'Button', e: 'Yes', r: [r[0] + r[2] - 210, r[1] + r[3] - 44, 90, 28] }, { t: 'Button', e: 'No', r: [r[0] + r[2] - 110, r[1] + r[3] - 44, 90, 28] }] };
+      date.dialoguri[CONF_ODT] = { titlu: 'Microsoft Word', file: [{ s: CONF_ODT, fila: null }] };
+    }
+    function intreabaOdt() {
+      const sub = dialog;
+      const doc = M.nume;
+      const text = doc + ' may contain features that are not compatible with this format. Do you want to continue to save in this format?';
+      dialog = null;
+      if (!deschideDialog(CONF_ODT)) { dialog = sub; return I.nesimulat('OpenDocument Text (*.odt)'); }
+      dialog.sub = sub;
+      dialog.odt = true;
+      const tx = dialog.el.querySelector('[data-lh-tip="Text"]');
+      if (tx) { const sp = tx.querySelector('.lh-ap-text') || tx; sp.textContent = text; sp.style.whiteSpace = 'normal'; tx.setAttribute('data-lh-eticheta', text); }
+      M.intrebare = { titlu: 'Microsoft Word', intrebare: text, butoane: ['Yes', 'No'], apasat: null };
+      return 'intrebare_format';
+    }
+    function clicOdt(fel, v, elx) {
+      if (fel !== 'fereastra') return 'fara_efect';
+      if (v === "Don't show this message again") return comutaCaseta(elx, 'CheckBox');
+      if (M.intrebare) M.intrebare.apasat = v;
+      inchideDialog();
+      if (v === 'Yes') {
+        const laInchidere = dialog && dialog.baza === INTREBARE_INCHIDERE, cum = M.dupaInchidere;
+        const r = salveaza(true, true);
+        return laInchidere && r === 'salvare' ? inchideDocument(cum, 'salvare_si_inchidere') : r;
+      }
+      return 'anulare';
+    }
+    function salveaza(inlocuieste, odtDa) {
       let v = valoareCamp('camp:nume_fisier').trim();
       if (!v) return 'fara_efect';
       if (SEMNE_INTERZISE.test(v)) return numeInterzis();
@@ -1849,8 +2080,8 @@
       const tip = (dialog && dialog.tip) || TIPURI_SALVARE[0] || 'Word Document (*.docx)';
       let r = 'salvare';
       /* un fișier cu același nume există deja în folder: Word întreabă („The file … already exists”, lecția m1-l03:157-159);
-         fereastra întrebării NU e în referință → mesajul central, fișierul NU se atinge, fereastra de salvare rămâne
-         deschisă (de_verificat.md R5-3). Excepție: „Save your changes…” pe documentul salvat = același fișier (AC-5).
+         întrebarea = intreabaInlocuire (word-F080, mai sus; înainte: mesajul central), fișierul NU se atinge până la
+         Yes / OK, fereastra de salvare rămâne deschisă sub întrebare (de_verificat.md R5-3). Excepție: „Save your changes…” pe documentul salvat = același fișier (AC-5).
          Critic runda 4, GRAV T2 */
       const exista = n => !!gasesteFisier(n, folder) && !(dialog && dialog.baza === INTREBARE_INCHIDERE && M.salvat &&
         n.toLowerCase() === String(M.nume).toLowerCase() && folder === M.folder);
@@ -1858,19 +2089,32 @@
         /* Save as type „PDF (*.pdf)”: o copie PDF; documentul deschis rămâne cel de lucru, nesalvat
            (scenarii_real/word-salvare-pdf.json: fisiere_salvate ["Orar.pdf"], nume_fisier null) */
         const np = v.replace(/\.(docx?|pdf)$/i, '') + '.pdf';
-        if (exista(np)) return I.nesimulat(np + ' already exists');
+        if (!inlocuieste && exista(np)) return intreabaInlocuire(np);
         scrieFisier(np, folder, tip);
         r = 'salvare_pdf';
       } else if (tip === TIPURI_SALVARE[0] || !TIPURI_SALVARE.length) {
         if (!/\.[a-z0-9]{2,5}$/i.test(v)) v += '.docx';
-        if (exista(v)) return I.nesimulat(v + ' already exists');
+        if (!inlocuieste && exista(v)) return intreabaInlocuire(v);
+        M.nume = v;
+        M.salvat = true;
+        M.folder = folder;
+        M.modificat = false;
+        scrieFisier(v, folder, tip);
+      } else if (/\(\*\.(odt|rtf)\)/.test(tip)) {
+        /* .odt / .rtf (lot_5 word-F079): lucrezi mai departe în fișierul nou; la .odt Word întreabă întâi dacă păstrezi
+           formatul (Yes / No), la .rtf nu — probat de judecător în Word real (lectii/vii/m1-l03/surse.md:68; vechiul
+           wordfisier.js:19, :130-134, :538-541) */
+        const ext = /\(\*\.(odt|rtf)\)/.exec(tip)[1];
+        v = v.replace(/\.(docx?|odt|rtf|pdf)$/i, '') + '.' + ext;
+        if (!inlocuieste && exista(v)) return intreabaInlocuire(v);
+        if (ext === 'odt' && !odtDa) return intreabaOdt();
         M.nume = v;
         M.salvat = true;
         M.folder = folder;
         M.modificat = false;
         scrieFisier(v, folder, tip);
       } else {
-        /* celelalte 15 tipuri ale listei: efectul lor nu e dovedit în referință (doar .docx și PDF) → mesajul central (R12) */
+        /* celelalte 13 tipuri ale listei: efectul lor nu e dovedit în referință (doar .docx, PDF, .odt, .rtf) → mesajul central (R12) */
         return I.nesimulat(tip);
       }
       /* mesajul de eroare al încercării de dinainte (nume interzis / „… already exists”) pleacă la salvarea reușită: în
@@ -1891,8 +2135,11 @@
     /* Ctrl+S pe un document deja salvat: același fișier, fără ferestre (support.microsoft.com/en-us/office/keyboard-
        shortcuts-in-word-95ef89dd-7142-4b50-afb2-f762f663ceb2: „Save the document. | Ctrl+S”); textul nou ajunge în fișier */
     function salveazaPeLoc() {
+      if (M.protejat) return 'fara_efect';   // [DEDUS] în PROTECTED VIEW salvarea pe loc nu face nimic (word-F092)
       scrieFisier(M.nume, M.folder || folderSalvare(), tipDupaNume(M.nume) || TIPURI_SALVARE[0] || null);
       M.modificat = false;
+      /* salvarea pe loc nu arată nicio fereastră: dialog_salvare (fereastra de salvare a ultimei salvări) se golește (word-F089) */
+      M.dialogSalvare = null;
       return 'salvare';
     }
     /* Save As › „Save as type:” — rândul ales se vede în casetă (acoperire_r3.fapte.e_dupa_pdf.save_as_type_arata:
@@ -2202,6 +2449,7 @@
       if (!backstage) return;
       backstage.strat.remove();
       backstage = null;
+      root.classList.remove('lh-ap-in-backstage');
       I.focus();
     }
     function deschideBackstage(pagina) {
@@ -2211,6 +2459,9 @@
         const inner = el('div', 'lh-ap-backstage-in');
         s.appendChild(inner);
         backstage = { strat: s, inner, pagina: null };
+        /* Backstage acoperă panglica: filele și comenzile nu se mai văd și nu se mai pot apăsa (în Word real Backstage
+           înlocuiește tot sub bara de titlu — uia_word.json › backstage.cadru; word-F105: „Ctrl+P deschide pagina Print”) */
+        root.classList.add('lh-ap-in-backstage');
         if (SUP['backstage.cadru']) { const c0 = desen('backstage.cadru'); pozitie(c0, SUP['backstage.cadru'].r); c0.classList.add('lh-ap-cadru'); const tb = c0.querySelector('[data-lh-tip="TitleBar"]'); if (tb) { const t = el('span', 'lh-ap-titlu-dialog'); t.textContent = tb.getAttribute('data-lh-eticheta'); tb.appendChild(t); } inner.appendChild(c0); }
         const nav = desen('backstage.nav');
         pozitie(nav, SUP['backstage.nav'].r);
@@ -2231,16 +2482,86 @@
       backstage.pag = p;
       backstage.pagina = pagina;
       if (pagina === 'Open') umpleRecente(p);
+      if (pagina === 'Print') { prevPag = 1; umplePrevizualizare(p); }
       backstage.nav.querySelectorAll('[data-lh-tip="ListItem"]').forEach(x => x.classList.toggle('activ', x.getAttribute('data-lh-eticheta') === pagina));
       return true;
     }
 
+    /* ---- previzualizarea din File › Print / Ctrl+P (lot_5 word-F105): paginile documentului cum ies pe hârtie, fără ¶,
+       „<n> of <N>” sub ea, ◀ ▶ (Previous Page / Next Page) între pagini. Locul și controalele = referința (uia_word.json ›
+       backstage.Print › Group „Print Preview”: Pane „Print Preview”, Previous Page, Current Page, Text „ of 1”, Next Page,
+       „52 %” = foaia A4 cât panoul de înaltă). Paginile se taie după desenul documentului din zona de lucru (înălțimea
+       paragrafelor, la 100 %), cu înălțimea utilă a paginii din M.pag (hârtia minus marginile sus / jos) — [DEDUS] tăierea
+       la paragraf întreg (Word taie și în mijlocul paragrafului: Widow/Orphan control); de_capturat.md */
+    let prevPag = 1;
+    function paginiDoc() {
+      const kids = [...corp.children];
+      const fr = foaie.getBoundingClientRect();
+      const ratio = fr.width > 0 ? fr.width / (M.pag.latime_cm * PX_CM) : 1;
+      const m = M.pag.margini_cm, hUtil = (M.pag.inaltime_cm - m.sus - m.jos) * PX_CM;
+      const pagini = [[]];
+      let start = null;
+      kids.forEach(k => {
+        const r = k.getBoundingClientRect(), top = r.top / ratio, bot = r.bottom / ratio;
+        if (start === null) start = top;
+        if (bot - start > hUtil + 0.5 && pagini[pagini.length - 1].length) { pagini.push([]); start = top; }
+        pagini[pagini.length - 1].push(k);
+      });
+      return pagini;
+    }
+    function umplePrevizualizare(p) {
+      p = p || (backstage && backstage.pag);
+      if (!p || !M.deschis) return;
+      const pane = p.querySelector('[data-lh-tip="Pane"][data-lh-eticheta="Print Preview"]');
+      if (!pane) return;
+      const pagini = paginiDoc(), N = pagini.length;
+      prevPag = Math.max(1, Math.min(prevPag, N));
+      pane.querySelectorAll('.lh-ap-prev-foaie').forEach(x => x.remove());
+      const m = M.pag.margini_cm, W = M.pag.latime_cm * PX_CM, Hh = M.pag.inaltime_cm * PX_CM;
+      const sc = Math.max(0.05, Math.min((pane.offsetHeight - 16) / Hh, (pane.offsetWidth - 16) / W));
+      const f = el('div', 'lh-ap-prev-foaie', { 'data-lh-tip': 'Custom', 'data-lh-eticheta': 'Page ' + prevPag });
+      f.style.cssText = 'position:absolute;left:' + Math.max(0, (pane.offsetWidth - W * sc) / 2) + 'px;top:8px;width:' + W + 'px;height:' + Hh +
+        'px;padding:' + (m.sus * PX_CM) + 'px ' + (m.dreapta * PX_CM) + 'px ' + (m.jos * PX_CM) + 'px ' + (m.stanga * PX_CM) +
+        'px;box-sizing:border-box;transform:scale(' + sc.toFixed(4) + ');transform-origin:0 0;overflow:hidden;pointer-events:none';
+      (pagini[prevPag - 1] || []).forEach(k => {
+        const c = k.cloneNode(true);
+        [c].concat([...c.querySelectorAll('*')]).forEach(x => {
+          [...x.attributes].forEach(a => { if (/^data-(lh-|o$)/.test(a.name) || a.name === 'id') x.removeAttribute(a.name); });
+          x.classList.remove('lh-ap-bucata');
+        });
+        f.appendChild(c);
+      });
+      pane.appendChild(f);
+      const tx = [...p.querySelectorAll('[data-lh-tip="Text"]')].find(x => /^\s*of\s+\d+\s*$/.test(x.getAttribute('data-lh-eticheta') || ''));
+      if (tx) { const t = ' of ' + N; tx.setAttribute('data-lh-eticheta', t); const sp = tx.querySelector('.lh-ap-text') || tx; sp.textContent = t; }
+      /* numărul paginii arătate stă în caseta Current Page (în Word se poate și scrie: aici doar ◀ ▶) */
+      const cp = p.querySelector('[data-lh-tip="Edit"][data-lh-eticheta="Current Page"]');
+      if (cp) {
+        const inp = cp.querySelector('input');
+        if (inp) inp.style.display = 'none';
+        let sp = cp.querySelector('.lh-ap-prev-nr');
+        if (!sp) { sp = el('span', 'lh-ap-prev-nr'); cp.appendChild(sp); }
+        sp.textContent = String(prevPag);
+      }
+      const bt = et => p.querySelector('[data-lh-tip="Button"][data-lh-eticheta="' + et + '"]');
+      if (bt('Previous Page')) bt('Previous Page').setAttribute('aria-disabled', prevPag > 1 ? 'false' : 'true');
+      if (bt('Next Page')) bt('Next Page').setAttribute('aria-disabled', prevPag < N ? 'false' : 'true');
+    }
+    function paginaPrevizualizare(d) {
+      const N = paginiDoc().length, k = Math.max(1, Math.min(N, prevPag + d));
+      if (k === prevPag) return 'fara_efect';
+      prevPag = k;
+      umplePrevizualizare();
+      return 'pagina_previzualizare';
+    }
+
     /* ============================================================ închiderea și deschiderea documentelor (critic runda 3, N4) */
     const instantaneuDoc = () => ({ P: M.P, tab: M.tab, img: M.img, pag: M.pag, sel: M.sel, cel: M.cel, nume: M.nume, salvat: M.salvat,
-      folder: M.folder, modificat: M.modificat, H });
+      folder: M.folder, modificat: M.modificat, protejat: !!M.protejat, H });
     function incarcaDoc(d) {
       M.P = d.P; M.tab = d.tab || []; M.img = d.img || []; M.pag = d.pag || paginaNoua(); M.sel = d.sel || { a: 0, f: 0 }; M.cel = d.cel || null;
       M.nume = d.nume; M.salvat = !!d.salvat; M.folder = d.folder || null; M.modificat = !!d.modificat;
+      M.protejat = !!d.protejat;   // PROTECTED VIEW (word-F092)
       M.fmtIns = null; M.ultima = null;
       H = d.H || st.istoric(grupeaza);
       M.deschis = true;
@@ -2269,7 +2590,7 @@
       if (cum === 'x') { inchideAplicatia(); return actiune; }
       M.deschis = false;
       M.P = [parIn('')]; M.tab = []; M.img = []; M.pag = paginaNoua(); M.sel = { a: 0, f: 0 }; M.cel = null;
-      M.nume = 'Document1'; M.salvat = false; M.folder = null; M.modificat = false; M.fmtIns = null; M.ultima = null;
+      M.nume = 'Document1'; M.salvat = false; M.folder = null; M.modificat = false; M.fmtIns = null; M.ultima = null; M.protejat = false;
       H = st.istoric(grupeaza);
       root.classList.add('lh-ap-fara-document');
       actualizeaza();
@@ -2305,7 +2626,7 @@
       }
       if (M.deschis && (M.salvat || M.modificat)) M.altele.push(instantaneuDoc());
       inchideBackstage();
-      incarcaDoc({ P: f.text.map(t => parIn(t)), nume: f.nume, folder: f.folder, salvat: true, modificat: false });
+      incarcaDoc({ P: f.text.map(t => parIn(t)), nume: f.nume, folder: f.folder, salvat: true, modificat: false, protejat: !!f.internet && !p2007 });
       return 'deschidere';
     }
     /* fereastra Open: numele ales sau scris, din folderul ferestrei; fișierul se deschide ca din Recent. Un PDF (Files of
@@ -2325,6 +2646,31 @@
       if (nf) nf.value = faraExt(x.__fisier.nume);
     }
     let alegereImg = null;
+    /* „Acest PC” din panoul de navigare: folderele lui Windows (Desktop, Descărcări, Documente, Imagini, Muzică, Videoclipuri —
+       numele implicite Windows 11 în română din referinte/acoperire_word_r3.py:57, NAV_IMPLICIT) apar sub el, câte un rând
+       care se poate alege (navigheaza) — lot_5 word-F077; vechiul avea mereu Desktop, Descărcări, Documente, Imagini
+       (wordfisier.js:37). [DEDUS] că un clic pe „Acest PC” îl și desface (în Windows desfacerea e pe săgeata ›); de_capturat.md */
+    const FOLDERE_PC = ['Desktop', 'Descărcări', 'Documente', 'Imagini', 'Muzică', 'Videoclipuri'];
+    function extindePC(rand) {
+      const arb = rand.parentElement;
+      if (rand.__desfacut) return 'fara_efect';
+      rand.__desfacut = true;
+      const are = new Set([...arb.querySelectorAll('.lh-ap-nav-rand')].map(x => x.getAttribute('data-lh-eticheta')));
+      let dupa = rand;
+      FOLDERE_PC.filter(n => !are.has(n)).forEach(nume => {
+        const x = el('div', 'lh-ap-n lh-ap-t-TreeItem lh-ap-nav-rand', { 'data-lh-tip': 'TreeItem', 'data-lh-eticheta': nume, role: 'treeitem',
+          'data-lh-tinta': 'arbore:' + nume, 'aria-level': '2' });
+        x.__folder = nume;
+        x.style.left = '20px'; x.style.width = Math.max(40, parseFloat(rand.style.width) - 16) + 'px'; x.style.height = '22px';
+        x.innerHTML = '<span class="lh-ap-text">' + esc(nume) + '</span>';
+        dupa.after(x);
+        dupa = x;
+      });
+      rand.setAttribute('aria-expanded', 'true');
+      [...arb.querySelectorAll('.lh-ap-nav-rand')].forEach((x, i) => { x.style.top = (6 + 24 * i) + 'px'; });
+      if (dialog && dialog.el) umpleFolder(dialog.el);
+      return 'extindere';
+    }
     function navigheaza(folder) {
       dialog.folder = folder;
       umpleFolder(dialog.el);
@@ -2371,6 +2717,14 @@
        support.microsoft.com/en-us/office/keyboard-shortcuts-in-word-95ef89dd-7142-4b50-afb2-f762f663ceb2: „Create a new
        document. | Ctrl+N”; lecția m1-l03:116. Numele: Document2, Document3, … (com_r5.json, vezi `nrNou`; critic 5,
        GRAV S6). Critic runda 4, GRAV T5 */
+    /* documentul k din spate (M.altele[k]) vine în față; cel din față trece în spate, la sfârșit (word-F087); k < 0 = cel din față */
+    function aduInFata(k) {
+      if (k < 0 || !M.altele[k]) return 'fara_efect';
+      const d = M.altele.splice(k, 1)[0];
+      if (M.deschis) M.altele.push(instantaneuDoc());
+      incarcaDoc(d);
+      return 'fereastra_document';
+    }
     function documentNou() {
       if (M.inchisApp) return 'fara_efect';
       if (M.deschis) M.altele.push(instantaneuDoc());
@@ -2447,6 +2801,28 @@
       FontDialog: () => (deschideDialog('dialog.FontDialog') && 'dialog_font'),
       ParagraphDialog: () => (paragrafDialog() && 'dialog_paragraf'),
       PageSetupDialog: () => (paginaDialog() && 'dialog_pagina'),
+      /* View › Window › Switch Windows (Alt, W, W): documentele deschise, numerotate, cel din față bifat; clic = documentul
+         vine în față (lot_5 word-F087). [DEDUS] ordinea rândurilor (aici: după nume, deci stabilă când schimbi documentul)
+         și forma „<n> <nume>” — de_capturat.md */
+      WindowSwitchWindowsMenuWord: e => {
+        const numeDoc = d => (d.salvat ? d.nume.replace(/\.docx$/i, '') : d.nume);
+        const docs = M.altele.map((d, k) => ({ nume: d.nume, salvat: d.salvat, k })).concat(M.deschis ? [{ nume: M.nume, salvat: M.salvat, k: -1 }] : [])
+          .sort((a, b) => numeDoc(a).localeCompare(numeDoc(b), undefined, { numeric: true }));
+        meniuLa(e, docs.map((d, i) => ({ tinta: (i + 1) + ' ' + numeDoc(d), text: (i + 1) + ' ' + numeDoc(d) + (d.k < 0 ? '  ✓' : ''),
+          fa: () => aduInFata(d.k) })));
+        return 'meniu_ferestre';
+      },
+      /* lansatoarele Clipboard și Styles → panourile lor (word-F102) */
+      ShowClipboard: () => panou(PANOU_CLIP), StylesPane: () => panou(PANOU_STIL),
+      /* săgeata ⌄ Ribbon Display Options (Alt, Z R): rândul Show / Hide Quick Access Toolbar (word-F099; surse_microsoft.md S3
+         citează rândul din meniul de clic dreapta al panglicii) — [DEDUS] că apare și aici, plus celelalte rânduri ale
+         meniului (Full-screen mode / Show tabs only / Always show Ribbon) nescrise, fiindcă nu sunt în surse (de_capturat.md) */
+      RibbonDisplayOptions: e => {
+        const m = meniuLa(e, [randQat()]);
+        const R = root.getBoundingClientRect(), q = m.getBoundingClientRect();
+        if (q.right > R.right) m.style.left = Math.max(0, R.right - R.left - q.width - 4) + 'px';
+        return 'meniu_afisare_panglica';
+      },
       IndentIncreaseWord: () => indenteaza(PAS_RETRAGERE), IndentDecreaseWord: () => indenteaza(-PAS_RETRAGERE),
       /* Line and Paragraph Spacing (Home/Layout): 1,0 … 3,0 și Line Spacing Options… */
       LineSpacingGallery: e => { meniuLa(e, INTERLINII.map(([t, v]) => ({ tinta: t, text: t, fa: () => interlinie(v) }))
@@ -2499,7 +2875,7 @@
     };
     const DUPA_NUME = { 'Bold': 'Bold', 'Italic': 'Italic', 'Underline': 'UnderlineGallery', 'Grow Font': 'FontSizeIncreaseWord',
       'Shrink Font': 'FontSizeDecreaseWord', 'Bullets': 'BulletsGalleryWord', 'Numbering': 'NumberingGalleryWord', 'Cut': 'Cut',
-      'Copy': 'Copy', 'Font...': 'FontDialog', 'Paragraph...': 'ParagraphDialog' };
+      'Copy': 'Copy', 'Font...': 'FontDialog', 'Paragraph...': 'ParagraphDialog', 'Ribbon Display Options': 'RibbonDisplayOptions' };
     function idDe(elx) {
       const n = elx.__nod || {};
       if (n.id && !/_Dropdown$/.test(n.id)) return n.id;
@@ -2655,6 +3031,7 @@
         const n2 = elx.__nod || {};
         if (elx.__fisier) return deschideFisier(elx.__fisier);
         if (n2.id === 'FileTabButton' || v === 'Back') { inchideBackstage(); return 'inapoi'; }
+        if (backstage && backstage.pagina === 'Print' && /^(Previous|Next) Page$/.test(v)) return paginaPrevizualizare(v === 'Next Page' ? 1 : -1);
         /* File › Save As › Browse → fereastra Save As (support.microsoft.com/en-us/office/collab-files/save-your-files) */
         if (v === 'Browse' && backstage && backstage.pagina === 'Save As') return deschideDialog('dialog.FileSaveAs') ? 'salvare_ca' : I.nesimulat(v);
         /* File › Open › Browse → fereastra Windows Open (uia_word.json › dialog.open › deschis_prin: „Backstage › Open ›
@@ -2664,11 +3041,18 @@
         if (v === 'Blank document') { inchideBackstage(); return documentNou(); }
         if (elx.closest('[data-lh-suprafata="backstage.nav"],[data-lh-suprafata="backstage.cadru"]') && n2.t === 'ListItem') {
           if (n2.a === 0) return 'indisponibil';
+          /* File › Save: documentul deja salvat se salvează pe loc și Word revine în document (la fel ca Ctrl+S, word-F089;
+             lot_5); documentul nou merge la pagina Save As */
+          if (v === 'Save' && M.deschis && M.salvat) { inchideBackstage(); return salveazaPeLoc(); }
           if (v === 'Save') return arataPaginaBackstage('Save As') ? 'pagina_backstage' : I.nesimulat(v);
+          /* File › Close = același drum ca Ctrl+W: nemodificat → se închide, modificat → „Save your changes…” (word-F088) */
+          if (v === 'Close') return cerereInchidere('ctrlw');
           return arataPaginaBackstage(v) ? 'pagina_backstage' : I.nesimulat(v);
         }
         return I.nesimulat(v);
       }
+      if (dialog && dialog.inlocuire) return clicInlocuire(fel, v, elx);
+      if (dialog && dialog.odt) return clicOdt(fel, v, elx);   // întrebarea .odt (word-F079)   // „already exists” (word-F080)
       if (dialog && (dialog.baza === SALVARE_NOUA || dialog.baza === INTREBARE_INCHIDERE)) {
         if (dialog.baza === INTREBARE_INCHIDERE && fel === 'fereastra' && M.intrebare) M.intrebare.apasat = v;
         /* „More options…” → pagina File › Save As (acoperire_r3.fapte.a_ctrl_s_document_nou.more_save_options.backstage) */
@@ -2698,6 +3082,7 @@
         if (fel === 'fereastra' && v === dialog.folder) return navigheaza(dialog.folder);
       }
       /* fereastra Open (uia_word.json › dialog.open; Ctrl+F12 / File › Open › Browse) — critic runda 4, GRAV N4 + T4 */
+      if (dialog && (dialog.baza === 'dialog.FileSaveAs' || dialog.baza === 'dialog.open') && fel === 'arbore' && elx.__pc) return extindePC(elx);
       if (dialog && dialog.baza === 'dialog.open') {
         if (fel === 'lista' && elx.__fisier) { alegeRandOpen(elx); return 'selectare'; }
         if (fel === 'arbore') return elx.__folder ? navigheaza(elx.__folder) : I.nesimulat(v);
@@ -2707,6 +3092,7 @@
         if (fel === 'camp') return I.nesimulat(v + ' ▾');
         return I.nesimulat(v || tinta);
       }
+      if (dialog && (dialog.baza === PANOU_CLIP || dialog.baza === PANOU_STIL)) return clicPanou(fel, v, elx);
       if (fel === 'fila_dialog' && dialog) { dialog.cheiePlasa = null; arataFilaDialog(v === (date.dialoguri[dialog.baza].file[0].fila || null) ? null : (date.dialoguri[dialog.baza].file.some(f => f.fila === v) ? v : null)); return 'fila_dialog'; }
       if (fel === 'dialog_salvare' && dialog) return v === 'Save' ? salveaza() : (inchideDialog(), 'anulare');
       if (dialog && dialog.baza === 'dialog.FileSaveAs' && fel === 'arbore' && elx.__folder) return navigheaza(elx.__folder);
@@ -2730,6 +3116,7 @@
       }
       if (fel === 'camp') return 'camp';
       if (dialog && dialog.strat.contains(elx)) return I.nesimulat(v);
+      if (fel === 'bara_mesaj' && v === 'Enable Editing') { M.protejat = false; actualizeaza(); I.focus(); return 'activare_editare'; }
       if (fel === 'zoom') return zoomClic(elx, e, v);
       if (fel === 'bara_derulare') { zona.scrollBy({ top: v === 'Line up' ? -40 : v === 'Line down' ? 40 : zona.clientHeight * 0.9 }); return 'derulare'; }
       /* fără document, comenzile panglicii sunt gri în Word real (com_r5.json › activ_fara_document) → fără efect, fără
@@ -2737,6 +3124,12 @@
       if (fel === 'panglica' || fel === 'meniu_derulant' || fel === 'lansator' || fel === 'meniu') return M.deschis ? apasa(elx, tinta) : 'indisponibil';
       /* ✕ al ferestrei Word = Ctrl+W pe document (acoperire_r3.fapte.b_x_la_fel_ca_ctrl_w: true) — critic runda 3, GRAV N4 */
       if (fel === 'bara_titlu' && v === 'Close') return cerereInchidere('x');
+      /* butoanele barei Acces rapid (word-F099 / word-F100): același drum ca Ctrl+S / Ctrl+Z / Ctrl+Y */
+      if (fel === 'bara_titlu' && elx.__qat) {
+        if (elx.getAttribute('aria-disabled') === 'true') return 'indisponibil';
+        gest('comanda', v);
+        return elx.__qat();
+      }
       return I.nesimulat(v || tinta);
     };
     I.la.dublu = tinta => {
@@ -2752,6 +3145,16 @@
     I.la.dreapta = (tinta, e) => {
       if (dialog || backstage || !M.deschis) return null;
       if (eInDocument(e.target)) return meniuContextual(e.clientX, e.clientY);
+      /* clic dreapta pe panglică → Show / Hide Quick Access Toolbar (surse_microsoft.md S3: „Right-click in the ribbon…”);
+         [DEDUS] celelalte rânduri ale acestui meniu nu sunt în surse, deci doar rândul citat (de_capturat.md) */
+      const tg = e.target;
+      if ((loculPanglicii.contains(tg) || filePl.contains(tg)) && !tg.closest('input')) {
+        const m = meniuLa(tg.closest('[data-lh-tinta]') || tg, [randQat()]);
+        const R = root.getBoundingClientRect();
+        m.style.left = Math.max(0, Math.min(e.clientX - R.left, R.width - m.offsetWidth - 4)) + 'px';
+        m.style.top = (e.clientY - R.top + 2) + 'px';
+        return 'meniu_contextual';
+      }
       return null;
     };
     function zoomClic(elx, e, v) {
@@ -2857,6 +3260,9 @@
          sursa din api_biblioteca.md §4): același efect ca clicul pe Cancel — în „Save your changes…” documentul rămâne
          deschis, cu dialog.apasat „Cancel” (scenarii_real/word-x-nesalvat-cancel.json, făcut cu clic); evenimentul poartă
          `activat` = Cancel. Fără Cancel în fereastră: doar se închide. „Save your changes…” nu e #32770 → [presupus] R20-3 */
+      /* Esc în „already exists” = Cancel: înapoi în fereastra de salvare, fișierul neatins (word-F080) */
+      if (dialog && dialog.inlocuire && e.key === 'Escape') return clicInlocuire('fereastra', 'Cancel');
+      if (dialog && dialog.odt && e.key === 'Escape') return clicOdt('fereastra', 'No');
       if (dialog && dialog.el && (e.key === 'Escape' || altF4)) {
         const cn =[...dialog.el.querySelectorAll('[data-lh-tip="Button"][data-lh-eticheta="Cancel"]')].find(x => L._vizibil(x));
         const tc = cn && (cn.hasAttribute('data-lh-tinta') ? cn : cn.querySelector('[data-lh-tinta]'));
@@ -2999,6 +3405,9 @@
         case 'ctrl_l': r = aliniaza('stanga'); break;
         case 'ctrl_r': r = aliniaza('dreapta'); break;
         case 'ctrl_j': r = aliniaza('stanga-dreapta'); break;
+        /* Ctrl+P = File › Print, cu previzualizarea (word-F105; support.microsoft.com keyboard-shortcuts-in-word: „Print the
+           document. | Ctrl+P”); Word 2007: Ctrl+P deschide fereastra Print (fără referință) → mesajul central */
+        case 'ctrl_p': if (M.inchisApp || !M.deschis) r = 'fara_efect'; else if (p2007) r = I.nesimulat('Ctrl+P'); else { deschideBackstage('Print'); r = 'backstage'; } break;
         case 'ctrl_z': r = anuleaza(); break;
         case 'ctrl_y': r = reface(); if (r && r !== 'fara_efect') gest('refacere', ''); break;
         case 'ctrl_c': r = copiaza(); break;
