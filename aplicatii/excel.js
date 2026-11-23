@@ -488,6 +488,9 @@
 
     /* ============================================================ modelul */
     const M = { foi: [], fi: 0, nume: null, salvat: false, edit: null, clip: null, tabCol: null, zoom: 100, mesaj: null, mod: false, dosar: null, avertisment: null };
+    /* runda 4c (F054): zoomul e al FOII (ca în Excel: Excursie 120 %, Note 100 %): M.zoom citește / scrie `zoom` de pe foaia
+       activă; foile fără cheie (magazie, lecție, foaie nouă) = 100 */
+    Object.defineProperty(M, 'zoom', { get() { const f = M.foi[M.fi]; return (f && f.zoom) || 100; }, set(v) { const f = M.foi[M.fi]; if (f) f.zoom = v; }, enumerable: true });
     /* magazia de fișiere (fisiere.js): creată la prima nevoie; dosar = folderul registrului salvat (null = nesalvat) */
     let magaz = null;
     /* registrele deschise (X8, m1-l03): cel activ stă în M; alte = cele din spate; nr = ultimul BookN dat (com_r7c.json › registre_noi:
@@ -568,6 +571,39 @@
         [{ t: 'Button', e: 'OK', r: [787, 432, 79, 27] }]);
       [DLG_STERGE, DLG_REFUZ, DLG_NUME].forEach(k => { date.dialoguri[k] = { titlu: 'Microsoft Excel', file: [{ s: k, fila: null }] }; });
     }
+    /* runda 4c (F158, F159, F160): numele de foaie gol / cu apostrof la sfârșit și „History”. Textele = ale simulatorului vechi
+       (registru-foi.js:109, :112, „probat în Excel”, p8 c); ferestrele NU sunt în referință [DEDUS: textul exact și forma, de_capturat 4c-1] */
+    const DLG_NUME_INVALID = 'dialog.nume_foaie_invalid', DLG_NUME_REZERVAT = 'dialog.nume_foaie_rezervat';
+    const TEXT_NUME_INVALID = 'You typed an invalid name for a sheet or chart. Make sure that:\n\n• The name that you type does not exceed 31 characters.\n• The name does not contain any of the following characters:  :  \\  /  ?  *  [  or  ]\n• You did not leave the name blank.';
+    const TEXT_NUME_REZERVAT = 'History is a reserved name.';
+    if (!SUP[DLG_NUME_INVALID]) {
+      SUP[DLG_NUME_INVALID] = mesajExcel([418, 252, 530, 256], TEXT_NUME_INVALID, [508, 350, 400, 112], [{ t: 'Button', e: 'OK', r: [839, 468, 79, 27] }]);
+      SUP[DLG_NUME_REZERVAT] = mesajExcel([470, 290, 426, 180], TEXT_NUME_REZERVAT, [555, 392, 310, 22], [{ t: 'Button', e: 'OK', r: [787, 432, 79, 27] }]);
+      [DLG_NUME_INVALID, DLG_NUME_REZERVAT].forEach(k => { date.dialoguri[k] = { titlu: 'Microsoft Excel', file: [{ s: k, fila: null }] }; });
+    }
+    /* runda 4c (F152, F170): meniul filei › Insert... (fereastra Insert, pagina General: Worksheet, Chart, MS Excel 4.0 Macro,
+       International Macro Sheet, MS Excel 5.0 Dialog; OK cu Worksheet = foaie nouă ÎNAINTEA celei active) și › Unhide... (lista
+       foilor ascunse, OK o reafișează). Ferestrele NU sunt în referință: listele = ale vechiului registru-foi.js:424-437; forma
+       = a ferestrei Move or Copy din referință (dialog.SheetMoveOrCopy: List cu ListItem de 24 px, OK / Cancel jos-dreapta)
+       [DEDUS: titlurile, etichetele, mărimea; în Excel Insert are file General / Spreadsheet Solutions și pictograme — de_capturat 4c-2] */
+    const DLG_INSERT_FOAIE = 'dialog.InsertSheet', DLG_UNHIDE = 'dialog.UnhideSheet';
+    const LISTA_INSERT_FOAIE = ['Worksheet', 'Chart', 'MS Excel 4.0 Macro', 'International Macro Sheet', 'MS Excel 5.0 Dialog'];
+    function fereastraLista(titlu, eticheta, randuri) {
+      const r = [1006, 448, 320, 330], ix = r[0] + 8, iy = r[1] + 31, iw = r[2] - 16, ih = r[3] - 39;
+      const its = randuri.map((n, i) => ({ t: 'ListItem', e: n, r: [1022, 507 + 24 * i, 288, 24], c: [{ t: 'Text', e: n, r: [1025, 511 + 24 * i, 200, 16] }] }));
+      return { t: 'Window', e: titlu, r, c: [
+        { t: 'Pane', e: '', r: [ix, iy, iw, ih], c: [{ t: 'Window', e: titlu, r: [ix, iy, iw, ih], c: [
+          { t: 'Text', e: eticheta, r: [1021, 486, 260, 16] },
+          { t: 'List', e: eticheta, r: [1021, 506, 290, 194], c: its },
+          { t: 'Button', e: 'OK', r: [1194, 735, 54, 24] }, { t: 'Button', e: 'Cancel', r: [1257, 735, 54, 24] }] }] },
+        { t: 'TitleBar', e: '', r: [ix, r[1] + 3, iw, 28], c: [{ t: 'Button', e: 'Închidere', r: [r[0] + r[2] - 48, r[1] + 1, 47, 30] }] }] };
+    }
+    if (!SUP[DLG_INSERT_FOAIE]) {
+      SUP[DLG_INSERT_FOAIE] = fereastraLista('Insert', 'General', LISTA_INSERT_FOAIE);
+      SUP[DLG_UNHIDE] = fereastraLista('Unhide', 'Unhide one or more sheets:', ['Sheet1']);
+      date.dialoguri[DLG_INSERT_FOAIE] = { titlu: 'Insert', file: [{ s: DLG_INSERT_FOAIE, fila: null }] };
+      date.dialoguri[DLG_UNHIDE] = { titlu: 'Unhide', file: [{ s: DLG_UNHIDE, fila: null }] };
+    }
     /* noaptea 22-23.11 (lot 1, excel-a-F040): lipirea pe o zonă care nu e o celulă, nici aceeași mărime, nici un multiplu exact
        al zonei copiate = mesajul Excel, nimic lipit. Textul NU e în referință [DEDUS: textul mesajului Excel 365, de_capturat L1-2] */
     const DLG_LIPIRE = 'dialog.lipire_marime';
@@ -609,7 +645,7 @@
       SUP[DLG_ARG_MULTE] = JSON.parse(JSON.stringify(SUP['dialog.eroare_formula_3']).replace(/too few arguments/g, 'too many arguments'));
       date.dialoguri[DLG_ARG_MULTE] = { titlu: 'Microsoft Excel', file: [{ s: DLG_ARG_MULTE, fila: null }] };
     }
-    const MESAJ_FOAIE = { [DLG_STERGE]: TEXT_STERGE, [DLG_REFUZ]: TEXT_REFUZ, [DLG_NUME]: TEXT_NUME, [DLG_LIPIRE]: TEXT_LIPIRE, [DLG_IMBINARE]: TEXT_IMBINARE, [DLG_AV_IMBINARE]: TEXT_AV_IMBINARE };
+    const MESAJ_FOAIE = { [DLG_STERGE]: TEXT_STERGE, [DLG_REFUZ]: TEXT_REFUZ, [DLG_NUME]: TEXT_NUME, [DLG_NUME_INVALID]: TEXT_NUME_INVALID, [DLG_NUME_REZERVAT]: TEXT_NUME_REZERVAT,[DLG_LIPIRE]: TEXT_LIPIRE, [DLG_IMBINARE]: TEXT_IMBINARE, [DLG_AV_IMBINARE]: TEXT_AV_IMBINARE };
     /* triunghiul de avertizare al ferestrelor de mai sus (desen propriu, nu o resursă Microsoft — I7) */
     const SVG_AVERT = '<svg viewBox="0 0 34 34" width="34" height="34" aria-hidden="true"><path d="M17 3.5 31.5 30h-29z" fill="#fcd77e" stroke="#c98a1b" stroke-width="1.6" stroke-linejoin="round"/><path d="M15.6 12h2.8l-.5 10h-1.8z" fill="#3b3b3b"/><circle cx="17" cy="25.3" r="1.6" fill="#3b3b3b"/></svg>';
 
@@ -932,7 +968,7 @@
       Object.keys(f.lat || {}).forEach(k => { latimi[colNume(+k)] = f.lat[k]; });
       Object.keys(INALT).forEach(r => { inaltimi[String(+r + 1)] = INALT[r]; });
       return { celule: cel, format_celule: fmt, latimi_coloane: latimi, inaltimi_randuri: inaltimi, selectie: selectieStare(), nume_fisier: M.nume, fereastra_mesaj: M.mesaj,
-        ramane_in_editare: !!M.edit, foi: M.foi.map(x => x.nume), foaie_activa: F().nume, culori_file: culoriFile(), dialog: dialogStare(),
+        ramane_in_editare: !!M.edit, foi: M.foi.map(x => x.nume), foaie_activa: F().nume, foi_ascunse: M.foi.filter(x => x.ascunsa).map(x => x.nume), zoom: M.zoom, culori_file: culoriFile(), dialog: dialogStare(),
         modificat: !!M.mod, foi_celule: Object.fromEntries(M.foi.map(x => [x.nume, celuleDe(x, x === f)])), inchideri: nInchideri, deschideri: nDeschideri,
         pagina_backstage: backstage ? backstage.pagina : null, titlu_fereastra: titlu(),
         grafice: stareGrafice(), grafic_activ: !!M.gr, grafic_element_ales: M.gr ? (M.gr.parte === 'titlu' ? 'Chart Title' : 'Chart Area') : null,
@@ -1039,6 +1075,7 @@
           if (n.t === 'Edit' && /^File name:?$/.test(n.e)) return 'camp:nume_fisier';
           if (n.t === 'ComboBox' && /^Save as type:?$/.test(n.e)) return 'camp:tip_fisier';
           if (ctx.cheie === SALVARE_NOUA && n.t === 'Button' && /^(Save|Cancel)$/.test(n.e)) return 'dialog_salvare:' + n.e;
+          if (n.t === 'ComboBox' && /^Choose a Location$/.test(n.e)) return 'camp:Choose a Location';   /* runda 4c (F183) */
         }
         return undefined;
       },
@@ -1224,6 +1261,35 @@
     const golEl = el('div', 'lh-ap-x-gol', { 'data-lh-tip': 'Pane', 'data-lh-eticheta': 'Excel' });
     golEl.style.display = 'none';
     zonaSup.appendChild(golEl);
+    /* runda 4c (excel-a-F190): bara galbenă „POSSIBLE DATA LOSS” după salvarea ca .csv, deasupra barei de formule (împinge bara
+       de formule și foaia în jos, ca bara de mesaje a Excelului). Textul = al vechiului registru-foi.js (TXT.csvBara, probat în
+       Excel p4 / p5 g, „capturi reale” în m1-l03/capturi_lipsa.json); bara NU e în uia_excel.json [DEDUS: forma, culorile,
+       butoanele Don't show again / Save As..., de_capturat 4c-3]. Se închide cu ✕ sau Don't show again; Save As... = F12. */
+    const TEXT_CSV_BARA = 'Some features might be lost if you save this workbook in the comma-delimited (.csv) format. To preserve these features, save it in an Excel file format.';
+    const H_AVERT = 34;
+    let avertEl0 = null;
+    function baraAvertisment() {
+      const on = !!M.avertisment && !REG.gol;
+      if (on && !avertEl0) {
+        avertEl0 = el('div', 'lh-ap-x-bara-avert', { 'data-lh-tip': 'Pane', 'data-lh-eticheta': 'POSSIBLE DATA LOSS', role: 'status' });
+        Object.assign(avertEl0.style, { position: 'absolute', left: '0', right: '0', top: '0', height: H_AVERT + 'px', display: 'flex', alignItems: 'center', gap: '8px', padding: '0 6px 0 10px', boxSizing: 'border-box', background: '#fff4ce', borderBottom: '1px solid #e1c56e', font: "12px 'Segoe UI',system-ui,sans-serif", color: '#323130', overflow: 'hidden', whiteSpace: 'nowrap' });
+        const t = el('span', 'lh-ap-text');
+        t.innerHTML = '<b>&#9432; POSSIBLE DATA LOSS</b> ';
+        t.appendChild(document.createTextNode(TEXT_CSV_BARA));
+        Object.assign(t.style, { flex: '1 1 auto', minWidth: '0', overflow: 'hidden', textOverflow: 'ellipsis' });
+        avertEl0.appendChild(t);
+        [["Don't show again", "Don't show again"], ['Save As...', 'Save As...'], ['✕', 'Close']].forEach(([et, v]) => {
+          const x = el('div', 'lh-ap-n lh-ap-t-Button', { 'data-lh-tip': 'Button', 'data-lh-eticheta': v, role: 'button', 'aria-label': v, 'data-lh-tinta': 'bara_avertisment:' + v });
+          x.textContent = et;
+          Object.assign(x.style, { position: 'relative', flex: '0 0 auto', padding: '3px 8px', border: v === 'Close' ? '0' : '1px solid #8a8886', borderRadius: '2px', background: v === 'Close' ? 'transparent' : '#fff', cursor: 'pointer' });
+          avertEl0.appendChild(x);
+        });
+        zonaSup.appendChild(avertEl0);
+      }
+      if (avertEl0) avertEl0.style.display = on ? 'flex' : 'none';
+      const dy = on ? H_AVERT : 0;
+      if ((parseFloat(randF.style.top) || 0) !== dy) { randF.style.top = dy + 'px'; paneFoaie.style.top = (41 + dy) + 'px'; }
+    }
     zonaSup.style.marginTop = '-2px';   // runda 25, MINOR 5 (vezi la susIn): grila de la y 220, cu 493 px, ca în referință
     const intrare = el('textarea', 'lh-ap-intrare', { 'data-lh-intrare-document': '', 'aria-label': 'Grid', autocomplete: 'off', autocorrect: 'off',
       autocapitalize: 'off', spellcheck: 'false', rows: '1' });
@@ -1288,10 +1354,13 @@
        (al patrulea, „auto”), deci grila se micșorează cu înălțimea barei. */
     const TASTE_AJUTOR = [["'", "'", 'Quote'], ['=', '=', 'Equal'], ['Tab', 'Tab', 'Tab'], ['Enter', 'Enter', 'Enter'], ['Esc', 'Escape', 'Escape'], ['F2', 'F2', 'F2'],
       ['←', 'ArrowLeft', 'ArrowLeft'], ['↑', 'ArrowUp', 'ArrowUp'], ['↓', 'ArrowDown', 'ArrowDown'], ['→', 'ArrowRight', 'ArrowRight'], ['Ctrl+Z', 'z', 'KeyZ', true]];
+    /* runda 4c (excel-a-F201; hotarari_dirijor.md pct. 1): tastele pe care le ia browserul (Ctrl+N, Ctrl+W, Ctrl+PageUp,
+       Ctrl+PageDown, F12 — vechiul registru-foi.js:650 „Tastele lui Excel”), puse după celelalte, în aceeași bară */
+    const TASTE_AJUTOR_BROWSER = [['Ctrl+N', 'n', 'KeyN', true], ['Ctrl+W', 'w', 'KeyW', true], ['Ctrl+PgUp', 'PageUp', 'PageUp', true], ['Ctrl+PgDn', 'PageDown', 'PageDown', true], ['F12', 'F12', 'F12']];
     const cuAtingere = c.taste === true || (c.taste !== false && ((window.matchMedia && window.matchMedia('(pointer: coarse)').matches) || (navigator.maxTouchPoints || 0) > 0));
     if (cuAtingere) {
-      const bara = el('div', 'lh-ap-x-taste', { 'data-lh-ajutor': 'taste', role: 'toolbar', 'aria-label': 'Taste' });
-      TASTE_AJUTOR.forEach(([et, key, code, ctrl]) => {
+      const bara = el('div', 'lh-ap-x-taste lh-ap-x-taste-rupt', { 'data-lh-ajutor': 'taste', role: 'toolbar', 'aria-label': 'Taste' });
+      TASTE_AJUTOR.concat(TASTE_AJUTOR_BROWSER).forEach(([et, key, code, ctrl]) => {
         const b = el('button', 'lh-ap-x-tasta', { type: 'button', 'data-lh-tasta': key, 'data-lh-eticheta': et, tabindex: '-1' });
         b.textContent = et;
         if (ctrl) b.setAttribute('data-lh-ctrl', '1');
@@ -1303,7 +1372,11 @@
       bara.addEventListener('click', e => {
         const b = e.target.closest('.lh-ap-x-tasta');
         if (!b || !b.__tasta) return;
-        try { I.focus(); } catch (er) { /* */ }
+        /* runda 4c (F060): focusul într-o casetă a aplicației (Name Box, redenumirea filei, câmpul unei ferestre) rămâne acolo —
+           tasta merge în caseta aceea, ca de la tastatură; altfel focusul vine în celulă */
+        const ae = document.activeElement;
+        const inCaseta = ae && root.contains(ae) && ae !== intrare && /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName);
+        if (!inCaseta) { try { I.focus(); } catch (er) { /* */ } }
         const tinta = (document.activeElement && root.contains(document.activeElement)) ? document.activeElement : root;
         tinta.dispatchEvent(new KeyboardEvent('keydown', Object.assign({ bubbles: true, cancelable: true }, b.__tasta)));
         tinta.dispatchEvent(new KeyboardEvent('keyup', Object.assign({ bubbles: true, cancelable: true }, b.__tasta)));
@@ -1566,7 +1639,7 @@
         }
       }
       corpIn.appendChild(frag);
-      corpIn.append(selStrat, clipStrat, propEl, maner, avertEl);
+      corpIn.append(selStrat, clipStrat, propEl, maner, avertEl, manerSel);
       deseneazaGrafice(true);
       deseneazaSelectia();
       if (R0 !== r00) corp.scrollTop = Math.max(0, vy0 - OY);
@@ -1630,6 +1703,12 @@
     const clipStrat = el('div', 'lh-ap-x-clip', { 'aria-hidden': 'true' });
     const maner = el('div', 'lh-ap-x-maner', { 'data-lh-tinta': 'maner_umplere', 'aria-label': 'Fill Handle' });
     const propEl = el('div', 'lh-ap-x-propus', { 'aria-hidden': 'true' });
+    /* runda 4c (excel-a-F044): pe ecranul tactil, tragerea pe foaie derulează (runda 21, G17-2), deci zona se alege ca în Excel
+       cu atingere: cercul de selecție din colțul de jos-dreapta al zonei (Selection Handle), tras cu degetul până la celula dorită.
+       Cercul stă puțin în afara colțului, ca pătrățelul de umplere să rămână apucabil [DEDUS: locul exact, de_capturat 4c-5].
+       Pe calculator nu apare. */
+    const manerSel = el('div', 'lh-ap-x-maner-sel', { 'data-lh-tinta': 'maner_selectie', 'aria-label': 'Selection Handle', role: 'button' });
+    Object.assign(manerSel.style, { position: 'absolute', width: '18px', height: '18px', borderRadius: '50%', background: '#fff', border: '2px solid #107c41', boxSizing: 'border-box', zIndex: 6, touchAction: 'none', display: 'none' });
     /* lot 2 (excel-a-F010, F213): butonul de avertizare de lângă celula activă cu triunghi verde (eroare în formulă / număr
        păstrat ca text); clicul deschide lista lui. Numele butonului și textele: [DEDUS — de_capturat L2-5] */
     const avertEl = el('div', 'lh-ap-x-avert', { 'data-lh-tip': 'Button', role: 'button', 'data-lh-tinta': 'avertizare:Trace Error', 'data-lh-eticheta': 'Trace Error' });
@@ -1679,6 +1758,9 @@
       maner.style.display = M.edit || s.zone.length > 1 ? 'none' : '';
       maner.style.left = (bu.x + bu.w - 4) + 'px';
       maner.style.top = (bu.y + bu.h - 4) + 'px';
+      const cuManerSel = ecranTactil() && !M.edit && s.zone.length === 1 && ult.r1 < MAXR - 1 && ult.c1 < MAXC - 1;
+      manerSel.style.display = cuManerSel ? '' : 'none';
+      if (cuManerSel) { manerSel.style.left = (bu.x + bu.w + 2) + 'px'; manerSel.style.top = (bu.y + bu.h + 2) + 'px'; }
       /* lot 2: butonul de avertizare, la stânga celulei active cu triunghi (la dreapta ei în prima coloană vizibilă) */
       const tri = !M.edit && !multe ? triunghi(f, adr(s.activa.r, s.activa.c)) : null;
       avertEl.style.display = tri ? '' : 'none';
@@ -1771,6 +1853,7 @@
       if (elMod) { elMod.firstChild.textContent = mod; elMod.setAttribute('data-lh-eticheta', 'Cell Mode ' + mod); }
       if (elZoomText) { const t = elZoomText.querySelector('.lh-ap-text') || elZoomText; t.textContent = M.zoom + ' %'; elZoomText.setAttribute('data-lh-eticheta', 'Zoom ' + M.zoom + ' %'); }
       rezumatSelectie();
+      baraAvertisment();
       if (elTitlu) { const t = elTitlu.querySelector('.lh-ap-x-titlu'); if (t) t.textContent = titlu(); elTitlu.setAttribute('data-lh-eticheta', titlu()); }
       const gri = (sel, on) => root.querySelectorAll(sel).forEach(x => { x.classList.toggle('lh-ap-gri', !on); if (on) x.removeAttribute('aria-disabled'); else x.setAttribute('aria-disabled', 'true'); });
       gri('[data-lh-suprafata="acces_rapid"] [data-lh-id-mso="Undo"], [data-lh-suprafata="acces_rapid"] [data-lh-id-mso="Undo"] *', H.poateAnula());
@@ -1804,13 +1887,28 @@
       t.style.color = on ? '' : (lum < 0.5 ? '#fff' : '#000');
       t.style.boxShadow = on ? 'inset 0 -2px 0 ' + h : 'none';
     }
+    /* runda 4c (F176): săgețile ‹ › ale filelor mută șirul cu o filă (gri la capete); fila activă poate ieși din vedere, ca în Excel */
+    function derulaFile(d) {
+      const n = M.foi.filter(x => !x.ascunsa).length, dx = tabFoi.__dx || 0;
+      if ((d < 0 && dx <= 0) || (d > 0 && !tabFoi.__dreapta)) return 'fara_efect';
+      tabFoi.__dx = Math.max(0, Math.min(n - 1, dx + d));
+      tabFoi.__sem = null; tabFoi.__nume = null;
+      foileFile();
+      return 'derulare_file';
+    }
     function foileFile() {
-      const sem = M.foi.map(x => x.nume + ':' + (x.culoare || '')).join('|') + '#' + M.fi, semN = M.foi.map(x => x.nume + ':' + (x.culoare || '')).join('|');
+      /* runda 4c (F176): filele care nu încap — tabFoi.__dx = câte file vizibile sunt sărite la stânga; când foaia activă se schimbă
+         (clic, Ctrl+PageDown, foaie nouă), șirul se mută cât s-o vadă (tabFoi.__fiVazut ține ultima foaie adusă la vedere) */
+      const viz = M.foi.filter(x => !x.ascunsa), ia = viz.indexOf(M.foi[M.fi]), aduce = tabFoi.__fiVazut !== M.foi[M.fi];
+      let dx0 = Math.max(0, Math.min(tabFoi.__dx || 0, viz.length - 1));
+      if (aduce && ia >= 0 && ia < dx0) dx0 = ia;
+      tabFoi.__dx = dx0;
+      const sem = M.foi.map(x => x.nume + ':' + (x.culoare || '') + (x.ascunsa ? ':h' : '')).join('|') + '#' + M.fi + '@' + dx0, semN = M.foi.map(x => x.nume + ':' + (x.culoare || '') + (x.ascunsa ? ':h' : '')).join('|') + '@' + dx0;
       if (tabFoi.__sem === sem) return;
       /* la schimbarea foii active doar marcajul: elementele rămân, ca dublul clic să nimerească fila */
-      if (tabFoi.__nume === semN && !redenumire) {
-        tabFoi.__sem = sem;
-        tabFoi.querySelectorAll('[data-lh-tinta="fila_foii"]').forEach(t => { const on = t.getAttribute('data-lh-id') === M.foi[M.fi].nume; t.classList.toggle('activ', on); t.setAttribute('aria-selected', on ? 'true' : 'false'); stilFila(t, M.foi.find(x => x.nume === t.getAttribute('data-lh-id')), on); });
+      if (tabFoi.__nume === semN && !redenumire && (!aduce || tabFoi.querySelector('[data-lh-tinta="fila_foii"][data-lh-id="' + CSS.escape(M.foi[M.fi].nume) + '"]'))) {
+        tabFoi.__sem = sem; tabFoi.__fiVazut = M.foi[M.fi];
+        tabFoi.querySelectorAll('[data-lh-tinta="fila_foii"]').forEach(t => { const on = t.getAttribute('data-lh-id') === M.foi[M.fi].nume; t.classList.toggle('activ', on); t.setAttribute('aria-selected', on ? 'true' : 'false'); t.setAttribute('tabindex', on ? '0' : '-1'); stilFila(t, M.foi.find(x => x.nume === t.getAttribute('data-lh-id')), on); });
         return;
       }
       tabFoi.__sem = sem;
@@ -1827,20 +1925,36 @@
         Object.assign(e.style, { left: (b.r[0] - r0[0]) + 'px', top: '0px', width: b.r[2] + 'px', height: b.r[3] + 'px' });
         tabFoi.appendChild(e);
       });
+      const add = (ff.c || []).find(b => /Add Sheet/.test(b.e));
+      /* runda 4c (F176): filele stau până la marginea șirului (cu loc pentru +); cele de dincolo nu se desenează */
+      const tb = tabFoi.getBoundingClientRect(), lims = [desp, barH.pane].map(q => { const r = q && q.getBoundingClientRect(); return r && r.width > 0 && tb.width > 0 ? r.left - tb.left : Infinity; }).filter(v => v > 40);
+      /* marginea șirului = unde începe despărțitorul / bara de derulare orizontală (pe ecranul îngust, mai devreme de 805 px) */
+      const lat = Math.min(r0[2], ...lims), dxAdd = add ? add.r[0] - (tab0.r[0] + tab0.r[2]) : 0, maxX = lat - (add ? add.r[2] + dxAdd + 2 : 0), x00 = x;
+      let ultima = null, dreapta = false;
       M.foi.forEach((fo, i) => {
+        if (fo.ascunsa) return;   /* runda 4c (F169): foaia ascunsă n-are filă */
+        const iv = viz.indexOf(fo);
+        if (iv < dx0 || dreapta) return;
         const w = Math.max(tab0.r[2], Math.round(latimeText(fo.nume) * 0.85 + 26));
+        if (x > x00 && x + w > maxX) { dreapta = true; return; }
         const e = el('div', 'lh-ap-n lh-ap-t-TabItem lh-ap-x-ff', { 'data-lh-tip': 'TabItem', 'data-lh-eticheta': fo.nume, 'data-lh-id-mso': tab0.id, role: 'tab',
-          'aria-selected': i === M.fi ? 'true' : 'false', 'data-lh-tinta': 'fila_foii', 'data-lh-id': fo.nume });
+          'aria-selected': i === M.fi ? 'true' : 'false', 'data-lh-tinta': 'fila_foii', 'data-lh-id': fo.nume, tabindex: i === M.fi ? '0' : '-1' });
         e.innerHTML = '<span class="lh-ap-text">' + esc(fo.nume) + '</span>';
         e.classList.toggle('activ', i === M.fi);
         Object.assign(e.style, { left: x + 'px', top: '0px', width: w + 'px', height: tab0.r[3] + 'px' });
         stilFila(e, fo, i === M.fi);
-        x += w + 1;
+        x += w + 1; ultima = iv;
         tabFoi.appendChild(e);
       });
-      const add = (ff.c || []).find(b => /Add Sheet/.test(b.e));
+      /* foaia activă nouă a rămas dincolo de margine: șirul se mută cu una și se desenează iar */
+      if (aduce && ia >= 0 && ultima != null && ia > ultima && dx0 < ia) { tabFoi.__dx = dx0 + 1; tabFoi.__sem = null; tabFoi.__nume = null; return foileFile(); }
+      tabFoi.__fiVazut = M.foi[M.fi]; tabFoi.__dreapta = dreapta;
+      tabFoi.querySelectorAll('[data-lh-tinta^="fila_foii_buton:Scroll"]').forEach(s => {
+        const on = /Left/.test(s.getAttribute('data-lh-eticheta')) ? dx0 > 0 : dreapta;
+        s.classList.toggle('lh-ap-gri', !on); if (on) s.removeAttribute('aria-disabled'); else s.setAttribute('aria-disabled', 'true');
+      });
       if (add) {
-        const dx = add.r[0] - (tab0.r[0] + tab0.r[2]);
+        const dx = dxAdd;
         const e = el('div', 'lh-ap-n lh-ap-x-ff-btn', { 'data-lh-tip': 'Button', 'data-lh-eticheta': add.e, 'data-lh-id-mso': add.id, role: 'button', 'aria-label': add.e, 'data-lh-tinta': 'fila_foii_buton:' + add.e });
         e.innerHTML = pang.glif('plus', 14);
         Object.assign(e.style, { left: (x - 1 + dx) + 'px', top: '0px', width: add.r[2] + 'px', height: add.r[3] + 'px' });
@@ -3209,10 +3323,20 @@
       M.foi = s.foi; M.fi = s.fi; actualizeaza();
       return 'refacere';
     }
-    function adaugaFoaie() {
-      let k = M.foi.length + 1;
-      while (M.foi.some(x => x.nume === 'Sheet' + k)) k++;
-      schimba('foaie', () => { M.foi.splice(M.fi + 1, 0, foaieNoua('Sheet' + k)); M.fi += 1; });
+    /* runda 4c (F149): numele foii noi vine dintr-un contor al registrului care doar crește (după Sheet3 ștearsă vine Sheet4,
+       ca vechiul, probat în Excel); contorul stă pe registru (M.nrFoi), nu în Ctrl+Z */
+    function numeFoaieNoua() {
+      let k = (M.nrFoi || 0) + 1;   /* registru deschis / nou: de la 1, sărind peste numele luate (vechiul, p6 c) */
+      while (M.foi.some(x => x.nume.toLowerCase() === ('sheet' + k))) k++;
+      M.nrFoi = k;
+      return 'Sheet' + k;
+    }
+    function adaugaFoaie(inainte) {
+      if (REG.gol) return 'fara_efect';
+      if (M.edit && !confirma()) return 'fara_efect';
+      const n = numeFoaieNoua();
+      /* Shift+F11 și Insert… › Worksheet (F151, F152) pun foaia ÎNAINTEA celei active; butonul + după ea */
+      schimba('foaie', () => { if (inainte) M.foi.splice(M.fi, 0, foaieNoua(n)); else { M.foi.splice(M.fi + 1, 0, foaieNoua(n)); M.fi += 1; } });
       actualizeaza();
       return 'foaie_noua';
     }
@@ -3286,9 +3410,13 @@
         return 'copiere_foaie';
       }
       if (k === i || k === i + 1) { if (M.fi !== i) { M.fi = i; actualizeaza(); } return 'fara_efect'; }
-      const f = M.foi.splice(i, 1)[0], j = k > i ? k - 1 : k;
-      M.foi.splice(j, 0, f); M.fi = j;
-      dupaFoi();
+      /* runda 4c (F175): mutarea intră în Ctrl+Z (vechiul registru-foi.js:47, probat: „Ctrl+Z anulează o mutare, o foaie nouă,
+         o redenumire (p2)”); copierea rămâne ca înainte (golește istoricul: Ctrl+Z după copie e NEPROBAT în Excel) */
+      const j = k > i ? k - 1 : k;
+      schimba('foaie', () => { const f = M.foi.splice(i, 1)[0]; M.foi.splice(j, 0, f); M.fi = j; });
+      M.clip = null;
+      if (M.gr) { M.gr = null; M.grTitlu = null; }
+      tabFoi.__sem = null; tabFoi.__nume = null; actualizeaza(); actualizeazaBare(); I.focus();
       return 'mutare_foaie';
     }
     /* ---- Move or Copy (uia_excel.json › dialog.SheetMoveOrCopy): rândurile listei Before sheet = foile registrului + „(move to
@@ -3346,6 +3474,68 @@
       const mc = dialog.mc;
       inchideDialog();
       return mutaFoaia(mc.sursa, mc.inainte, mc.copie);
+    }
+    /* runda 4c (F152, F170): listele ferestrelor Insert (foaia) și Unhide — aceleași rânduri ca Move or Copy; dialog.lst.ales */
+    function pregatesteLista(s, nume) {
+      const lst = s.querySelector('[data-lh-tip="List"]');
+      const its = lst ? [...lst.children].filter(x => x.getAttribute('data-lh-tip') === 'ListItem') : [];
+      if (!its.length) return;
+      const t0 = parseFloat(its[0].style.top) || 0, pas = its[1] ? (parseFloat(its[1].style.top) - t0) || 24 : 24;
+      nume.forEach((n, i) => {
+        let x = its[i];
+        if (!x) { x = its[0].cloneNode(true); x.style.top = (t0 + pas * i) + 'px'; lst.appendChild(x); }
+        etichetaRand(x, n);
+      });
+      its.slice(nume.length).forEach(x => x.remove());
+      dialog.lst = { nume, ales: 0 };
+      marcheazaLista();
+    }
+    function marcheazaLista() {
+      randuriMutare().forEach((x, i) => {
+        const on = !!dialog.lst && i === dialog.lst.ales;
+        x.toggleAttribute('data-lh-selectat', on); x.setAttribute('aria-selected', on ? 'true' : 'false');
+        x.style.background = on ? '#cce8ff' : ''; x.style.outline = on ? '1px solid #000' : ''; x.style.outlineOffset = on ? '-1px' : '';
+      });
+    }
+    function alegeInLista(li) {
+      const i = randuriMutare().indexOf(li);
+      if (i < 0 || !dialog.lst) return 'fara_efect';
+      dialog.lst.ales = i; marcheazaLista();
+      return 'alegere';
+    }
+    function aplicaLista() {
+      const L0 = dialog.lst, baza = dialog.baza, n = L0 && L0.nume[L0.ales];
+      inchideDialog();
+      if (baza === DLG_INSERT_FOAIE) return n === 'Worksheet' ? adaugaFoaie(true) : I.nesimulat(n || 'Insert');
+      if (baza === DLG_UNHIDE) return n ? reafiseazaFoaia(n) : 'fara_efect';
+      return 'fara_efect';
+    }
+    /* runda 4c (F169, F170): Hide / Unhide (vechiul registru-foi.js: Hide pe foaia activă, Unhide... inactiv când nu e nimic
+       ascuns). Cheia `ascunsa` pe foaie (citită ca boolean: foile vechi n-o au); fila dispare, foaia activă devine cea vizibilă
+       din dreapta (la ultima, din stânga) [DEDUS, ca la ștergere]; ultima foaie vizibilă nu se ascunde: mesajul DLG_REFUZ
+       („A workbook must contain at least one visible worksheet…”, care vorbește chiar de hide). Intră în Ctrl+Z (ca vechiul puneUndo). */
+    const vizibile = () => M.foi.filter(x => !x.ascunsa).length;
+    function ascundeFoaia(i) {
+      if (REG.gol || i < 0 || i >= M.foi.length) return 'fara_efect';
+      if (M.edit && !confirma()) return 'fara_efect';
+      if (vizibile() <= 1) return deschideMesajFoaie(DLG_REFUZ) ? 'refuz_ascundere' : I.nesimulat('Hide');
+      schimba('foaie', () => {
+        M.foi[i].ascunsa = true;
+        let j = M.foi.findIndex((x, k) => k > i && !x.ascunsa);
+        if (j < 0) for (let k = i - 1; k >= 0; k--) if (!M.foi[k].ascunsa) { j = k; break; }
+        M.fi = j;
+      });
+      tabFoi.__sem = null; tabFoi.__nume = null;
+      actualizeaza(); actualizeazaBare(); I.focus();
+      return 'ascundere_foaie';
+    }
+    function reafiseazaFoaia(nume) {
+      const i = M.foi.findIndex(x => x.nume === nume && x.ascunsa);
+      if (i < 0) return 'fara_efect';
+      schimba('foaie', () => { delete M.foi[i].ascunsa; M.fi = i; });
+      tabFoi.__sem = null; tabFoi.__nume = null;
+      actualizeaza(); actualizeazaBare(); I.focus();
+      return 'reafisare_foaie';
     }
     /* ---- Tab Color: paleta = galeria de culori a Office din referință (uia_excel.json › lista.CellFillColorPicker: Theme Colors,
        Standard Colors, More Colors…), deschisă ca submeniu lângă rândul Tab Color, cu „No Color” în loc de „No Fill” [DEDUS:
@@ -3458,8 +3648,8 @@
        = închiderea registrului activ (rămâne cel din spate, altfel Excel deschis, gol). Cu modificări nesalvate Excel întreabă
        „Save your changes” — fereastra NU e în referința Excel: mesajul central standard (de_verificat R7-15) */
     const istoricNou = () => L._module.stare.istoric(() => false);
-    const registruActiv = () => ({ foi: M.foi, fi: M.fi, nume: M.nume, salvat: M.salvat, mod: M.mod, H, book: BOOK, dosar: M.dosar, avertisment: M.avertisment });
-    function incarcaRegistru(r) { M.foi = r.foi; M.fi = r.fi; M.nume = r.nume; M.salvat = r.salvat; M.mod = r.mod; H = r.H; BOOK = r.book; M.clip = null; M.dosar = r.dosar || null; M.avertisment = r.avertisment || null; }
+    const registruActiv = () => ({ foi: M.foi, fi: M.fi, nume: M.nume, salvat: M.salvat, mod: M.mod, H, book: BOOK, dosar: M.dosar, avertisment: M.avertisment, nrFoi: M.nrFoi });
+    function incarcaRegistru(r) { M.foi = r.foi; M.fi = r.fi; M.nume = r.nume; M.salvat = r.salvat; M.mod = r.mod; H = r.H; BOOK = r.book; M.clip = null; M.dosar = r.dosar || null; M.avertisment = r.avertisment || null; M.nrFoi = r.nrFoi || 0; }
     function dupaRegistru() { if (backstage) inchideBackstage(); arataGol(); tabFoi.__sem = null; tabFoi.__nume = null; actualizeaza(); actualizeazaBare(); I.focus(); }
     function registruNou() {
       if (M.edit && !confirma()) return 'fara_efect';
@@ -3524,6 +3714,13 @@
       t.appendChild(inp);
       redenumire = { i, inp, vechi: nume };
       inp.addEventListener('blur', () => { if (redenumire && redenumire.inp === inp) terminaRedenumire(true); });
+      /* runda 4c (F157): semnele : \ / ? * [ ] nu se scriu deloc (Ore/2 → Ore2), cu cursorul păstrat */
+      inp.addEventListener('input', () => {
+        const v0 = inp.value, v1 = v0.replace(/[\\/?*[\]:]/g, '');
+        if (v1 === v0) return;
+        const p0 = Math.max(0, (inp.selectionStart || 0) - (v0.length - v1.length));
+        inp.value = v1; try { inp.setSelectionRange(p0, p0); } catch (e) { /* */ }
+      });
       try { inp.focus({ preventScroll: true }); inp.select(); } catch (e) { /* */ }
       return 'redenumire';
     }
@@ -3531,13 +3728,24 @@
       const R0 = redenumire;
       if (!R0) return;
       redenumire = null;
-      const v = String(R0.inp.value || '').trim();
+      /* runda 4c (F157, F160): semnele : \ / ? * [ ] nu ajung în casetă (filtrul de la tastare, mai jos); apostroful de la
+         ÎNCEPUT dispare ('Note → Note), cel din mijloc rămâne (No'te), cel de la sfârșit dă mesajul „invalid name” (vechiul
+         registru-foi.js:259, :454, probat în Excel, p8 c) */
+      const scris = String(R0.inp.value || '').replace(/[\\/?*[\]:]/g, '').slice(0, 31);
+      const v = scris.trim().replace(/^'+/, '');
       R0.inp.remove();
       const luat = M.foi.some((x, k) => k !== R0.i && x.nume.toLowerCase() === v.toLowerCase());
-      const bun = v && v.length <= 31 && !/[\\/?*[\]:]/.test(v) && !/^'|'$/.test(v) && !luat;
-      if (ok && bun && v !== R0.vechi && M.foi[R0.i]) { M.foi[R0.i].nume = v; M.mod = true; M.salvat = false; }
+      const rezervat = v.toLowerCase() === 'history';
+      const invalid0 = !v.trim() || /'$/.test(v);
+      const bun = !invalid0 && !rezervat && !luat;
+      /* runda 4c (F161): redenumirea trece prin istoric (Ctrl+Z o desface, ca vechiul) */
+      if (ok && bun && v !== R0.vechi && M.foi[R0.i]) { const i0 = R0.i; schimba('foaie', () => { M.foi[i0].nume = v; }); }
       tabFoi.__sem = null; tabFoi.__nume = null;
       foileFile();
+      /* runda 4c (F158, F159): numele gol / cu apostrof la sfârșit → „You typed an invalid name…”; „History” → „History is a
+         reserved name.”; după OK fila revine în redenumire, ca la numele luat */
+      if (ok && invalid0 && M.foi[R0.i] && deschideMesajFoaie(DLG_NUME_INVALID)) { dialog.redenumire = { nume: M.foi[R0.i].nume, text: scris }; return 'nume_invalid'; }
+      if (ok && rezervat && M.foi[R0.i] && deschideMesajFoaie(DLG_NUME_REZERVAT)) { dialog.redenumire = { nume: M.foi[R0.i].nume, text: scris }; return 'nume_rezervat'; }
       /* runda 29 (stare_finala_erori): numele altei foi → mesajul Excel; fila nu se redenumește, iar după OK revine în redenumire */
       if (ok && v && luat && M.foi[R0.i] && deschideMesajFoaie(DLG_NUME)) { dialog.redenumire = { nume: M.foi[R0.i].nume, text: v }; return 'nume_existent'; }
       I.focus();
@@ -3560,6 +3768,8 @@
       const l = Math.max(0, Math.min(x - R.left + 1, R.width - w - 2)), t = Math.max(0, Math.min(y - R.top + 1, R.height - h - 2));
       m.style.left = l + 'px'; m.style.top = t + 'px';
       m.classList.add('lh-ap-x-meniu');
+      /* runda 4c (F170): Unhide... e gri cât nu e nicio foaie ascunsă (vechiul registru-foi.js:401) */
+      if (cheie === 'meniu_contextual.fila_foii') { const u = m.querySelector('[data-lh-tinta="meniu:Unhide..."]'); if (u) { const g = !M.foi.some(x => x.ascunsa); u.toggleAttribute('aria-disabled', g); if (g) u.setAttribute('aria-disabled', 'true'); u.classList.toggle('lh-ap-gri', g); } }
       root.appendChild(m);
       meniu = m;
       return 'meniu_contextual';
@@ -3684,7 +3894,7 @@
       if (!dialog) return;
       if (/^dialog\.eroare_formula/.test(dialog.baza) || MESAJ_FOAIE[dialog.baza]) M.mesaj = null;
       /* după „That name is already taken” (OK, ✕, Enter sau Esc) fila revine în redenumire, cu textul tastat ales [DEDUS: R29-7] */
-      const rd = dialog.baza === DLG_NUME ? dialog.redenumire : null;
+      const rd = dialog.baza === DLG_NUME || dialog.baza === DLG_NUME_INVALID || dialog.baza === DLG_NUME_REZERVAT ? dialog.redenumire : null;
       if (rd) setTimeout(() => { if (!dialog && !redenumire) reiaRedenumire(rd); }, 0);
       /* critic runda 8, GRAV E4: după „We found a typo…” închisă fără Yes (No / Esc / Închidere), celula trece în modul Edit
          (uia_excel.json › acoperire_r7.fapte.e_sum_lipit.mod_dupa_inchidere „Cell Mode Edit”): săgețile mută cursorul în
@@ -3722,6 +3932,8 @@
       if (dialog.baza === 'dialog.SortWarning') pregatesteAvertizare(s);
       if (dialog.baza === 'dialog.ChartChangeType') pregatesteTipGrafic(s);
       if (dialog.baza === 'dialog.SheetMoveOrCopy') pregatesteMutare(s);
+      if (dialog.baza === DLG_INSERT_FOAIE) pregatesteLista(s, LISTA_INSERT_FOAIE);
+      if (dialog.baza === DLG_UNHIDE) pregatesteLista(s, M.foi.filter(x => x.ascunsa).map(x => x.nume));
       if (MESAJ_FOAIE[dialog.baza]) {
         /* img/confirma-stergerea.webp: titlul „Microsoft Excel” verde, mare; mesajul pe rânduri (\n) */
         s.querySelectorAll('[data-lh-tip="Image"][data-lh-eticheta="Warning Icon"]').forEach(x => { x.innerHTML = SVG_AVERT; });
@@ -3763,6 +3975,12 @@
       const nf = s.querySelector('[data-lh-tinta="camp:nume_fisier"] input');
       /* Save As propune numele CU extensia; „Save this file” / „Save your changes” FĂRĂ (uia_excel.json › Edit File name v „Book1”) */
       if (nf) { nf.value = dialog.baza === SALVARE_NOUA || dialog.baza === INTREBARE_INCHIDERE ? numeRegistru() : (M.nume ? M.nume : BOOK + '.xlsx'); setTimeout(() => { try { nf.focus({ preventScroll: true }); nf.select(); } catch (e) { /* */ } }, 0); }
+      if (nf && (dialog.baza === SALVARE_NOUA || dialog.baza === INTREBARE_INCHIDERE)) {
+        /* runda 4c (F183, F186): locul ales stă în dialog.folder (Save îl folosește deja); mesajul semnelor dispare când le scoți */
+        if (dialog.folder == null) dialog.folder = M.dosar || 'Documente';
+        arataLocSalvare();
+        nf.addEventListener('input', () => { if (!SEMNE_FISIER.test(nf.value)) mesajNumeFisier(false); });
+      }
       else { s.setAttribute('tabindex', '-1'); if (!focusInitial(s)) setTimeout(() => { if (dialog && dialog.el === s) focusStrat(); }, 0); }
     }
     function marcheazaFolder() {
@@ -3771,8 +3989,57 @@
     }
     /* Save din „Save this file” / „Save your changes”: scrie în magazie (fisiere.js); dacă numele există, întâi
        „Confirm Save As”. dupaExtra (ex. închiderea registrului) rulează după salvare; returnează acțiunea. */
+    /* runda 4c (F183, F192): lista Choose a Location ▾ din „Save this file” / „Save your changes”: folderele magaziei (Desktop,
+       Documente, Descărcări — numele din Windows-ul în română, ca în fisiere.js) și „More locations” (→ File › Save As, ca More
+       options…: vechiul registru-foi.js:478-480, probat p4 / p6 / p8 b2). Rândurile NU sunt în referință (ComboBox-ul arată doar
+       Documents / OneDrive - Personal) [DEDUS: aspectul listei, de_capturat 4c-4]. Locul propus rămâne cel de până acum (folderul
+       registrului, altfel Documente): „cel folosit ultima dată” (vechiul, p8) ar schimba ce salvează lecția m1-l03 fără alegere. */
+    const LOCURI_SALVARE = ['Desktop', 'Documente', 'Descărcări'];
+    const SEMNE_FISIER = /[\\/:*?"<>|]/;
+    function arataLocSalvare() {
+      const cb = dialog && dialog.el.querySelector('[data-lh-tinta="camp:Choose a Location"]');
+      if (!cb) return;
+      const ts = [...cb.querySelectorAll('[data-lh-tip="Text"]')];
+      if (ts[0]) { const sp = ts[0].querySelector('.lh-ap-text') || ts[0]; sp.textContent = dialog.folder; ts[0].setAttribute('data-lh-eticheta', dialog.folder); ts[0].style.width = 'auto'; ts[0].style.whiteSpace = 'nowrap'; }
+      if (ts[1]) ts[1].style.visibility = 'hidden';
+      cb.setAttribute('aria-label', 'Choose a Location: ' + dialog.folder);
+    }
+    function listaLocSalvare(deschide) {
+      const vechi = dialog && dialog.el.querySelector('.lh-ap-x-lista-loc');
+      if (vechi) vechi.remove();
+      if (!deschide || !dialog) return vechi ? 'inchidere_lista' : 'fara_efect';
+      const cb = dialog.el.querySelector('[data-lh-tinta="camp:Choose a Location"]');
+      if (!cb) return I.nesimulat('Choose a Location ▾');
+      const par = cb.parentNode, w = cb.offsetWidth || 396;
+      const L = el('div', 'lh-ap-n lh-ap-t-List lh-ap-x-lista-loc', { 'data-lh-tip': 'List', 'data-lh-eticheta': 'Choose a Location', role: 'listbox' });
+      const randuri = LOCURI_SALVARE.concat(['More locations']);
+      Object.assign(L.style, { position: 'absolute', left: cb.offsetLeft + 'px', top: (cb.offsetTop + cb.offsetHeight) + 'px', width: w + 'px', height: (randuri.length * 30 + 4) + 'px', background: '#fff', border: '1px solid #8a8886', boxShadow: '0 4px 10px rgba(0,0,0,.18)', zIndex: 5, boxSizing: 'border-box' });
+      randuri.forEach((n, i) => {
+        const x = el('div', 'lh-ap-n lh-ap-t-ListItem', { 'data-lh-tip': 'ListItem', 'data-lh-eticheta': n, role: 'option', 'aria-selected': n === dialog.folder ? 'true' : 'false', 'data-lh-tinta': 'fereastra:' + n });
+        x.innerHTML = '<span class="lh-ap-text">' + esc(n) + '</span>';
+        Object.assign(x.style, { position: 'absolute', left: '2px', right: '2px', top: (2 + 30 * i) + 'px', height: '30px', display: 'flex', alignItems: 'center', paddingLeft: '10px', boxSizing: 'border-box', cursor: 'pointer', background: n === dialog.folder ? '#e5f1fb' : '', borderTop: n === 'More locations' ? '1px solid #e1dfdd' : '' });
+        L.appendChild(x);
+      });
+      par.appendChild(L);
+      return 'lista_locuri';
+    }
+    /* mesajul de sub caseta File name [DEDUS: textul e cel al Explorer-ului Windows pentru aceleași semne, de_capturat 4c-3] */
+    const TEXT_NUME_FISIER = 'A file name can\'t contain any of the following characters: \\ / : * ? " < > |';
+    function mesajNumeFisier(arata) {
+      const cf = dialog && dialog.el.querySelector('[data-lh-tinta="camp:nume_fisier"]');
+      const v0 = dialog && dialog.el.querySelector('.lh-ap-x-mesaj-nume');
+      if (!arata) { if (v0) v0.remove(); return; }
+      if (v0 || !cf) return;
+      const m = el('div', 'lh-ap-n lh-ap-t-Text lh-ap-x-mesaj-nume', { 'data-lh-tip': 'Text', 'data-lh-eticheta': TEXT_NUME_FISIER, role: 'alert' });
+      m.textContent = TEXT_NUME_FISIER;
+      Object.assign(m.style, { position: 'absolute', left: cf.offsetLeft + 'px', top: (cf.offsetTop + cf.offsetHeight + 2) + 'px', width: Math.max(cf.offsetWidth, 300) + 'px', color: '#a4262c', font: "12px 'Segoe UI',system-ui,sans-serif", whiteSpace: 'normal', lineHeight: '15px', zIndex: 4 });
+      cf.parentNode.appendChild(m);
+    }
     function salveazaDinDialog(dupaExtra) {
       const x = dialog && dialog.el.querySelector('[data-lh-tinta="camp:nume_fisier"] input');
+      /* runda 4c (F186): în „Save this file” / „Save your changes” semnele nu mai dispar pe tăcute: mesaj sub casetă, fereastra
+         rămâne deschisă (vechiul registru-foi.js:467-473) */
+      if (x && dialog && (dialog.baza === SALVARE_NOUA || dialog.baza === INTREBARE_INCHIDERE) && SEMNE_FISIER.test(x.value)) { mesajNumeFisier(true); try { x.focus({ preventScroll: true }); } catch (e) { /* */ } return 'nume_nepermis'; }
       const v = String(x ? x.value : '').trim().replace(/[\\/:*?"<>|]/g, '');
       if (!v) return 'fara_efect';
       const nume = /\.[a-z0-9]{2,5}$/i.test(v) ? v : v + '.xlsx';
@@ -3999,9 +4266,10 @@
       if (dialog.baza === 'dialog.SortDialog_eroare_nivel_gol') { inchideDialog(); return 'inchidere'; }
       if (dialog.baza === 'dialog.ChartChangeType') return aplicaTipGrafic();
       if (dialog.baza === 'dialog.SheetMoveOrCopy' && dialog.mc) return aplicaMutare();
+      if ((dialog.baza === DLG_INSERT_FOAIE || dialog.baza === DLG_UNHIDE) && dialog.lst) return aplicaLista();
       if (dialog.baza === DLG_STERGE) return stergeAcum(dialog.foaie);
       if (dialog.baza === DLG_AV_IMBINARE) return imbinaDupaAvertisment(true);
-      if (dialog.baza === DLG_REFUZ || dialog.baza === DLG_NUME || dialog.baza === DLG_LIPIRE || dialog.baza === DLG_IMBINARE) { inchideDialog(); return 'inchidere'; }
+      if (dialog.baza === DLG_REFUZ || dialog.baza === DLG_NUME || dialog.baza === DLG_NUME_INVALID || dialog.baza === DLG_NUME_REZERVAT || dialog.baza === DLG_LIPIRE || dialog.baza === DLG_IMBINARE) { inchideDialog(); return 'inchidere'; }
       if (dialog.baza === 'dialog.CellsDelete') return stergeDinDialog();
       const b = dialog.baza.replace(/^dialog\./, '');
       inchideDialog();
@@ -4610,7 +4878,7 @@
     const dinCerc = t => (t || '').replace(/^cerc_latime:/, 'antet_coloana_margine:').replace(/^cerc_inaltime:/, 'antet_rand_margine:');
     function ecranTactil() { return (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) || (navigator.maxTouchPoints || 0) > 0; }
     I.la = {};
-    let ancora = null, josFacut = false, atingere = null, cercAtins = null;
+    let ancora = null, josFacut = false, atingere = null, cercAtins = null, lungFila = null, lungFilaFacut = 0;
     /* runda 3 (excel-a-F133, F135): bula de lângă indicator în timpul tragerii liniei unui antet, „Width: 8,11 (64 pixels)” /
        „Height: 30,00 (40 pixels)” — forma din simulatorul vechi (lectii/_sim/excelx-formatare.js:644-645, arataBula); textul și
        locul din Excel 365 NU sunt în referință [DEDUS, de_capturat R3-2] */
@@ -4639,7 +4907,31 @@
       const gx = !dialog && !backstage && /^grafic(:|$)/.test(tinta || '') && tg.closest ? tg.closest('.lh-ap-x-grafic') : null;
       if (gx) return josGrafic(e, tinta, gx);
       /* runda 29: apăsarea pe o filă poate deveni tragerea ei (mutare / copiere); fără mișcare rămâne clicul de alegere */
-      if (!dialog && !backstage && !REG.gol && !redenumire && /^fila_foii:/.test(tinta || '')) { ancora = { fila: tinta.slice(10) }; return 'tragere'; }
+      if (!dialog && !backstage && !REG.gol && !redenumire && /^fila_foii:/.test(tinta || '')) {
+        ancora = { fila: tinta.slice(10), x0: e.clientX, y0: e.clientY };
+        /* runda 4c (F178): pe telefon apăsarea lungă (550 ms, ca vechiul registru-foi.js:613) pe filă = meniul filei; Safari pe
+           iPhone și Chrome fără fereastră nu trimit „contextmenu” la apăsarea lungă, deci o măsurăm aici */
+        if (lungFila) { clearTimeout(lungFila); lungFila = null; }
+        if (e.pointerType === 'touch') {
+          const nume = tinta.slice(10), x = e.clientX, y = e.clientY;
+          lungFila = setTimeout(() => {
+            lungFila = null;
+            if (!ancora || ancora.fila !== nume || dialog || backstage || redenumire) return;
+            ancora = null; lungFilaFacut = Date.now();
+            alegeFoaia(nume);
+            const h = (SUP['meniu_contextual.fila_foii'] || { r: [0, 0, 0, 300] }).r[3];
+            meniuContextual('meniu_contextual.fila_foii', x, y - h - 8);
+          }, 550);
+        }
+        return 'tragere';
+      }
+      /* runda 4c (F044): cercul de selecție — colțul opus rămâne pe loc (celula activă), zona urmează degetul (ramura ancora.de) */
+      if (tinta === 'maner_selectie' && !dialog && !backstage && !M.edit) {
+        const q = F().sel.zone[F().sel.zone.length - 1];
+        F().sel.activa = { r: q.r0, c: q.c0 };   /* colțul de sus-stânga = ancora (cercul e în colțul opus) */
+        M.tabCol = null; ancora = { de: { r: q.r0, c: q.c0 }, manerSel: true }; josFacut = true;
+        return 'tragere';
+      }
       if (amanat(e, tinta, tg)) { atingere = tinta; ancora = null; return null; }
       return josGrila(e, tinta, tg);
     };
@@ -4659,7 +4951,10 @@
           if (poatePuncta() || (M.edit.ales && M.edit.text.charAt(0) === '=')) { insereaza(adr(p.r, p.c)); M.edit.punct = true; M.edit.pk = { i: M.edit.poz - adr(p.r, p.c).length, j: M.edit.poz, r: p.r, c: p.c }; M.edit.propus = { r0: p.r, c0: p.c, r1: p.r, c1: p.c }; ancora = { punct: true, de: p }; deseneazaSelectia(); I.focus(); return 'selectie'; }
           if (!confirma()) { ancora = null; return 'selectie'; }
         }
-        M.tabCol = null;
+        /* runda 4c (F056): clicul pe celula ACTIVĂ (fără Shift / Ctrl) nu rupe șirul Tab–Enter (vechiul, probat în Excel; drumul
+           de pe telefon: atingi celula, apoi bara de taste); clicul pe altă celulă îl rupe */
+        const fa = F().sel.activa;
+        if (!(fa.r === p.r && fa.c === p.c && unaSingura() && !e.shiftKey && !e.ctrlKey && !e.metaKey)) M.tabCol = null;
         alege(p.r, p.c, e.shiftKey, (e.ctrlKey || e.metaKey) && !e.shiftKey);
         ancora = { de: p };
         I.focus();
@@ -4696,6 +4991,19 @@
           s.zone = s.zone.slice(0, -1).concat([q]); pastreaza = a;
         } else if ((ac || ar) && (e.ctrlKey || e.metaKey)) s.zone = s.zone.concat([q]);
         else s.zone = [q];
+        /* runda 4c (F146): o îmbinare atinsă de coloanele / rândurile alese lărgește zona la toată îmbinarea (A8:D8 îmbinat,
+           clic pe litera C → A:D), repetat cât se mai lărgește — ca în Excel (vechiul, „ca în Excel”, felia e) */
+        if (ac || ar) {
+          const zq = Object.assign({}, s.zone[s.zone.length - 1]), ms = (F().merge || []).map(zonaDin).filter(Boolean);
+          s.zone[s.zone.length - 1] = zq;   /* celula activă rămâne în coloana / rândul clicat [DEDUS, de_capturat 4c-4] */
+          for (let sch = true; sch;) {
+            sch = false;
+            ms.forEach(m => {
+              if (ac && m.c1 >= zq.c0 && m.c0 <= zq.c1 && (m.c0 < zq.c0 || m.c1 > zq.c1)) { zq.c0 = Math.min(zq.c0, m.c0); zq.c1 = Math.max(zq.c1, m.c1); sch = true; }
+              if (ar && m.r1 >= zq.r0 && m.r0 <= zq.r1 && (m.r0 < zq.r0 || m.r1 > zq.r1)) { zq.r0 = Math.min(zq.r0, m.r0); zq.r1 = Math.max(zq.r1, m.r1); sch = true; }
+            });
+          }
+        }
         s.activa = pastreaza || { r: ac ? randLa(corp.scrollTop) : q.r0, c: ar ? colLa(corp.scrollLeft) : q.c0 };
         if (tinta === 'selecteaza_tot') s.activa = { r: 0, c: 0 };
         ancora = { antet: ac ? 'c' : ar ? 'r' : null, q: pastreaza ? (ac ? { r0: 0, c0: pastreaza.c, r1: MAXR - 1, c1: pastreaza.c } : { r0: pastreaza.r, c0: 0, r1: pastreaza.r, c1: MAXC - 1 }) : q, rest: s.zone.slice(0, -1) };
@@ -4711,7 +5019,18 @@
     I.la.misca = (e, j) => {
       if (!ancora) return;
       if (ancora.grafic != null) { mutaGrafic(e); return; }
-      if (ancora.fila != null) { marcajFila(e.clientX); return; }
+      if (ancora.fila != null) {
+        /* runda 4c (F178): degetul care se mișcă nu mai e apăsare lungă */
+        if (lungFila && ancora.x0 != null && Math.hypot(e.clientX - ancora.x0, e.clientY - ancora.y0) > 8) { clearTimeout(lungFila); lungFila = null; }
+        /* runda 4c (F176): fila trasă lângă marginea șirului derulează filele (o filă la ~100 ms) */
+        const ts = [...tabFoi.querySelectorAll('[data-lh-tinta="fila_foii"]')], acum = Date.now();
+        if (ts.length && acum - (ancora.tDer || 0) > 100) {
+          const bu = ts[ts.length - 1].getBoundingClientRect(), bp = ts[0].getBoundingClientRect();
+          if (tabFoi.__dreapta && e.clientX > bu.right - 12) { ancora.tDer = acum; derulaFile(1); }
+          else if ((tabFoi.__dx || 0) > 0 && e.clientX < bp.left + 12) { ancora.tDer = acum; derulaFile(-1); }
+        }
+        marcajFila(e.clientX); return;
+      }
       if (ancora.latime != null) {
         const f = F(), w = Math.max(0, Math.round(ancora.w0 + (e.clientX - ancora.x0) / z()));
         if (f.lat[ancora.latime] !== w) { (ancora.toate || [ancora.latime]).forEach(c => { f.lat[c] = w; }); ancora.schimbat = true; deseneazaGrila(); }
@@ -4760,13 +5079,20 @@
       }
     };
     I.la.sus = (e, j, g) => {
+      if (lungFila) { clearTimeout(lungFila); lungFila = null; }
       const an = ancora;
       ancora = null;
       M.trageInfo = null;
       if (an && an.fila != null) marcajFila(null);
       if (!g) return null;
       if (an && an.grafic != null) return susGrafic(an);
-      if (an && an.fila != null) { const i = M.foi.findIndex(x => x.nume === an.fila); return i < 0 ? 'fara_efect' : mutaFoaia(i, locFila(e.clientX).k, !!(e.ctrlKey || e.metaKey)); }
+      if (an && an.fila != null) {
+        const i = M.foi.findIndex(x => x.nume === an.fila);
+        /* runda 4c: locul e printre filele VĂZUTE; cu foi ascunse, indicele din M.foi = al filei de pe ecran */
+        const L0 = locFila(e.clientX), ts = [...tabFoi.querySelectorAll('[data-lh-tinta="fila_foii"]')];
+        const k = L0.k < ts.length ? M.foi.findIndex(x => x.nume === ts[L0.k].getAttribute('data-lh-id')) : M.foi.length;
+        return i < 0 || k < 0 ? 'fara_efect' : mutaFoaia(i, k, !!(e.ctrlKey || e.metaKey));
+      }
       if (g === 'umplere_tragere' && an && an.umplere) { const p = celulaLa(e.clientX, e.clientY); return umple(p.r, p.c); }
       bulaTragere(null);
       if (an && an.inaltime != null) {
@@ -4823,6 +5149,15 @@
       if (/^antet_(coloana|rand)$/.test(fel) || tinta === 'selecteaza_tot') return fel === 'antet_coloana' ? 'selectare_coloana' : fel === 'antet_rand' ? 'selectare_rand' : 'selectare_tot';
       if (tinta === 'grila' || tinta === 'maner_umplere') return 'fara_efect';
       if (!elx || !root.contains(elx)) return null;
+      /* runda 4c (F196): ✕ din bara de titlu (uia_excel.json › bara_titlu: Close) = închiderea registrului activ, același drum ca
+         Ctrl+W / File › Close (cu „Save your changes to this file?” la modificări). Minimize / Restore rămân nesimulate. */
+      if (fel === 'bara_titlu' && v === 'Close') return inchideRegistru();
+      /* runda 4c (F190): butoanele barei POSSIBLE DATA LOSS */
+      if (fel === 'bara_avertisment') {
+        if (v === 'Save As...') return deschideSalvareCa() ? 'salvare_ca' : I.nesimulat('Save As');
+        M.avertisment = null; actualizeazaBare(); I.focus();
+        return 'inchidere_bara';
+      }
       if (fel === 'fila') {
         if (v === 'File') return deschideBackstage('Home');
         if (backstage) inchideBackstage();
@@ -4852,14 +5187,17 @@
         /* More options… → pagina File › Save As (acoperire_r7.fapte.a_ctrl_s_registru_nou.more_options.backstage „Save As”) */
         if (fel === 'fereastra' && v === 'More options…') { inchideDialog(); deschideBackstage('Save As'); return 'pagina_backstage'; }
         if (fel === 'fereastra' && /^(Cancel|Închidere)$/.test(v)) { inchideDialog(); return 'anulare'; }
-        /* rândurile listelor Choose a Location ▾ și Save as type ▾ nu sunt în referință → mesajul central (ca word.js) */
-        if (fel === 'fereastra' && v === 'Open') return I.nesimulat('Choose a Location ▾');
+        /* runda 4c (F183, F192): Choose a Location ▾ (caseta sau săgeata ei) deschide / închide lista locurilor; rândul ales
+           devine locul; More locations = pagina File › Save As, ca More options…. Save as type ▾ rămâne nesimulat. */
+        if ((fel === 'camp' && v === 'Choose a Location') || (fel === 'fereastra' && v === 'Open')) return listaLocSalvare(!dialog.el.querySelector('.lh-ap-x-lista-loc'));
+        if (fel === 'fereastra' && v === 'More locations') { inchideDialog(); deschideBackstage('Save As'); return 'pagina_backstage'; }
+        if (fel === 'fereastra' && LOCURI_SALVARE.indexOf(v) >= 0 && dialog.el.querySelector('.lh-ap-x-lista-loc')) { dialog.folder = v; listaLocSalvare(false); arataLocSalvare(); return 'folder'; }
         if (fel === 'camp' && v === 'tip_fisier') return I.nesimulat('Save as type ▾');
       }
       /* runda 29 (G25-1): întrebarea ștergerii (Delete / Cancel / ✕), refuzul (OK / ✕), Move or Copy (rândul listei, Create a copy) */
       if (fel === 'fereastra' && dialog && dialog.baza === DLG_STERGE) { if (v === 'Delete') return stergeAcum(dialog.foaie); inchideDialog(); return 'anulare'; }
       if (fel === 'fereastra' && dialog && dialog.baza === DLG_AV_IMBINARE) return /^(OK)$/.test(v) ? imbinaDupaAvertisment(true) : /^(Cancel|Închidere|Close)$/.test(v) ? imbinaDupaAvertisment(false) : I.nesimulat(v);
-      if (fel === 'fereastra' && dialog && (dialog.baza === DLG_REFUZ || dialog.baza === DLG_NUME || dialog.baza === DLG_LIPIRE || dialog.baza === DLG_IMBINARE)) { inchideDialog(); return v === 'OK' ? 'inchidere' : 'anulare'; }
+      if (fel === 'fereastra' && dialog && (dialog.baza === DLG_REFUZ || dialog.baza === DLG_NUME || dialog.baza === DLG_NUME_INVALID || dialog.baza === DLG_NUME_REZERVAT || dialog.baza === DLG_LIPIRE || dialog.baza === DLG_IMBINARE)) { inchideDialog(); return v === 'OK' ? 'inchidere' : 'anulare'; }
       /* lot 1: fereastra Delete — butonul radio ales (clic pe el sau pe textul lui), OK șterge */
       if (fel === 'fereastra' && dialog && dialog.baza === 'dialog.CellsDelete') {
         if (OPT_STERGERE[v]) { dialog.optSterg = v; radioStergere(); return 'alegere'; }
@@ -4869,6 +5207,10 @@
         const li = elx.closest('[data-lh-tip="ListItem"]');
         if (li && dialog.el.contains(li)) return alegeInMutare(li);
         if (v === 'Create a copy') { dialog.mc.copie = !dialog.mc.copie; bifeaza(elx.closest('[data-lh-tip="CheckBox"]') || elx, dialog.mc.copie, false); return 'bifare'; }
+      }
+      if (fel === 'fereastra' && dialog && dialog.lst && (dialog.baza === DLG_INSERT_FOAIE || dialog.baza === DLG_UNHIDE)) {
+        const li = elx.closest('[data-lh-tip="ListItem"]');
+        if (li && dialog.el.contains(li)) return alegeInLista(li);
       }
       if (fel === 'fereastra' && dialog && dialog.baza === 'dialog.ChartChangeType' && elx.getAttribute('data-lh-tip') === 'ListItem') return clicTipGrafic(elx, v);
       if (fel === 'fereastra' && dialog) {
@@ -4889,6 +5231,10 @@
         if (lista === 'lista.TableDeleteRowsAndColumnsMenu') return v === 'Delete Sheet' ? stergeFoaia(M.fi) : v === 'Delete Cells...' ? dialogStergere()
           : v === 'Delete Sheet Rows' ? stergeSelectia('randuri') : v === 'Delete Sheet Columns' ? stergeSelectia('coloane') : I.nesimulat(v);
         if (lista === 'meniu_contextual.fila_foii' && v === 'Delete') return stergeFoaia(M.fi);
+        /* runda 4c (F152, F169, F170): Insert... (fereastra Insert a foii), Hide, Unhide... (gri fără foi ascunse) */
+        if (lista === 'meniu_contextual.fila_foii' && v === 'Insert...') return deschideDialog(DLG_INSERT_FOAIE) ? 'fereastra' : I.nesimulat(v);
+        if (lista === 'meniu_contextual.fila_foii' && v === 'Hide') return ascundeFoaia(M.fi);
+        if (lista === 'meniu_contextual.fila_foii' && v === 'Unhide...') return !M.foi.some(x => x.ascunsa) ? 'indisponibil' : deschideDialog(DLG_UNHIDE) ? 'fereastra' : I.nesimulat(v);
         /* lot 1: Delete din meniul literei / numărului = coloanele / rândurile selectate (excel-a-F032, F033, b-F113) */
         if (lista === 'meniu_contextual.antet_rand' && v === 'Delete') return stergeSelectia('randuri');
         if (lista === 'meniu_contextual.antet_coloana' && v === 'Delete') return stergeSelectia('coloane');
@@ -4926,7 +5272,9 @@
         if (v === 'Rename') return pornesteRedenumire(F().nume);
         return I.nesimulat(v);
       }
+      if (fel === 'fila_foii' && lungFilaFacut && Date.now() - lungFilaFacut < 1500 && meniu) { lungFilaFacut = 0; return 'meniu_contextual'; }
       if (fel === 'fila_foii') return alegeFoaia(v);
+      if (fel === 'fila_foii_buton' && /^Scroll (Left|Right)$/.test(v)) return derulaFile(/Right/.test(v) ? 1 : -1);
       if (fel === 'fila_foii_buton') return v === 'Add Sheet' ? adaugaFoaie() : 'indisponibil';
       if (fel === 'bara_formule') {
         if (v === 'Insert Function') return deschideDialog('dialog.FunctionWizard') ? 'fereastra' : I.nesimulat(v);
@@ -5042,6 +5390,20 @@
     const NUME_TASTE = { ctrl_e: 'Flash Fill (Ctrl+E)', ctrl_n: 'New (Ctrl+N)', ctrl_w: 'Close (Ctrl+W)', ctrl_p: 'Print (Ctrl+P)', ctrl_f: 'Find (Ctrl+F)', ctrl_h: 'Replace (Ctrl+H)', ctrl_k: 'Link (Ctrl+K)' };
     I.la.tasta = (e, g, inCamp) => {
       const k = e.key;
+      /* runda 4c (F177): fila cu focusul tastaturii (Tab până la ea sau clic): Enter / Spațiu o aleg, Shift+F10 deschide meniul ei,
+         ← → mută focusul pe fila vecină (vechiul registru-foi.js: filele sunt butoane) */
+      const filaT = !inCamp && e.target && e.target.closest ? e.target.closest('[data-lh-tinta="fila_foii"]') : null;
+      if (filaT && tabFoi.contains(filaT) && !dialog && !meniu && !backstage) {
+        const nume = filaT.getAttribute('data-lh-id');
+        if (k === 'Enter' || k === ' ' || k === 'Spacebar') { e.preventDefault(); const r = alegeFoaia(nume); focusFila(nume); return r; }
+        if ((k === 'F10' && e.shiftKey) || k === 'ContextMenu') { e.preventDefault(); return meniuFilaTastatura(filaT); }
+        if (k === 'ArrowLeft' || k === 'ArrowRight') {
+          e.preventDefault();
+          const ts = [...tabFoi.querySelectorAll('[data-lh-tinta="fila_foii"]')], i = ts.indexOf(filaT), u = ts[i + (k === 'ArrowRight' ? 1 : -1)];
+          if (u) { try { u.focus({ preventScroll: true }); } catch (er) { /* */ } }
+          return 'fara_efect';
+        }
+      }
       if (inCamp) {
         if (redenumire && e.target === redenumire.inp) {
           if (k === 'Enter') { e.preventDefault(); return terminaRedenumire(true) || 'redenumire_foaie'; }
@@ -5072,6 +5434,8 @@
         return 'fara_efect';
       }
       if (g === 'tasta_f12') { e.preventDefault(); if (M.edit && !confirma()) return 'fara_efect'; return deschideSalvareCa() ? 'salvare_ca' : I.nesimulat('Save As'); }
+      /* runda 4c (F151): Shift+F11 = foaie nouă ÎNAINTEA celei active (Insert Worksheet; vechiul registru-foi.js) */
+      if (k === 'F11' && e.shiftKey && !ctrl && !e.altKey) { e.preventDefault(); return adaugaFoaie(true); }
       /* ------------------------------------------------ în editare */
       if (M.edit) {
         const ed = M.edit;
@@ -5168,7 +5532,8 @@
       /* runda 29 (R25-7; m1-l03:197, :230): Ctrl+PageDown / Ctrl+PageUp = foaia din dreapta / din stânga; la capăt rămâi pe loc */
       if ((k === 'PageDown' || k === 'PageUp') && ctrl && !e.shiftKey && !e.altKey) {
         e.preventDefault();
-        const j = M.fi + (k === 'PageDown' ? 1 : -1);
+        let j = M.fi + (k === 'PageDown' ? 1 : -1);
+        while (j >= 0 && j < M.foi.length && M.foi[j].ascunsa) j += k === 'PageDown' ? 1 : -1;   /* runda 4c: sare peste foile ascunse */
         if (j < 0 || j >= M.foi.length) return 'fara_efect';
         return alegeFoaia(M.foi[j].nume) === 'fila_foii' ? (k === 'PageDown' ? 'foaie_urmatoare' : 'foaie_anterioara') : 'fara_efect';
       }
@@ -5325,6 +5690,9 @@
       const spatiu = ctrl && !e.shiftKey && (e.key === ' ' || e.code === 'Space');
       const meniuT = !ctrl && !e.altKey && e.key === 'ContextMenu';
       if (!minus && !spatiu && !meniuT) return false;
+      /* runda 4c (F177): tasta Meniu pe o filă cu focus = meniul filei */
+      const filaT = meniuT && e.target && e.target.closest ? e.target.closest('[data-lh-tinta="fila_foii"]') : null;
+      if (filaT && tabFoi.contains(filaT) && !dialog && !backstage) { e.preventDefault(); if (meniu) inchideMeniu(); meniuFilaTastatura(filaT); return true; }
       /* într-un câmp (Name Box, bara de formule, câmpurile ferestrelor) tastele rămân ale câmpului */
       if (e.target && e.target !== intrare && /^(INPUT|TEXTAREA)$/.test(e.target.tagName || '')) return false;
       e.preventDefault();
@@ -5345,6 +5713,18 @@
       return rand ? 'selectare_rand' : 'selectare_coloana';
     }
     /* meniul de clic dreapta deschis din tastatură: al rândurilor / coloanelor dacă sunt selectate întregi, altfel al celulei */
+    /* runda 4c (F177): meniul filei deschis de la tastatură (Shift+F10, tasta Meniu), deasupra filei, ca la clic dreapta */
+    function meniuFilaTastatura(filaT) {
+      const nume = filaT.getAttribute('data-lh-id');
+      alegeFoaia(nume);
+      const t = tabFoi.querySelector('[data-lh-tinta="fila_foii"][data-lh-id="' + CSS.escape(nume) + '"]') || filaT;
+      const bb = t.getBoundingClientRect(), h = (SUP['meniu_contextual.fila_foii'] || { r: [0, 0, 0, 300] }).r[3];
+      return meniuContextual('meniu_contextual.fila_foii', bb.left + 10, bb.top - h - 4) || 'fara_efect';
+    }
+    function focusFila(nume) {
+      const t = tabFoi.querySelector('[data-lh-tinta="fila_foii"][data-lh-id="' + CSS.escape(nume) + '"]');
+      if (t) { try { t.focus({ preventScroll: true }); } catch (er) { /* */ } }
+    }
     function meniuTastatura() {
       const s = F().sel, q = zonaUltima(), ce = celEl[adr(s.activa.r, s.activa.c)];
       const b = ce ? ce.getBoundingClientRect() : root.getBoundingClientRect();
