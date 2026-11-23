@@ -43,7 +43,8 @@
   /* lot 2 (excel-a-F015, F016): numărătoarea Excel 1900 — 1 = 01.01.1900, 60 = 29.02.1900 (zi care n-a existat, păstrată din
      Lotus), 61 = 01.03.1900; 0 = „00.01.1900”. Înainte numărătoarea pornea de la 30.12.1899 fără 29.02, deci sub 61 ieșea o zi
      în minus (7,5 ca dată = 06.ian în loc de 07.ian, cum arată Excelul și simulatorul vechi) */
-  const serial = (y, m, d) => { const n = Math.round((Date.UTC(y, m - 1, d) - Date.UTC(1899, 11, 30)) / 864e5); return n < 61 ? n - 1 : n; };
+  /* runda 4a (critic runda 2, M-2): 29.02.1900 = 60 (calendarul JavaScript l-ar face 01.03.1900 = 61) */
+  const serial = (y, m, d) => { if (y === 1900 && m === 2 && d === 29) return 60; const n = Math.round((Date.UTC(y, m - 1, d) - Date.UTC(1899, 11, 30)) / 864e5); return n < 61 ? n - 1 : n; };
   const dinSerial = s0 => {
     const s = Math.floor(s0);
     if (s === 60) return { y: 1900, m: 2, d: 29 };
@@ -327,7 +328,8 @@
   }
   const LUNA_NUME = {};
   LUNI_L.forEach((n, i) => { LUNA_NUME[n] = i + 1; }); LUNI.forEach((n, i) => { LUNA_NUME[n] = i + 1; }); LUNA_NUME.sep = 9;
-  const dataOk = (y, l, d) => l >= 1 && l <= 12 && d >= 1 && d <= new Date(Date.UTC(y, l, 0)).getUTCDate();
+  /* runda 4a (critic runda 2, M-2): 29.02.1900 tastat e o dată în Excel (ziua păstrată din Lotus, numărul 60), nu text */
+  const dataOk = (y, l, d) => l >= 1 && l <= 12 && d >= 1 && (d <= new Date(Date.UTC(y, l, 0)).getUTCDate() || (y === 1900 && l === 2 && d === 29));
   const an2 = y => (y < 30 ? 2000 + y : 1900 + y);
   const NR_RO = '(\\d{1,3}(?:\\.\\d{3})+|\\d+)(?:,(\\d+))?';   // cu sau fără punctul miilor
   const nrRo = (i, z) => parseFloat(i.replace(/\./g, '') + (z ? '.' + z : ''));
@@ -375,10 +377,20 @@
         }
         out.push({ t: 'str', v, s: s.slice(i, j + 1) }); i = j + 1; continue;
       }
-      let m = /^(\$?[A-Za-z]{1,3}\$?\d+)(:\$?[A-Za-z]{1,3}\$?\d+)?(?![A-Za-z0-9_(À-ɏ])/.exec(r);
+      /* noaptea 22-23.11, runda 4a (excel-b-F063, F064): ghilimelele întoarse “ ” și semnele ≥ ≤ ≠ fac parte dintr-un NUME (Excel
+         primește formula și arată #NAME?, fără fereastră: lectii/viii/m2-l09/surse.md:27, :29) — „B2≥5” și „“da”” sunt câte un nume */
+      let m = /^[A-Za-z_À-ɏ“”≥≤≠][A-Za-z0-9_.À-ɏ“”≥≤≠]*/.exec(r);
+      if (m && /[“”≥≤≠]/.test(m[0])) { out.push({ t: 'nume', v: m[0].toUpperCase(), s: m[0] }); i += m[0].length; continue; }
+      /* runda 4a (excel-a-F208): rânduri întregi (4:20) și coloane întregi (B:D) — Excel primește =20:4, o scrie =4:20 și dă
+         #SPILL! în C2 (lectii/viii/m1-l07/surse.md:42) */
+      m = /^(\$?\d+:\$?\d+|\$?[A-Za-z]{1,3}:\$?[A-Za-z]{1,3})(?![A-Za-z0-9_(À-ɏ.])/.exec(r);
+      if (m && zonaDin(m[0]) && (i === 0 || !/[A-Za-z0-9_.$]/.test(s[i - 1]))) { out.push({ t: 'zona', s: m[0] }); i += m[0].length; continue; }
+      m = /^(\$?[A-Za-z]{1,3}\$?\d+)(:\$?[A-Za-z]{1,3}\$?\d+)?(?![A-Za-z0-9_(À-ɏ])/.exec(r);
       if (m && pa(m[1]) && (!m[2] || pa(m[2].slice(1)))) { out.push({ t: m[2] ? 'zona' : 'ref', s: m[0] }); i += m[0].length; continue; }
       /* numele de funcții pot avea diacritice (=DACĂ(…) e primită și dă #NAME?: runde/6/critic_probe/com_r6b.json › D3, D5) */
-      m = /^([A-Za-zÀ-ɏ][A-Za-z0-9_.À-ɏ]*)\s*\(/.exec(r);
+      /* runda 4a (excel-a-F225, F226): fără spațiu între nume și „(” — „SUM (B2:B6)” e numele SUM, spațiul (intersecția) și
+         paranteza, deci #NAME? după No în fereastra „We found a typo…” (lectii/viii/m2-l08/surse.md:22) */
+      m = /^([A-Za-zÀ-ɏ][A-Za-z0-9_.À-ɏ]*)\(/.exec(r);
       if (m) { out.push({ t: 'fn', v: m[1].toUpperCase(), s: m[1].toUpperCase() + '(' }); i += m[0].length; continue; }
       m = /^(TRUE|FALSE)(?![A-Za-z0-9_(])/i.exec(r);
       if (m) { out.push({ t: 'bool', v: m[1].toUpperCase() === 'TRUE', s: m[1].toUpperCase() }); i += m[0].length; continue; }
@@ -399,13 +411,28 @@
     COUNTA: [1, 255], COUNTBLANK: [1, 1], COUNTIF: [2, 2], IF: [2, 3], IFERROR: [2, 2], INT: [1, 1], LEFT: [1, 2], LEN: [1, 1],
     LOWER: [1, 1], MAX: [1, 255], MEDIAN: [1, 255], MID: [3, 3], MIN: [1, 255], MOD: [2, 2], NOT: [1, 1], OR: [1, 255],
     POWER: [2, 2], PRODUCT: [1, 255], PROPER: [1, 1], RIGHT: [1, 2], ROUND: [2, 2], ROUNDDOWN: [2, 2], ROUNDUP: [2, 2],
-    SQRT: [1, 1], SUBSTITUTE: [3, 4], SUM: [1, 255], SUMIF: [2, 3], TRIM: [1, 1], UPPER: [1, 1]
+    SQRT: [1, 1], SUBSTITUTE: [3, 4], SUM: [1, 255], SUMIF: [2, 3], TRIM: [1, 1], UPPER: [1, 1],
+    /* runda 4a (excel-a-F224): MATCH și funcțiile cu mai multe condiții (vechiul le avea doar ca nume: excelx-functii.js:61-72) */
+    MATCH: [2, 3], SUMIFS: [3, 255], COUNTIFS: [2, 255], AVERAGEIFS: [3, 255], MAXIFS: [3, 255], MINIFS: [3, 255], SUMPRODUCT: [1, 255],
+    /* runda 4a (critic runda 2, M-6): funcțiile de dată */
+    DAY: [1, 1], MONTH: [1, 1], YEAR: [1, 1], DATE: [3, 3], TODAY: [0, 0]
   };
-  const NUME_FN = Object.keys(FN).sort();
+  /* runda 4a (excel-a-F223, F224): funcțiile pe care Excelul le are (lista de sub celulă, Tab, fereastra „We found a typo…”),
+     chiar dacă foaia nu le calculează — numele din vechiul excelx-functii.js:61-72 (DOAR_NUME) plus funcțiile uzuale ale
+     Excel 365 [DEDUS: lista nu e capturată din Excel; ordinea = alfabetică, ca în captura lecției m2-l08/_proba/cap_lista_*.png:
+     =SU → SUBSTITUTE, =MA → MATCH, =MI → MID, =AV → AVEDEV; de_capturat R4a-3] */
+  const FN_EXCEL = new Set(Object.keys(FN).concat(('SUBTOTAL SUMSQ SUMX2MY2 SUMX2PY2 SUMXMY2 AVERAGEA MAXA MINA MINUTE MINVERSE MIRR MIDB ' +
+    'SEARCH ACCRINT INDEX VLOOKUP HLOOKUP XLOOKUP LOOKUP CHOOSE FIND REPLACE TEXT VALUE DATE DAY MONTH YEAR TODAY NOW TIME HOUR ' +
+    'SECOND WEEKDAY RANK LARGE SMALL STDEV VAR MODE TRUNC CEILING FLOOR RAND RANDBETWEEN PI EXP LN LOG LOG10 SIGN EVEN ODD FACT ' +
+    'ISBLANK ISNUMBER ISTEXT ISERROR IFS SWITCH XOR ROW COLUMN ROWS COLUMNS TRANSPOSE UNIQUE SORT FILTER SEQUENCE TEXTJOIN REPT ' +
+    'EXACT CHAR CODE CLEAN DAYS EDATE EOMONTH NETWORKDAYS WORKDAY DATEDIF HYPERLINK PMT FV PV NPV IRR RATE NPER COUNTIFS').split(' ')));
+  const NUME_FN = [...FN_EXCEL].sort();
   function arbore(tok) {
-    const T = tok.filter(t => t.t !== 'sp');
+    /* runda 4a (excel-a-F203, F204): spațiul dintre două referințe / nume e operatorul de INTERSECȚIE al Excelului (=A2 B2 →
+       #NULL!, =A2 x B2 → #NAME?, lectii/viii/m1-l07/surse.md:59, :82); în rest spațiile nu contează */
+    const T = tok;
     let i = 0;
-    const vezi = () => T[i], ia = () => T[i++];
+    const vezi = () => { while (T[i] && T[i].t === 'sp') i++; return T[i]; }, ia = () => { vezi(); return T[i++]; };
     const e = s => { const t = vezi(); return t && t.t === 'op' && t.s === s; };
     function comp() { let a = concat(); while (vezi() && vezi().t === 'op' && /^(=|<>|<|>|<=|>=)$/.test(vezi().s)) { const o = ia().s; a = { k: 'op', o, a, b: concat() }; } return a; }
     function concat() { let a = adun(); while (e('&')) { ia(); a = { k: 'op', o: '&', a, b: adun() }; } return a; }
@@ -413,7 +440,17 @@
     function inm() { let a = put(); while (e('*') || e('/')) { const o = ia().s; a = { k: 'op', o, a, b: put() }; } return a; }
     function put() { let a = unar(); while (e('^')) { ia(); a = { k: 'op', o: '^', a, b: unar() }; } return a; }
     function unar() { if (e('-')) { ia(); return { k: 'neg', a: unar() }; } if (e('+')) { ia(); return unar(); } return proc(); }
-    function proc() { let a = prim(); while (e('%')) { ia(); a = { k: 'pct', a }; } return a; }
+    function proc() { let a = isect(); while (e('%')) { ia(); a = { k: 'pct', a }; } return a; }
+    function isect() {
+      let a = prim();
+      for (;;) {
+        if (!(T[i] && T[i].t === 'sp') || (a.k === 'v' && !eErr(a.v))) return a;
+        let j = i; while (T[j] && T[j].t === 'sp') j++;
+        const u = T[j];
+        if (!u || !(u.t === 'ref' || u.t === 'zona' || u.t === 'nume' || u.t === 'fn' || (u.t === 'op' && u.s === '('))) return a;
+        i = j; a = { k: 'isect', a, b: prim() };
+      }
+    }
     function prim() {
       const t = ia();
       if (!t) throw new Error('lipsa');
@@ -445,14 +482,15 @@
       throw new Error('neasteptat');
     }
     const a = comp();
+    vezi();
     if (i < T.length) throw new Error('rest');
     return a;
   }
   /* „=SUM(A1;A2)” tastat → forma engleză din COM „=SUM(A1,A2)”; null = formula nu e primită (rămâne în editare) */
-  function laForma(text, din, spre) {
+  function laForma(text, din, spre, faraArbore) {
     try {
       const tok = jetoane(text.slice(1), din);
-      arbore(tok);
+      if (!faraArbore) arbore(tok);
       return '=' + tok.map(t => t.t === 'sep' ? LOC[spre].sep : t.t === 'num' ? t.s.replace(LOC[din].dec, LOC[spre].dec)
         : (t.t === 'ref' || t.t === 'zona') ? t.s.toUpperCase() : t.s).join('');
     } catch (e) { return null; }
@@ -609,7 +647,16 @@
       SUP[DLG_ARG_MULTE] = JSON.parse(JSON.stringify(SUP['dialog.eroare_formula_3']).replace(/too few arguments/g, 'too many arguments'));
       date.dialoguri[DLG_ARG_MULTE] = { titlu: 'Microsoft Excel', file: [{ s: DLG_ARG_MULTE, fila: null }] };
     }
-    const MESAJ_FOAIE = { [DLG_STERGE]: TEXT_STERGE, [DLG_REFUZ]: TEXT_REFUZ, [DLG_NUME]: TEXT_NUME, [DLG_LIPIRE]: TEXT_LIPIRE, [DLG_IMBINARE]: TEXT_IMBINARE, [DLG_AV_IMBINARE]: TEXT_AV_IMBINARE };
+    /* runda 4a (excel-a-F227): referința circulară (=SUM(B2:B7) în B7) — fereastra cu OK, apoi celula arată 0 (lectii/viii/m2-l08/
+       surse.md:56, probat de judecătorul lecției 8). Textul NU e în referință: cel din vechiul lectii/_sim/excelx-functii.js:299
+       [DEDUS: textul întreg și mărimea ferestrei, de_capturat R4a-4] */
+    const DLG_CERC = 'dialog.referinta_circulara';
+    const TEXT_CERC = 'There are one or more circular references where a formula refers to its own cell either directly or indirectly. This might cause them to calculate incorrectly.\n\nTry removing or changing these references, or moving the formulas to different cells.';
+    if (!SUP[DLG_CERC]) {
+      SUP[DLG_CERC] = mesajExcel([398, 262, 570, 226], TEXT_CERC, [488, 352, 450, 82], [{ t: 'Button', e: 'OK', r: [869, 438, 79, 27] }]);
+      date.dialoguri[DLG_CERC] = { titlu: 'Microsoft Excel', file: [{ s: DLG_CERC, fila: null }] };
+    }
+    const MESAJ_FOAIE = { [DLG_STERGE]: TEXT_STERGE, [DLG_REFUZ]: TEXT_REFUZ, [DLG_NUME]: TEXT_NUME, [DLG_LIPIRE]: TEXT_LIPIRE, [DLG_IMBINARE]: TEXT_IMBINARE, [DLG_AV_IMBINARE]: TEXT_AV_IMBINARE, [DLG_CERC]: TEXT_CERC };
     /* triunghiul de avertizare al ferestrelor de mai sus (desen propriu, nu o resursă Microsoft — I7) */
     const SVG_AVERT = '<svg viewBox="0 0 34 34" width="34" height="34" aria-hidden="true"><path d="M17 3.5 31.5 30h-29z" fill="#fcd77e" stroke="#c98a1b" stroke-width="1.6" stroke-linejoin="round"/><path d="M15.6 12h2.8l-.5 10h-1.8z" fill="#3b3b3b"/><circle cx="17" cy="25.3" r="1.6" fill="#3b3b3b"/></svg>';
 
@@ -621,11 +668,19 @@
       if (!x.f) return x.v;
       if (!cache) cache = new Map();
       const k = f.nume + '!' + a;
-      if (cache.has(k)) { const v = cache.get(k); return v === CICLU ? 0 : v; }
+      /* runda 4a (excel-a-F227): referința circulară — o formulă care ajunge la propria celulă (=SUM(B2:B7) în B7) arată 0, ca
+         toate celulele din cerc (lectii/viii/m2-l08/surse.md:56: „apoi 0”; m1-l07/surse.md:42: =4:20 în C4 dă 0). Căutarea
+         vărsărilor (varsat) sare peste formulele aflate chiar în calcul */
+      if (cache.has(k)) { const v = cache.get(k); if (v === CICLU) { const j = stivaV.indexOf(k); if (j >= 0) stivaV.slice(j).forEach(x => cerc.add(x)); } return v === CICLU ? 0 : v; }
       cache.set(k, CICLU);
+      stivaV.push(k);
       let v;
       /* o referință pierdută la ștergerea de rânduri / coloane / celule e scrisă #REF! în formulă (=#REF!*2): valoarea = #REF! */
       try { v = evalua(f, arbore(jetoane(x.f.slice(1), 'en'))); } catch (e) { v = eErr(e) ? e : ERR(/#REF!/.test(x.f) ? '#REF!' : '#NAME?'); }
+      stivaV.pop();
+      if (cerc.has(k)) { cache.set(k, 0); return 0; }
+      /* runda 4a (excel-a-F208): o zonă care, vărsată din celula formulei, ar ieși din foaie (=4:20 în C2: 16384 de coloane) = #SPILL! */
+      if (v && v.zona && !v.mat && multi(v) && (r + dimZ(v)[0] > MAXR || c0 + dimZ(v)[1] > MAXC)) v = ERR('#SPILL!');
       /* rezultat-zonă (E5): ancora ia primul element, restul se varsă în celulele de sub / din dreapta (varsat) dacă sunt
          goale; ocupate = #SPILL! (runda 17; uia_excel.json › acoperire_r14.fapte.v_varsare_com.a_ocupat: D2 „#SPILL!”, CVErr
          2045, golirea lui D4 readuce vărsarea). O zonă simplă de mai multe celule (=B2:B6) se varsă la fel (fapte.c_simple:
@@ -638,7 +693,10 @@
       return v;
     }
     const CICLU = {};
-    const invalid = () => { cache = null; matC = null; vcache = null; };
+    const stivaV = [], cerc = new Set();
+    const invalid = () => { cache = null; matC = null; vcache = null; cerc.clear(); };
+    /* runda 4a: celula (r, c0) e într-o referință circulară? (după calculul ei) */
+    const eCerc = (f, r, c0) => { valoare(f, r, c0); return cerc.has(f.nume + '!' + adr(r, c0)); };
     /* ---- E5, vărsarea. Excel real (runde/8/critic_probe/com_r8.json): =SUM(B2:B7)*B2:B6 în D2 → D2:D6 = 432, 336, 384, 480,
        288, HasSpill, formula doar în D2 (D3 Formula2 = ""). O operație aritmetică (+ − * / ^, minus, %) cu o zonă de mai multe
        celule dă un rezultat-zonă (mat), element cu element; un număr se aplică pe toată zona, iar zonele de mărimi diferite
@@ -716,7 +774,7 @@
       for (const a of lista) {
         const p = pa(a);
         if (!p || p.r > r || p.c > c0 || (p.r === r && p.c === c0)) continue;
-        valoare(f, p.r, p.c);
+        if (stivaV.indexOf(f.nume + '!' + a) >= 0) continue; valoare(f, p.r, p.c);
         const m = matC && matC.get(f.nume + '!' + a);
         if (!m || r - p.r >= m.rows || c0 - p.c >= m.cols || !liber(f, p.r, p.c, m)) continue;
         rez = { v: m.vals[(r - p.r) * m.cols + (c0 - p.c)], ancora: a };
@@ -730,7 +788,7 @@
       const o = [];
       ancore(f).forEach(a => {
         const p = pa(a); if (!p) return;
-        valoare(f, p.r, p.c);
+        if (stivaV.indexOf(f.nume + '!' + a) >= 0) return; valoare(f, p.r, p.c);
         const m = matC && matC.get(f.nume + '!' + a);
         if (!m || !liber(f, p.r, p.c, m)) return;
         for (let i = 0; i < m.rows; i++) for (let j = 0; j < m.cols; j++) if (i || j) o.push([adr(p.r + i, p.c + j), p.r + i, p.c + j]);
@@ -788,7 +846,26 @@
           break;
         }
         case 'fn': return functie(f, n);
+        case 'isect': {
+          /* runda 4a: intersecția (spațiul): zona comună a două referințe; nimic comun = #NULL!; un nume necunoscut = #NAME? */
+          const z = zonaIsect(f, n);
+          if (z.r0 === z.r1 && z.c0 === z.c1) return valoare(f, z.r0, z.c0);
+          return evalua(f, { k: 'zona', z });
+        }
       }
+      throw ERR('#VALUE!');
+    }
+    function zonaIsect(f, n) {
+      if (n.k === 'ref') return { r0: n.r, c0: n.c, r1: n.r, c1: n.c };
+      if (n.k === 'zona') return n.z;
+      if (n.k === 'isect') {
+        const a = zonaIsect(f, n.a), b = zonaIsect(f, n.b);
+        const z = { r0: Math.max(a.r0, b.r0), c0: Math.max(a.c0, b.c0), r1: Math.min(a.r1, b.r1), c1: Math.min(a.c1, b.c1) };
+        if (z.r0 > z.r1 || z.c0 > z.c1) throw ERR('#NULL!');
+        return z;
+      }
+      const v = evalua(f, n);
+      if (eErr(v)) throw v;
       throw ERR('#VALUE!');
     }
     const un = (f, n) => { const v = evalua(f, n); if (v && v.zona) return v.vals.length === 1 ? v.vals[0] : ERR('#VALUE!'); return v; };
@@ -824,6 +901,67 @@
           if (F2 === 'SUMIF') return sum;
           if (!k) throw ERR('#DIV/0!');
           return sum / k;
+        }
+        /* runda 4a (excel-a-F224): MATCH (1 = cel mai mare ≤ valoarea, în listă crescătoare; 0 = potrivire exactă, cu * ? în text;
+           -1 = cel mai mic ≥, listă descrescătoare) și funcțiile cu mai multe condiții (zonele de aceeași mărime, altfel #VALUE!) */
+        case 'MATCH': {
+          const cv = s1(), z = V[1], tip = A[2] && A[2].k !== 'gol' ? Math.trunc(num(un(f, A[2]))) : 1;
+          if (eErr(cv)) throw cv;
+          if (!(z && z.zona) || (z.z.r1 > z.z.r0 && z.z.c1 > z.z.c0)) throw ERR('#N/A');
+          const vals = z.vals;
+          if (tip === 0) { const t = typeof cv === 'string' ? criteriu('=' + cv) : null; const i = vals.findIndex(x => typeof cv === 'string' ? typeof x === 'string' && t(x) : typeof x === typeof cv && compara(x, cv) === 0); if (i < 0) throw ERR('#N/A'); return i + 1; }
+          let gasit = -1;
+          for (let i = 0; i < vals.length; i++) { const x = vals[i]; if (x == null || typeof x !== typeof cv) continue; const c = compara(x, cv); if (tip > 0 ? c <= 0 : c >= 0) gasit = i; else break; }
+          if (gasit < 0) throw ERR('#N/A');
+          return gasit + 1;
+        }
+        case 'SUMIFS': case 'AVERAGEIFS': case 'MAXIFS': case 'MINIFS': case 'COUNTIFS': {
+          const cnt = F2 === 'COUNTIFS', z0 = cnt ? null : V[0], start = cnt ? 0 : 1;
+          if ((A.length - start) % 2) throw ERR('#VALUE!');
+          const perechi = [];
+          for (let i = start; i < A.length; i += 2) { const z = V[i]; if (!(z && z.zona)) throw ERR('#VALUE!'); perechi.push([z, criteriu(un(f, A[i + 1]))]); }
+          const ref = cnt ? perechi[0][0] : z0;
+          if (!(ref && ref.zona)) throw ERR('#VALUE!');
+          const dim = z => [z.z.r1 - z.z.r0, z.z.c1 - z.z.c0].join();
+          if (perechi.some(([z]) => dim(z) !== dim(ref))) throw ERR('#VALUE!');
+          const o = [];
+          for (let i = 0; i < ref.vals.length; i++) if (perechi.every(([z, t]) => t(z.vals[i]))) o.push(cnt ? 1 : ref.vals[i]);
+          if (cnt) return o.length;
+          const nr = o.filter(x => typeof x === 'number');
+          if (F2 === 'SUMIFS') return nr.reduce((s, x) => s + x, 0);
+          if (F2 === 'AVERAGEIFS') { if (!nr.length) throw ERR('#DIV/0!'); return nr.reduce((s, x) => s + x, 0) / nr.length; }
+          return nr.length ? (F2 === 'MAXIFS' ? Math.max(...nr) : Math.min(...nr)) : 0;
+        }
+        /* runda 4a (critic runda 2, M-6): DAY / MONTH / YEAR din numărul de serie (0 = „00.01.1900”, 60 = 29.02.1900; textul unei
+           date e citit ca la tastare); DATE(an; lună; zi) cu luna și ziua care trec peste (DATE(2026;13;1) = 01.01.2027), anul
+           0-1899 + 1900; TODAY() = ziua de azi. Regulile: documentația Microsoft a funcțiilor [DEDUS: nu sunt în referinte/;
+           de_capturat R4a-5] */
+        case 'DAY': case 'MONTH': case 'YEAR': {
+          let x = s1();
+          if (eErr(x)) throw x;
+          if (typeof x === 'string') { const k = constanta(x); if (typeof k.v !== 'number') throw ERR('#VALUE!'); x = k.v; }
+          x = num(x);
+          if (x < 0 || x >= 2958466) throw ERR('#NUM!');
+          const d = dinSerial(x);
+          return F2 === 'DAY' ? d.d : F2 === 'MONTH' ? d.m : d.y;
+        }
+        case 'DATE': {
+          let y = Math.trunc(num(s1())), m = Math.trunc(num(un(f, A[1]))), d = Math.trunc(num(un(f, A[2])));
+          if (y >= 0 && y < 1900) y += 1900;
+          if (y < 1900 || y > 9999) throw ERR('#NUM!');
+          y += Math.floor((m - 1) / 12); m = ((m - 1) % 12 + 12) % 12 + 1;
+          const v = serial(y, m, 1) + d - 1;
+          if (v < 0 || v > 2958465) throw ERR('#NUM!');
+          return v;
+        }
+        case 'TODAY': { const t = new Date(); return serial(t.getFullYear(), t.getMonth() + 1, t.getDate()); }
+        case 'SUMPRODUCT': {
+          const Z = V.map(v => (v && v.zona ? v : { zona: true, vals: [v], z: { r0: 0, c0: 0, r1: 0, c1: 0 } }));
+          const n0 = Z[0].vals.length;
+          if (Z.some(z => z.vals.length !== n0)) throw ERR('#VALUE!');
+          let s = 0;
+          for (let i = 0; i < n0; i++) { let p = 1; Z.forEach(z => { const x = z.vals[i]; if (eErr(x)) throw x; p *= typeof x === 'number' ? x : 0; }); s += p; }
+          return s;
         }
         case 'AND': case 'OR': { const o = []; V.forEach(v => { if (v && v.zona) v.vals.forEach(x => { if (typeof x === 'number' || typeof x === 'boolean') o.push(!!x); }); else o.push(!!num(v)); }); if (!o.length) throw ERR('#VALUE!'); return F2 === 'AND' ? o.every(Boolean) : o.some(Boolean); }
         case 'NOT': return !num(s1());
@@ -870,7 +1008,7 @@
     function textEditare(f, a) {
       const x = f.cel[a];
       if (!x) return '';
-      if (x.f) return laForma(x.f, 'en', 'ro') || x.f;
+      if (x.f) return laForma(x.f, 'en', 'ro') || laForma(x.f, 'en', 'ro', true) || x.f;
       /* lot 2 (excel-a-F145): bara arată valoarea din spatele formatului — data ca 27.09.2026 (cu ora, dacă are), ora ca 12:30:00,
          procentul ca 12,5%, restul ca număr General (7,125 sub 7,13; 1234,5 sub 1.234,50 lei) */
       if (typeof x.v === 'number') {
@@ -1288,9 +1426,14 @@
        (al patrulea, „auto”), deci grila se micșorează cu înălțimea barei. */
     const TASTE_AJUTOR = [["'", "'", 'Quote'], ['=', '=', 'Equal'], ['Tab', 'Tab', 'Tab'], ['Enter', 'Enter', 'Enter'], ['Esc', 'Escape', 'Escape'], ['F2', 'F2', 'F2'],
       ['←', 'ArrowLeft', 'ArrowLeft'], ['↑', 'ArrowUp', 'ArrowUp'], ['↓', 'ArrowDown', 'ArrowDown'], ['→', 'ArrowRight', 'ArrowRight'], ['Ctrl+Z', 'z', 'KeyZ', true]];
+    /* runda 4a (excel-b-F076; hotarari_dirijor.md pct. 1): semnele formulei " ; < > lângă = (vechiul lectii/_sim/excelx-decizie.js,
+       `simboluri`: butoanele " ; < > = pe ecranele cu atingere, lectii/viii/m2-l09/surse.md:92 m10); bara trece pe două rânduri
+       (flex-wrap) ca pe 390 px toate tastele să rămână pe ecran (Esc, săgețile — excel-a-F021) */
+    TASTE_AJUTOR.splice(2, 0, ['"', '"', 'Quote'], [';', ';', 'Semicolon'], ['<', '<', 'Comma'], ['>', '>', 'Period']);
     const cuAtingere = c.taste === true || (c.taste !== false && ((window.matchMedia && window.matchMedia('(pointer: coarse)').matches) || (navigator.maxTouchPoints || 0) > 0));
     if (cuAtingere) {
       const bara = el('div', 'lh-ap-x-taste', { 'data-lh-ajutor': 'taste', role: 'toolbar', 'aria-label': 'Taste' });
+      Object.assign(bara.style, { flexWrap: 'wrap', overflowX: 'visible' });
       TASTE_AJUTOR.forEach(([et, key, code, ctrl]) => {
         const b = el('button', 'lh-ap-x-tasta', { type: 'button', 'data-lh-tasta': key, 'data-lh-eticheta': et, tabindex: '-1' });
         b.textContent = et;
@@ -1970,6 +2113,10 @@
         if (A.c < 0 || B.c < 0 || (A.c <= B.c && A.r <= B.r)) return tot;
         const [cs, csD, ce, ceD] = A.c <= B.c ? [c1, d1, c2, d3] : [c2, d3, c1, d1], [rs, rsD, re, reD] = A.r <= B.r ? [r1, d2, r2, d4] : [r2, d4, r1, d2];
         return csD + cs.toUpperCase() + rsD + rs + ':' + ceD + ce.toUpperCase() + reD + re;
+      }).replace(/("[^"]*"?)|(^|[^A-Za-z0-9_.$:])(\$?)(\d+):(\$?)(\d+)(?![\dA-Za-z_(.:])/g, (tot, str, p, d1, r1, d2, r2) => {
+        /* runda 4a (excel-a-F208): rândurile scrise invers (=20:4) se întorc (=4:20), ca în Excel (lectii/viii/m1-l07/surse.md:42) */
+        if (str || +r1 <= +r2) return tot;
+        return p + d2 + r2 + ':' + d1 + r1;
       });
     }
     function confirma() {
@@ -1983,11 +2130,14 @@
         if ((s.charAt(0) === '+' || s.charAt(0) === '-') && s.length > 1 && typeof constanta(s).v !== 'number' && laForma('=' + s, 'ro', 'en')) s = '=' + s;
         if (s.charAt(0) === '=') s = normalizeazaFormula(s);
       }
-      let nou = null, fn = null, ok = true;
+      let nou = null, fn = null, ok = true, g0 = null;
       /* lot 2: în celula cu formatul Text (@) tot ce se scrie rămâne text, și „=…”, și numerele (cu triunghiul verde) */
       if (s !== '' && fmtDe(f, e.a).format_numar === '@') nou = s.charAt(0) === "'" ? { v: s.slice(1), ap: true } : { v: s };
       else if (s.charAt(0) === '=' && s.length > 1) {
-        const en = laForma(s, 'ro', 'en');
+        /* runda 4a: întâi greșelile de scriere la care Excel propune o corectură sau refuză formula (greseala); după No într-o
+           fereastră „We found a typo…” cu formula care rămâne citibilă (=SUM (B2:B6)), formula se primește așa cum e (#NAME?) */
+        g0 = e.faraCorectura ? null : greseala(s);
+        const en = g0 ? null : (laForma(s, 'ro', 'en') || (e.faraCorectura ? laForma(s, 'ro', 'en', true) : null));
         if (!en) ok = false;
         else {
           nou = { f: en };
@@ -1999,6 +2149,8 @@
             const fr = fmtDe(f, r1[1].toUpperCase() + r1[2]).format_numar;
             if (/^(data|ora|data_ora)$/.test(felFmt(fr))) fn = fr;
           }
+          /* runda 4a (M-6): =DATE(…) / =TODAY() într-o celulă General ia formatul datei scurte [DEDUS: de_capturat R4a-5] */
+          if ((!fc || fc === 'General') && /^=\s*(DATE|TODAY)\(/i.test(en)) fn = 'dd.mm.yyyy';
         }
       } else if (s === '=') ok = false;
       else if (s !== '') {
@@ -2008,7 +2160,7 @@
            [DEDUS: documentația Microsoft „Format numbers as percentages”, nu e în referinte/; de_capturat R3-3] */
         if (!fn && typeof k.v === 'number' && !/%/.test(s) && Math.abs(k.v) >= 1 && felFmt(fmtDe(f, e.a).format_numar) === 'procent') nou.v = k.v / 100;
       }
-      if (!ok) { if (!fereastraEroare(s)) mesajFormula(); return false; }
+      if (!ok) { if (!fereastraEroare(s, g0)) mesajFormula(); return false; }
       M.edit = null;
       schimba('scriere', () => {
         if (nou) f.cel[e.a] = nou; else delete f.cel[e.a];
@@ -2030,9 +2182,89 @@
       });
       f.sel.activa = { r: p.r, c: p.c };
       deseneazaGrila();
+      /* runda 4a (excel-a-F227): formula care își cuprinde celula → fereastra referinței circulare (OK), celula arată 0;
+         (excel-a-F224) o funcție pe care Excel o are, dar foaia n-o calculează → mesajul, nu un #NAME? fără explicație */
+      if (nou && nou.f) {
+        if (eCerc(f, p.r, p.c)) deschideMesajFoaie(DLG_CERC);
+        else { const nf = fnNecalculata(nou.f); if (nf) mesajFunctie(nf); }
+      }
       return true;
     }
     function renunta() { M.edit = null; deseneazaSelectia(); }
+    /* runda 4a (lotul 4): ce face Excelul real (Microsoft 365, setări românești) cu o formulă tastată greșit, ÎNAINTE de calcul.
+       Întoarce null (formula merge mai departe), { problema: true } (fereastra „There's a problem with this formula.”) sau
+       { cor, laNu } (fereastra „We found a typo… <cor> …” cu Yes / No; laNu = 'nume': după No formula se primește și arată #NAME?;
+       'problema': după No vine fereastra de problemă). Sursele, caz cu caz:
+       - ghilimea fără pereche → problemă (lectii/viii/m2-l09/surse.md:82, M5: e32, r12);
+       - ghilimeaua românească „ → problemă (m2-l09/surse.md:26; „ ” întoarse = nume → #NAME?, în jetoane);
+       - ; în afara parantezelor (paranteza închisă prea devreme, =IF(B2<14);10;20)) → problemă (m2-l09/surse.md:102, n3, r20);
+       - zecimala cu punct: într-o funcție → problemă (=IF(B2>=4.5;…), m2-l09/surse.md:30); în afara funcțiilor → corectura
+         greșită a Excelului, punctul scos (=A2*0.5 → =A2*05, lectii/viii/m1-l07/surse.md:39) [DEDUS: linia dintre cele două
+         cazuri probate = „în / în afara parantezelor unei funcții”; de_capturat R4a-1];
+       - =>, =<, ==, != → >=, <=, =, <>; „> =” cu spațiu → „>” (m2-l09/surse.md:29); la No: problemă (idem);
+       - 5x3 → 5*3, la No problemă (m1-l07/surse.md:38);
+       - ) în plus la sfârșit → corectura o scoate (m2-l09/surse.md:84, :102: e33) [DEDUS: ce urmează după No; de_capturat R4a-2];
+       - spațiu între numele unei funcții și „(” → corectura îl scoate (=SUM (B2:B6), =IF (…): m2-l08/surse.md:22, m2-l09/surse.md:84);
+         =SUM B2:B6 → =SUM(B2:B6) (m2-l08/surse.md:22); la No: formula rămâne și arată #NAME? (idem; ✕ și Esc = No, judecătorul
+         lecției 8, n1: m2-l08/surse.md:61). */
+    const FN_PATRU = /^(SUM|AVERAGE|MAX|MIN|COUNT)$/;
+    function greseala(text) {
+      const corp = text.slice(1);
+      if (((corp.match(/"/g) || []).length) % 2) return { problema: true };
+      const m = corp.replace(/"[^"]*"/g, x => '\u0001'.repeat(x.length));
+      if (/„/.test(m)) return { problema: true };
+      const ad = []; let d = 0;
+      for (let i = 0; i < m.length; i++) { if (m[i] === ')') d--; ad.push(d); if (m[i] === '(') d++; }
+      for (let i = 0; i < m.length; i++) if (m[i] === ';' && ad[i] <= 0) return { problema: true };
+      const ed = [];   // modificări pe pozițiile din corp: { i, n (câte caractere înlocuiește), s (cu ce), nume }
+      let x, re = /(^|[^A-Za-z0-9_$.\u0001])\d+(\.)\d+(?![\d.])/g;
+      while ((x = re.exec(m))) { const i = x.index + x[0].indexOf('.', x[1].length); if (ad[i] > 0) return { problema: true }; ed.push({ i, n: 1, s: '' }); }
+      re = /=>|=<|==|!=/g;
+      while ((x = re.exec(m))) ed.push({ i: x.index, n: 2, s: { '=>': '>=', '=<': '<=', '==': '=', '!=': '<>' }[x[0]] });
+      re = /([<>])(\s+)=/g;
+      while ((x = re.exec(m))) ed.push({ i: x.index + 1, n: x[2].length + 1, s: '' });
+      re = /(^|[^A-Za-z0-9_$.\u0001])(\d+(?:,\d+)?)[xX](?=\d)/g;
+      while ((x = re.exec(m))) ed.push({ i: x.index + x[1].length + x[2].length, n: 1, s: '*' });
+      const deschise = (m.match(/\(/g) || []).length, inchise = (m.match(/\)/g) || []).length;
+      if (inchise > deschise) {
+        const coada = /\)[\s)]*$/.exec(m);
+        if (coada && (coada[0].match(/\)/g) || []).length >= inchise - deschise) {
+          let k = inchise - deschise, j = m.length - 1;
+          while (k > 0 && j >= 0) { if (m[j] === ')') { ed.push({ i: j, n: 1, s: '' }); k--; } j--; }
+        }
+      }
+      const faraNo = ed.length > 0;
+      re = /(^|[^A-Za-z0-9_.$\u0001])([A-Za-z][A-Za-z0-9.]*)(\s+)\(/g;
+      while ((x = re.exec(m))) if (FN_EXCEL.has(x[2].toUpperCase())) ed.push({ i: x.index + x[1].length + x[2].length, n: x[3].length, s: '', nume: true });
+      let cor = null;
+      const fs = /^\s*([A-Za-z]+)\s+(\$?[A-Za-z]{1,3}\$?\d+(?:\s*:\s*\$?[A-Za-z]{1,3}\$?\d+)?)\s*$/.exec(corp);
+      if (!ed.length && fs && FN_PATRU.test(fs[1].toUpperCase())) cor = '=' + fs[1] + '(' + fs[2].replace(/\s/g, '') + ')';
+      else if (ed.length) {
+        let t = corp;
+        ed.sort((a, b) => b.i - a.i).forEach(o => { t = t.slice(0, o.i) + o.s + t.slice(o.i + o.n); });
+        cor = '=' + t;
+      }
+      if (!cor) return null;
+      if (!laForma(cor, 'ro', 'en')) return { problema: true };
+      return { cor, laNu: faraNo ? 'problema' : 'nume' };
+    }
+    /* runda 4a (excel-a-F224): funcțiile pe care Excel le are, dar foaia nu le calculează: formula se primește (Excel o primește),
+       celula arată #NAME? și mesajul spune de ce (vechiul lectii/_sim/excelx-functii.js:110: „Funcția MATCH există în Excel, dar
+       foaia de aici nu o calculează”) */
+    function fnNecalculata(fen) {
+      const re = /([A-Za-z][A-Za-z0-9.]*)\(/g, s = fen.replace(/"[^"]*"/g, '""');
+      let x;
+      while ((x = re.exec(s))) { const n = x[1].toUpperCase(); if (!FN[n] && FN_EXCEL.has(n)) return n; }
+      return null;
+    }
+    function mesajFunctie(nume) {
+      root.querySelectorAll('[data-lh-nesimulat]:not([data-lh-tip])').forEach(x => x.remove());
+      const m = el('div', 'lh-ap-mesaj', { 'data-lh-nesimulat': 'functie', role: 'status' });
+      m.textContent = 'Funcția ' + nume + ' există în Excel, dar foaia de aici nu o calculează (de aceea celula arată #NAME?).';
+      root.appendChild(m);
+      clearTimeout(I._tMesaj);
+      I._tMesaj = setTimeout(() => m.remove(), scenariu ? 60000 : 6000);
+    }
     /* ferestrele reale de eroare a formulei (uia_excel.json › dialog.eroare_formula*, runda acoperire după runda 7), în locul
        mesajului central, DOAR pe cazurile capturate:
        - „=SUM(A1,A2)” (virgula, separatorul englez, pe Excel românesc) → dialog.eroare_formula_2 „There's a problem with this
@@ -2043,11 +2275,15 @@
          this correction?” (Yes cu focusul, No).
        Altfel (ex. „=” singur, paranteză lipsă): mesajul central, ca înainte (fără referință). */
     function motivFormula(text) { try { arbore(jetoane(text.slice(1), 'ro')); return null; } catch (e) { return (e && e.message) || 'alta'; } }
-    function fereastraEroare(text) {
-      const mo = motivFormula(text);
+    function fereastraEroare(text, g) {
+      const mo = g ? 'greseala' : motivFormula(text);
       if (!mo) return false;
       let cheie = null, corectat = null;
-      if (mo === 'argumente') cheie = 'dialog.eroare_formula_3';
+      /* runda 4a: greșelile din `greseala` (corectura propusă sau fereastra de problemă) */
+      if (g && g.cor) { cheie = 'dialog.eroare_formula'; corectat = g.cor; }
+      else if (g) cheie = 'dialog.eroare_formula_2';
+      else if (mo === 'ghilimele') cheie = 'dialog.eroare_formula_2';
+      else if (mo === 'argumente') cheie = 'dialog.eroare_formula_3';
       else if (mo === 'argumente_multe') cheie = DLG_ARG_MULTE;
       else if (mo === 'rest') {
         const re = /\)\s*(?=\$?[A-Za-z]{1,3}\$?\d)/g;
@@ -2059,6 +2295,7 @@
       if (corectat) {
         /* textul ferestrei arată formula corectată a elevului, nu pe cea din captură (=SUM(B2:B7)*B2:B6) */
         dialog.corectat = corectat;
+        dialog.laNu = g ? g.laNu : null;
         dialog.el.querySelectorAll('[data-lh-tip="Text"]').forEach(x => {
           const t0 = x.getAttribute('data-lh-eticheta') || '';
           if (!/typo/.test(t0)) return;
@@ -2614,18 +2851,61 @@
     function autoSum(fnx) {
       const FX = fnx || 'SUM';
       const f = F(), s = f.sel;
+      const zt = (r0, c0, r1, c1) => (r0 === r1 && c0 === c1 ? adr(r0, c0) : adr(r0, c0) + ':' + adr(r1, c1));
+      const gol = (r, c0) => { const x = f.cel[adr(r, c0)]; return !x || (!x.f && (x.v == null || x.v === '')); };
       if (!unaSingura()) {
-        const q = s.zone[s.zone.length - 1];
-        const tinta2 = q.r1 + 1 < MAXR ? { r: q.r1 + 1, c: q.c0 } : null;
-        if (!tinta2) return 'fara_efect';
-        schimba('scriere', () => { for (let c0 = q.c0; c0 <= q.c1; c0++) f.cel[adr(q.r1 + 1, c0)] = { f: '=' + FX + '(' + adr(q.r0, c0) + ':' + adr(q.r1, c0) + ')' }; });
+        /* runda 4a (excel-a-F218): Σ pe o zonă scrie rezultatele direct — sub fiecare coloană (în ultimul rând al zonei, dacă e
+           gol pe toată lățimea), iar pe o zonă de un singur rând în dreapta lui (sau în ultima celulă, dacă e goală); selecția
+           cuprinde apoi și rezultatele (lectii/viii/m2-l08/surse.md:26 „B2:B6 → B7…, selecția devine B2:B7; B2:B7 cu B7 goală
+           + Average → B7 =AVERAGE(B2:B6); B2:D3 → B4:D4”; vechiul lectii/_sim/excelx-functii.js:186-202) */
+        const q = s.zone[s.zone.length - 1], tinte = [];
+        if (q.r1 > q.r0 || q.c0 === q.c1) {
+          let ultimGol = q.r1 > q.r0;
+          for (let c0 = q.c0; c0 <= q.c1 && ultimGol; c0++) if (!gol(q.r1, c0)) ultimGol = false;
+          const r = ultimGol ? q.r1 : q.r1 + 1, r2 = ultimGol ? q.r1 - 1 : q.r1;
+          if (r < MAXR) for (let c0 = q.c0; c0 <= q.c1; c0++) tinte.push({ r, c: c0, f: '=' + FX + '(' + zt(q.r0, c0, r2, c0) + ')' });
+        } else {
+          const ultimGol = gol(q.r0, q.c1), c0 = ultimGol ? q.c1 : q.c1 + 1, c2 = ultimGol ? q.c1 - 1 : q.c1;
+          if (c0 < MAXC) tinte.push({ r: q.r0, c: c0, f: '=' + FX + '(' + zt(q.r0, q.c0, q.r0, c2) + ')' });
+        }
+        if (!tinte.length) return 'fara_efect';
+        schimba('scriere', () => { tinte.forEach(t => { f.cel[adr(t.r, t.c)] = { f: t.f }; }); });
+        const r1 = Math.max(q.r1, ...tinte.map(t => t.r)), c1 = Math.max(q.c1, ...tinte.map(t => t.c));
+        f.sel = { activa: Object.assign({}, s.activa), zone: s.zone.slice(0, -1).concat([{ r0: q.r0, c0: q.c0, r1, c1 }]) };
         actualizeaza();
         return 'suma_automata';
       }
-      const a = s.activa, nr = (r, c0) => r >= 0 && c0 >= 0 && typeof valoare(f, r, c0) === 'number';
+      /* runda 4a (excel-a-F215, F216): zona propusă, regulile probate în Excel real (lectii/viii/m2-l08/surse.md:26, :52 m1,
+         :62 n2; vechiul excelx-functii.js:123-156): în sus se sar celulele goale de lângă celulă, apoi numerele și formulele
+         până la primul text / prima celulă goală; deasupra doar formule și în stânga numere → stânga; Σ (Sumă) sub un total
+         SUM propune doar totalul (=SUM(B7)) și urcă doar până sub ultimul SUM; Average / Max / Min urcă peste total */
+      const a = s.activa;
+      const felul = (r, c0) => {
+        if (r < 0 || c0 < 0) return 'afara';
+        if (gol(r, c0)) return 'gol';
+        return typeof valoare(f, r, c0) === 'number' ? (f.cel[adr(r, c0)].f ? 'formula' : 'numar') : 'text';
+      };
+      const eSuma = (r, c0) => { const x = r >= 0 && c0 >= 0 && f.cel[adr(r, c0)]; return !!(x && x.f && /^=\s*SUM\s*\(/i.test(x.f)); };
+      const pe = (dr, dc) => {
+        const k = i => felul(a.r - dr * i, a.c - dc * i);   // dr = 1: în sus; dc = 1: spre stânga
+        let i = 1; while (k(i) === 'gol') i++;
+        if (k(i) !== 'numar' && k(i) !== 'formula') return null;
+        let doarF = k(i) === 'formula';
+        while (k(i + 1) === 'numar' || k(i + 1) === 'formula') { i++; if (k(i) === 'numar') doarF = false; }
+        /* Σ (Sumă): doar până sub ultimul total SUM (n2) */
+        if (FX === 'SUM') for (let j = 2; j <= i; j++) if (eSuma(a.r - dr * j, a.c - dc * j)) { i = j - 1; break; }
+        return { i, doarF, z: dr ? zt(a.r - i, a.c, a.r - 1, a.c) : zt(a.r, a.c - i, a.r, a.c - 1) };
+      };
       let zona = '';
-      if (nr(a.r - 1, a.c)) { let r = a.r - 1; while (nr(r - 1, a.c)) r--; zona = adr(r, a.c) + ':' + adr(a.r - 1, a.c); }
-      else if (nr(a.r, a.c - 1)) { let c0 = a.c - 1; while (nr(a.r, c0 - 1)) c0--; zona = adr(a.r, c0) + ':' + adr(a.r, a.c - 1); }
+      if (FX === 'SUM') {
+        let i = 1; while (felul(a.r - i, a.c) === 'gol') i++;
+        if (eSuma(a.r - i, a.c)) { const j = i; while (eSuma(a.r - i - 1, a.c)) i++; zona = zt(a.r - i, a.c, a.r - j, a.c); }
+      }
+      if (!zona) {
+        const sus = pe(1, 0), st = pe(0, 1);
+        const z = sus && st ? (sus.doarF && !st.doarF ? st : sus) : (sus || st);
+        zona = z ? z.z : '';
+      }
       const t = '=' + FX + '(' + zona + ')';
       /* zona propusă e aleasă (scrisul sau tragerea elevului o înlocuiește) și încadrată punctat (lecția m2-l08:181);
          cursorul stă înaintea parantezei; Enter o primește (scenarii_real/excel-autosum-buton) */
@@ -3943,7 +4223,7 @@
         if (k === 'Enter') { e.preventDefault(); if (its[i]) { I.activat = L._canon(its[i].closest('[data-lh-tinta]') || its[i]); return I.la.clic(I.activat, evFals(its[i]), 1, 'tasta') || 'alegere'; } inchideListaSort(); return 'inchidere_meniu'; }
         if (k === 'Escape') { e.preventDefault(); inchideListaSort(); return 'inchidere_meniu'; }
       }
-      if (k === 'Escape') { inchideDialog(); return 'anulare'; }
+      if (k === 'Escape') { if (dialog.baza === 'dialog.eroare_formula' && dialog.laNu === 'nume') return raspunsEroare('Închidere'); inchideDialog(); return 'anulare'; }
       if (k === 'Tab') { e.preventDefault(); return tabDialog(e.shiftKey); }
       if (k === 'Enter' || (k === ' ' && esteButon(ctl))) {
         e.preventDefault();
@@ -3977,13 +4257,25 @@
        (excel-separator-virgula / excel-autocompletare-tab: ramane_in_editare true); Yes = corectura primită, ca la Enter
        (ce face No și unde merge celula după Yes: de_verificat RUNDA8 R8-1) */
     function raspunsEroare(v) {
-      const corectat = dialog && dialog.corectat;
+      const corectat = dialog && dialog.corectat, laNu = dialog && dialog.laNu;
+      /* runda 4a: No pe o corectură după care formula nu se poate citi (=>, 5x3, 0.5, „)” în plus) = fereastra de problemă
+         (m2-l09/surse.md:29, m1-l07/surse.md:38); ✕ / Esc = înapoi în editare, ca la =SUM(B2:B7)B2:B6 (E4) [DEDUS: de_capturat R4a-2] */
+      if (v === 'No' && laNu === 'problema' && M.edit) {
+        inchideDialog();
+        const t = M.edit.text;
+        if (fereastraEroare(t, { problema: true })) return 'fereastra_eroare';
+        deseneazaSelectia(); return 'anulare';
+      }
+      /* runda 4a: No / ✕ / Esc pe =SUM (B2:B6), =SUM B2:B6, =IF (…) = formula rămâne cum e scrisă și arată #NAME?
+         (m2-l08/surse.md:22, :61 n1); fereastra revine la următorul Enter pe ea */
+      const nuNume = laNu === 'nume' && v !== 'Yes' && M.edit;
       inchideDialog();
-      if (v !== 'Yes' || !corectat || !M.edit) { deseneazaSelectia(); return 'anulare'; }
-      const a = pa(M.edit.a);
-      M.edit.text = corectat; M.edit.poz = corectat.length; M.edit.pk = null;
-      if (!confirma()) { deseneazaSelectia(); return 'formula_neprimita'; }
-      alege(a.r + 1, a.c);
+      if (!nuNume && (v !== 'Yes' || !corectat || !M.edit)) { deseneazaSelectia(); return 'anulare'; }
+      const a = pa(M.edit.a), tab = M.edit.cuTab;
+      if (nuNume) { M.edit.faraCorectura = true; M.edit.mod = 'Enter'; }
+      else { M.edit.text = corectat; M.edit.poz = corectat.length; M.edit.pk = null; }
+      if (!confirma()) { if (M.edit) M.edit.faraCorectura = false; deseneazaSelectia(); return 'formula_neprimita'; }
+      if (tab) alege(a.r, a.c + 1); else alege(a.r + 1, a.c);
       return 'confirmare';
     }
     function implicitDialog() {
@@ -4001,7 +4293,7 @@
       if (dialog.baza === 'dialog.SheetMoveOrCopy' && dialog.mc) return aplicaMutare();
       if (dialog.baza === DLG_STERGE) return stergeAcum(dialog.foaie);
       if (dialog.baza === DLG_AV_IMBINARE) return imbinaDupaAvertisment(true);
-      if (dialog.baza === DLG_REFUZ || dialog.baza === DLG_NUME || dialog.baza === DLG_LIPIRE || dialog.baza === DLG_IMBINARE) { inchideDialog(); return 'inchidere'; }
+      if (dialog.baza === DLG_REFUZ || dialog.baza === DLG_NUME || dialog.baza === DLG_LIPIRE || dialog.baza === DLG_IMBINARE || dialog.baza === DLG_CERC) { inchideDialog(); return 'inchidere'; }
       if (dialog.baza === 'dialog.CellsDelete') return stergeDinDialog();
       const b = dialog.baza.replace(/^dialog\./, '');
       inchideDialog();
@@ -4859,7 +5151,7 @@
       /* runda 29 (G25-1): întrebarea ștergerii (Delete / Cancel / ✕), refuzul (OK / ✕), Move or Copy (rândul listei, Create a copy) */
       if (fel === 'fereastra' && dialog && dialog.baza === DLG_STERGE) { if (v === 'Delete') return stergeAcum(dialog.foaie); inchideDialog(); return 'anulare'; }
       if (fel === 'fereastra' && dialog && dialog.baza === DLG_AV_IMBINARE) return /^(OK)$/.test(v) ? imbinaDupaAvertisment(true) : /^(Cancel|Închidere|Close)$/.test(v) ? imbinaDupaAvertisment(false) : I.nesimulat(v);
-      if (fel === 'fereastra' && dialog && (dialog.baza === DLG_REFUZ || dialog.baza === DLG_NUME || dialog.baza === DLG_LIPIRE || dialog.baza === DLG_IMBINARE)) { inchideDialog(); return v === 'OK' ? 'inchidere' : 'anulare'; }
+      if (fel === 'fereastra' && dialog && (dialog.baza === DLG_REFUZ || dialog.baza === DLG_NUME || dialog.baza === DLG_LIPIRE || dialog.baza === DLG_IMBINARE || dialog.baza === DLG_CERC)) { inchideDialog(); return v === 'OK' ? 'inchidere' : 'anulare'; }
       /* lot 1: fereastra Delete — butonul radio ales (clic pe el sau pe textul lui), OK șterge */
       if (fel === 'fereastra' && dialog && dialog.baza === 'dialog.CellsDelete') {
         if (OPT_STERGERE[v]) { dialog.optSterg = v; radioStergere(); return 'alegere'; }
@@ -5079,6 +5371,7 @@
         if (k === 'Enter') {
           e.preventDefault();
           const col = M.tabCol, a = pa(ed.a);
+          ed.cuTab = false;
           if (!confirma()) { deseneazaSelectia(); return 'formula_neprimita'; }
           M.tabCol = null;
           if (e.altKey) return 'scriere';
@@ -5092,6 +5385,7 @@
           e.preventDefault();
           if (completare()) return 'completare_functie';
           const a = pa(ed.a);
+          ed.cuTab = !e.shiftKey;
           if (!confirma()) { deseneazaSelectia(); return 'formula_neprimita'; }
           if (M.tabCol == null) M.tabCol = a.c;
           if (!unaSingura()) { inainteaza(0, e.shiftKey ? -1 : 1); return 'confirmare'; }
