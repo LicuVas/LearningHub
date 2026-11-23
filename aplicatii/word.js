@@ -350,8 +350,15 @@
         if (b > a) M.sel = { a, f: b };
       }
       selDublu = null;
+      /* runda 2r, G1-4: poza ÎN LINIE aleasă e ca un caracter ales — litera o înlocuiește (Word: Options › Advanced
+         „Typing replaces selected text”, pornit implicit; critici/runda_1/raport.md G1-4). Pozele flotante: neschimbat. */
+      const imgI = !M.protejat && aleasa() && (aleasa().wrap || 'inline') === 'inline' ? M.imgSel : -1;
       schimba(tip, () => {
-        if (areSel()) stergeSelectia(false);
+        if (imgI >= 0) {
+          const x = M.img[imgI], q = inceput(x.p) + Math.min(x.o || 0, M.P[x.p].t.length);
+          M.img = M.img.filter((y, k) => k !== imgI);
+          M.sel = { a: q, f: q };
+        } else if (areSel()) stergeSelectia(false);
         let pos = M.sel.f;
         const f = fmtLa(pos);
         for (const ch of String(text)) {
@@ -365,6 +372,7 @@
         }
         M.sel = { a: pos, f: pos };
       });
+      if (imgI >= 0) { M.imgSel = null; contextActiv = null; deseneazaFile(); }
       M.fmtIns = null;
       if (!/\n|\r/.test(text)) {
         if (M.ultima && M.ultima.fel === 'text' && H.ultimTip() === 'tastare' && !p2007) M.ultima.text += text;
@@ -842,6 +850,14 @@
     }
     /* ---- clipboard-ul aplicației (nu cel al calculatorului) */
     function copiaza(intern) {
+      /* runda 2r, G1-3: cu poza aleasă, Ctrl+C / Copy copiază POZA (Ctrl+V pune a doua poză; raport.md G1-3) */
+      const xi = !M.cel && aleasa();
+      if (xi) {
+        M.clip = { text: '', f: [], img: { fisier: xi.fisier, w: xi.w, h: xi.h, wrap: xi.wrap || 'inline' } };
+        griComenzi();
+        if (!intern) gest('copiere', '');
+        return 'copiere';
+      }
       if (!areSel()) return 'fara_efect';
       const a = selMin(), b = Math.min(selMax(), maxCaret());
       M.clip = { text: textIntre(a, b), f: fmtIntre(a, b) };
@@ -850,6 +866,7 @@
       return 'copiere';
     }
     function decupeaza() {
+      if (!M.cel && aleasa()) { copiaza(true); stergeImagineaAleasa(); deseneazaFile(); gest('decupare', ''); return 'decupare'; }
       if (!areSel()) return 'fara_efect';
       copiaza(true);
       schimba('decupare', () => stergeSelectia(true));
@@ -906,6 +923,28 @@
     }
     function lipeste(doarText) {
       if (!M.clip) return 'fara_efect';
+      /* runda 2r, G1-3: în clipboard e o poză → Ctrl+V pune o poză nouă la cursor (peste selecție / peste poza aleasă, care
+         se înlocuiesc); „Keep Text Only” al unei poze nu pune nimic [DEDUS] (de_capturat.md R2r-1). În celulă: ca Insert
+         Picture (poza la cursorul din corp). */
+      if (M.clip.img) {
+        if (doarText) return 'fara_efect';
+        const ci = M.clip.img, xi = aleasa() && (aleasa().wrap || 'inline') === 'inline' ? M.imgSel : -1;
+        let idx = -1;
+        schimba('lipire', () => {
+          if (xi >= 0) {
+            const x = M.img[xi], q = inceput(x.p) + Math.min(x.o || 0, M.P[x.p].t.length);
+            M.img = M.img.filter((y, k) => k !== xi);
+            M.sel = { a: q, f: q };
+          } else if (areSel() && !M.cel) stergeSelectia(true);
+          const l2 = loc(M.sel.f);
+          M.img = M.img.concat([{ p: l2.i, o: l2.o, fisier: ci.fisier, w: ci.w, h: ci.h, wrap: ci.wrap }]);
+          idx = M.img.length - 1;
+        });
+        H.rupe();
+        if (idx >= 0) { M.imgSel = null; contextActiv = null; M.cel = null; deseneazaFile(); }
+        gest('lipire', '');
+        return 'lipire';
+      }
       if (M.cel) return scrieCelula(M.clip.text.replace(/\r/g, ' '));
       schimba('lipire', () => {
         /* lipirea peste o selecție: întâi ștergerea inteligentă (rezultate_word.json › lipire_peste_selectie: „Plecăm luni la
@@ -2817,15 +2856,21 @@
       const nume = f ? f.nume : v, g = imagineGata(nume);
       const l = loc(M.sel.f);
       let idx = -1;
+      /* runda 2r, G1-2 (varianta minimă aleasă, critici/de_reparat.md): celulele sunt șiruri și nu pot ține o poză; cu
+         cursorul în celulă poza se pune la începutul paragrafului de imediat după tabel (deterministic, nu la cursorul vechi
+         din corp), iar cursorul RĂMÂNE în celulă (tastarea de după merge în celulă). Word real o pune în celulă: rămas deschis. */
+      const inCel = M.cel && M.tab[M.cel.t] ? Object.assign({}, M.cel) : null;
       schimba('imagine', () => {
         if (areSel() && !M.cel) stergeSelectia(false);
-        const l2 = loc(M.sel.f);
+        let l2 = loc(M.sel.f);
+        if (inCel) l2 = { i: Math.min(M.tab[inCel.t].la, M.P.length - 1), o: 0 };
         M.img = M.img.concat([{ p: l2.i, o: l2.o, fisier: nume, w: g ? g.w : 6, h: g ? g.h : 4, wrap: 'inline' }]);
         idx = M.img.length - 1;
       });
       void l;
       H.rupe();
       inchideDialog();
+      if (inCel && idx >= 0) { M.imgSel = null; if (contextActiv === 'imagine') contextActiv = null; M.cel = inCel; deseneazaFile(); actualizeaza(); return 'inserare_imagine'; }
       M.imgSel = idx; contextActiv = 'imagine'; M.cel = null;
       deseneazaFile(); actualizeaza();
       return 'inserare_imagine';
@@ -3982,6 +4027,13 @@
       }
       let r = null;
       const sh = e.shiftKey;
+      /* runda 2r, G1-3: săgețile / Home / End scot alegerea pozei; cursorul pleacă de la locul pozei (în model, înainte și după
+         poză e același loc, deci ← / → doar strâng alegerea acolo) */
+      if (!M.cel && aleasa() && (g === 'sageti' || g === 'tasta_home_end')) {
+        const x = aleasa(), q = inceput(x.p) + Math.min(x.o || 0, M.P[x.p].t.length);
+        M.imgSel = null; contextActiv = null; M.sel = { a: q, f: q }; H.rupe(); deseneazaFile();
+        if (g === 'sageti' && (e.key === 'ArrowLeft' || e.key === 'ArrowRight') && !e.ctrlKey && !sh) { e.preventDefault(); actualizeaza(); return 'cursor'; }
+      }
       switch (g) {
         case 'tastare': e.preventDefault(); r = scrie(e.key, true); gest('tastare', e.key, true); break;
         case 'tasta_enter': e.preventDefault(); r = e.ctrlKey ? I.nesimulat('Ctrl+Enter') : enter(); break;

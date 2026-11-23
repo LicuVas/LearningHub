@@ -288,6 +288,70 @@ async function main() {
       await u.p.keyboard.press('Control+y'); await pauza(150);
       return (await u.st()).imagini.in_linie === 0 ? true : 'Ctrl+Y n-a scos poza';
     });
+    // ---------- runda 2r (reparatorul): G1-4 / G1-3 din critici/de_reparat.md
+    const pozaAleasa = async (u, nume = 'flori.jpg') => { await u.poza(); await u.loc('lista:' + nume).dblclick(); await pauza(350); };
+    await verif(browser, base, 'R2-G1-4a litera tastată peste poza aleasă o înlocuiește; Ctrl+Z aduce poza înapoi', {}, async u => {
+      await u.doc(); await u.p.keyboard.type('Ana '); await pozaAleasa(u);
+      await u.p.keyboard.type('Z'); await pauza(150);
+      let s = await u.st();
+      if (JSON.stringify(s.text) !== '["Ana Z"]' || s.imagini_detalii.length !== 0) return 'după Z: ' + JSON.stringify([s.text, s.imagini_detalii]);
+      await u.p.keyboard.type('ebra'); await pauza(100);
+      await u.p.keyboard.press('Control+z'); await pauza(200);
+      s = await u.st();
+      return JSON.stringify(s.text) === '["Ana "]' && s.imagini_detalii.length === 1 ? true : 'Ctrl+Z: ' + JSON.stringify([s.text, s.imagini_detalii]);
+    });
+    await verif(browser, base, 'R2-G1-4b word2007: litera peste poza aleasă din mijlocul rândului o înlocuiește pe loc', { profil: 'word2007' }, async u => {
+      await u.doc(); await u.p.keyboard.type('Unu doi'); await u.p.keyboard.press('Home');
+      for (let i = 0; i < 4; i++) await u.p.keyboard.press('ArrowRight');
+      await pozaAleasa(u, 'soare.png');
+      await u.p.keyboard.type('X'); await pauza(150);
+      const s = await u.st();
+      return JSON.stringify(s.text) === '["Unu Xdoi"]' && s.imagini_detalii.length === 0 ? true : JSON.stringify([s.text, s.imagini_detalii]);
+    });
+    await verif(browser, base, 'R2-G1-3a Ctrl+C pe poza aleasă, End, Ctrl+V = a doua poză, textul neschimbat; Ctrl+Z o scoate', {}, async u => {
+      await u.doc(); await u.p.keyboard.type('Ana are'); await u.p.keyboard.press('Home'); await u.p.keyboard.press('Shift+End');
+      await u.p.keyboard.press('Control+c'); await u.p.keyboard.press('End');
+      await pozaAleasa(u);
+      await u.p.keyboard.press('Control+c'); await pauza(100);
+      await u.p.keyboard.press('End'); await pauza(100);
+      let s = await u.st();
+      if (s.imagini_detalii[0].aleasa) return 'după End poza e încă aleasă';
+      await u.p.keyboard.press('Control+v'); await pauza(200);
+      s = await u.st();
+      if (JSON.stringify(s.text) !== '["Ana are"]' || s.imagini_detalii.length !== 2 || s.imagini_detalii.some(d => d.fisier !== 'flori.jpg')) return 'după Ctrl+V: ' + JSON.stringify([s.text, s.imagini_detalii]);
+      await u.p.keyboard.press('Control+z'); await pauza(200);
+      s = await u.st();
+      return s.imagini_detalii.length === 1 && JSON.stringify(s.text) === '["Ana are"]' ? true : 'Ctrl+Z: ' + JSON.stringify([s.text, s.imagini_detalii]);
+    });
+    await verif(browser, base, 'R2-G1-3b Ctrl+X pe poza aleasă o scoate; Ctrl+V la începutul rândului o pune acolo', { profil: 'word2007' }, async u => {
+      await u.doc(); await u.p.keyboard.type('Ana'); await pozaAleasa(u, 'munte.png');
+      await u.p.keyboard.press('Control+x'); await pauza(150);
+      let s = await u.st();
+      if (s.imagini_detalii.length !== 0) return 'Ctrl+X n-a scos poza';
+      await u.p.keyboard.press('Home'); await u.p.keyboard.press('Control+v'); await pauza(200);
+      s = await u.st();
+      const d = s.imagini_detalii[0];
+      return d && d.fisier === 'munte.png' && d.loc_in_paragraf === 0 && JSON.stringify(s.text) === '["Ana"]' ? true : JSON.stringify([s.text, s.imagini_detalii]);
+    });
+    await verif(browser, base, 'R2-G1-3c Home / săgeata cu poza aleasă scot alegerea (fila Picture Format dispare)', {}, async u => {
+      await u.doc(); await u.p.keyboard.type('Ana'); await pozaAleasa(u);
+      await u.p.keyboard.press('ArrowLeft'); await pauza(150);
+      let s = await u.st();
+      if (s.imagini_detalii[0].aleasa) return '← n-a scos alegerea';
+      if (await u.loc('fila:Picture Format').count()) return 'fila Picture Format a rămas după ←';
+      await u.p.keyboard.type('X'); await pauza(100);
+      s = await u.st();
+      return s.imagini_detalii.length === 1 && JSON.stringify(s.text) === '["AnaX"]' ? true : 'după ← + X: ' + JSON.stringify([s.text, s.imagini_detalii]);
+    });
+    await verif(browser, base, 'R2-G1-2 Insert Picture cu cursorul în celulă: poza imediat după tabel, cursorul rămâne în celulă (Z intră în celulă)', {}, async u => {
+      await u.doc(); await u.p.keyboard.type('Ana'); await u.p.keyboard.press('Enter');
+      await u.tabel(2, 2); await u.p.keyboard.type('c1'); await pauza(100);
+      await pozaAleasa(u);
+      await u.p.keyboard.type('Z'); await pauza(150);
+      const s = await u.st();
+      const d = s.imagini_detalii[0];
+      return d && d.paragraf === 2 && d.loc_in_paragraf === 0 && s.tabele[0].celule[0][0] === 'c1Z' && JSON.stringify(s.text) === '["Ana",""]' ? true : JSON.stringify([s.text, s.tabele, s.imagini_detalii]);
+    });
   } finally {
     await browser.close().catch(() => {});
     srv.close();
