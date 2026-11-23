@@ -66,11 +66,38 @@
     '[data-lh-aplicatie="word"] .lh-ap-bara-protejat-btn{position:relative;flex:none;padding:3px 10px;border:1px solid #8a8886;border-radius:2px;background:#fff;cursor:pointer}' +
     '[data-lh-aplicatie="word"] .lh-ap-panou-gol{padding:8px;font-size:12px;color:#605e5c}' +
     '[data-lh-aplicatie="word"] [data-lh-tip="List"]:has(>.lh-ap-panou-rand),[data-lh-aplicatie="word"] [data-lh-tip="List"]:has(>.lh-ap-panou-gol){overflow:auto}';
+  /* stilul benzii B (tabelul și poza, 23.11): mutat din aplicatii.css în word.js, ca să nu se atingă fișierul comun
+     (aplicatii.css e scris și de consolele de Excel și PowerPoint) */
+  const STIL_WORD_B = `
+/* Word, banda B (23.11): grila Insert > Table cu textul ei, rândurile de sub grilă, celulele alese, View Gridlines, linia dintre coloane, poza aleasă */
+[data-lh-aplicatie="word"] .lh-ap-grila-eticheta{grid-column:1/-1;font:12px "Segoe UI",sans-serif;color:#262626;padding:0 0 4px;white-space:nowrap}
+[data-lh-aplicatie="word"] .lh-ap-grila .lh-ap-meniu-rand.lh-ap-grila-text{grid-column:1/-1;width:auto;height:auto;min-height:22px;padding:3px 6px;border:none;background:transparent;white-space:nowrap}
+[data-lh-aplicatie="word"] .lh-ap-grila .lh-ap-meniu-rand.lh-ap-grila-text:hover{background:#e5e5e5}
+[data-lh-aplicatie="word"] .lh-ap-tabel td.lh-ap-celula-aleasa{box-shadow:inset 0 0 0 999px rgba(0,90,200,.18)}
+[data-lh-aplicatie="word"].lh-ap-grila-tabel .lh-ap-tabel td.lh-ap-fara-chenar{border:1px dashed #8cb4e2 !important}
+[data-lh-aplicatie="word"] .lh-ap-linie-coloana .lh-ap-tabel td{cursor:col-resize}
+[data-lh-aplicatie="word"] .lh-ap-meniu.lh-ap-galerie-tabel{display:grid;grid-template-columns:repeat(7,30px);gap:3px;padding:6px;min-width:0}
+[data-lh-aplicatie="word"] .lh-ap-galerie-tabel .lh-ap-meniu-rand{width:30px;height:21px;min-height:0;padding:0}
+[data-lh-aplicatie="word"] .lh-ap-galerie-tabel .lh-ap-meniu-rand[data-lh-selectat]{outline:2px solid #d24726}
+[data-lh-aplicatie="word"] .lh-ap-dala-tabel{display:block;width:28px;height:19px;margin:1px;border:1px solid #bfbfbf;box-sizing:border-box}
+[data-lh-aplicatie="word"] .lh-ap-imagine{position:relative;background-size:100% 100%;background-repeat:no-repeat;border:none;margin:0;box-sizing:border-box}
+[data-lh-aplicatie="word"] .lh-ap-imagine[data-lh-selectat]{outline:1px solid #5b9bd5}
+[data-lh-aplicatie="word"] .lh-ap-maner{position:absolute;width:9px;height:9px;margin:-5px 0 0 -5px;background:#fff;border:1px solid #5b5b5b;border-radius:50%;box-sizing:border-box;touch-action:none;z-index:2}
+[data-lh-aplicatie="word"] .lh-ap-maner-nw{left:0;top:0;cursor:nwse-resize}[data-lh-aplicatie="word"] .lh-ap-maner-n{left:50%;top:0;cursor:ns-resize}[data-lh-aplicatie="word"] .lh-ap-maner-ne{left:100%;top:0;cursor:nesw-resize}[data-lh-aplicatie="word"] .lh-ap-maner-e{left:100%;top:50%;cursor:ew-resize}
+[data-lh-aplicatie="word"] .lh-ap-maner-se{left:100%;top:100%;cursor:nwse-resize}[data-lh-aplicatie="word"] .lh-ap-maner-s{left:50%;top:100%;cursor:ns-resize}[data-lh-aplicatie="word"] .lh-ap-maner-sw{left:0;top:100%;cursor:nesw-resize}[data-lh-aplicatie="word"] .lh-ap-maner-w{left:0;top:50%;cursor:ew-resize}
+@media (pointer:coarse){[data-lh-aplicatie="word"] .lh-ap-maner{width:16px;height:16px;margin:-8px 0 0 -8px}}
+[data-lh-aplicatie="word"] .lh-ap-layout-options{position:absolute;left:100%;top:0;margin-left:10px;width:20px;height:20px;border:1px solid #a6a6a6;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Crect x='1' y='3' width='6' height='6' fill='%23707070'/%3E%3Cpath d='M9 3h4M9 6h4M1 11h12' stroke='%23707070'/%3E%3C/svg%3E") center/14px no-repeat;box-sizing:border-box;cursor:pointer;z-index:2}
+[data-lh-aplicatie="word"] .lh-ap-img-square,[data-lh-aplicatie="word"] .lh-ap-img-tight,[data-lh-aplicatie="word"] .lh-ap-img-through{float:left;margin:0 9px 4px 0}
+[data-lh-aplicatie="word"] .lh-ap-img-topbottom{display:block}[data-lh-aplicatie="word"] .lh-ap-img-behind{position:absolute;z-index:-1}[data-lh-aplicatie="word"] .lh-ap-img-front{position:absolute;z-index:3}
+[data-lh-aplicatie="word"] .lh-ap-par.lh-ap-cu-flot{position:relative;z-index:0}
+[data-lh-aplicatie="word"] .lh-ap-sel-imagine{position:absolute;pointer-events:none;outline:1px solid #5b9bd5;z-index:4}
+[data-lh-aplicatie="word"] .lh-ap-sel-imagine .lh-ap-maner,[data-lh-aplicatie="word"] .lh-ap-sel-imagine .lh-ap-layout-options{pointer-events:auto}
+`;
   function stilWord() {
     if (document.getElementById('lh-ap-word-css')) return;
     const s = document.createElement('style');
     s.id = 'lh-ap-word-css';
-    s.textContent = STIL_WORD;
+    s.textContent = STIL_WORD + STIL_WORD_B;
     document.head.appendChild(s);
   }
 
