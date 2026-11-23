@@ -367,6 +367,220 @@ async function main() {
       const n = await u.nesim();
       return n.some(x => /Ctrl\+P/.test(x)) ? [] : [`mesaje: ${J(n)}`];
     });
+    // ================= runda 2c (lot_6: pagina și vizualizarea) =================
+    let u2c = null;
+    const PAG = () => u2c.st().then(s => s.pagina);
+    const zoomEt = async u => { const e = await u.p.locator(viz('[data-lh-tinta="zoom:Zoom"]')).first().getAttribute('data-lh-eticheta'); return +((/(\d+)\s*%/.exec(e || '') || [])[1]); };
+    const OKW = u => u.p.locator(viz('[data-lh-tinta="fereastra:OK"]')).last();
+    const camp = async (u, nume, val) => { const x = u.loc(`[data-lh-tinta="camp:${nume}"] input`); await x.click(); await u.p.keyboard.press('Control+a'); await u.p.keyboard.type(val); await pauza(60); };
+    const meniuLay = async (u, ce, rand, tap) => {
+      if (tap) { await u.atinge('[data-lh-tinta="fila:Layout"]'); await u.atinge(`[data-lh-tinta="meniu_derulant:Layout/Page Setup/${ce}"]`); await u.atinge(MENIU(rand)); }
+      else { await u.clic('[data-lh-tinta="fila:Layout"]'); await u.clic(`[data-lh-tinta="meniu_derulant:Layout/Page Setup/${ce}"]`); await u.clic(MENIU(rand)); }
+      await pauza(150);
+    };
+    const textTot = u => u.p.evaluate(R => document.querySelector(R).innerText, R);
+    // ---- word-F068: orientarea rotește marginile, înapoi și cu Ctrl+Z
+    await C('C2-F068a Landscape apoi Portrait: marginile se rotesc și revin; Ctrl+Z întoarce foaia și marginile', {}, async u => {
+      u2c = u; const pb = [];
+      await u.scrie('Ana');
+      await meniuLay(u, 'Margins', 'Moderate Margins');           // sus 2,54 jos 2,54 st 1,91 dr 1,91
+      await meniuLay(u, 'Orientation', 'Landscape');
+      let g = await PAG();
+      if (!(g.orientare === 'vedere' && Math.abs(g.margini_cm.sus - 1.91) < 0.01 && Math.abs(g.margini_cm.stanga - 2.54) < 0.01)) pb.push(`vedere: ${J(g)}`);
+      await meniuLay(u, 'Orientation', 'Portrait');
+      g = await PAG();
+      if (!(g.orientare === 'portret' && Math.abs(g.margini_cm.sus - 2.54) < 0.01 && Math.abs(g.margini_cm.stanga - 1.91) < 0.01)) pb.push(`înapoi portret: ${J(g)}`);
+      await u.p.keyboard.press('Control+z'); await pauza(200);
+      g = await PAG();
+      if (!(g.orientare === 'vedere' && Math.abs(g.margini_cm.sus - 1.91) < 0.01)) pb.push(`Ctrl+Z după Portrait: ${J(g)}`);
+      return pb;
+    });
+    await C('C2-F068b [2007] pe telefon (atingere): Layout › Orientation › Landscape rotește marginile', { telefon: true, profil: 'word2007' }, async u => {
+      u2c = u;
+      await meniuLay(u, 'Margins', 'Moderate Margins', true);
+      await meniuLay(u, 'Orientation', 'Landscape', true);
+      const g = await PAG();
+      return g.orientare === 'vedere' && Math.abs(g.margini_cm.sus - 1.91) < 0.01 && Math.abs(g.latime_cm - 29.7) < 0.01 ? [] : [`după atingeri: ${J(g)}`];
+    });
+    // ---- word-F070 / F073: mesajele, fereastra rămâne deschisă, caseta greșită selectată, Esc, Ctrl+Z
+    await C('C2-F073a Top „abc” + OK: mesajul, OK pe mesaj → Page Setup tot deschisă, Top selectat; apoi 3 + OK aplică, Ctrl+Z întoarce', {}, async u => {
+      u2c = u; const pb = [];
+      await u.scrie('Ana');
+      await u.clic('[data-lh-tinta="fila:Layout"]'); await u.clic('[data-lh-tinta="lansator:Layout/Page Setup"]'); await pauza(300);
+      await camp(u, 'Top', 'abc');
+      await OKW(u).click(); await pauza(250);
+      if (!/This is not a valid measurement\./.test(await textTot(u))) return ['nu apare mesajul'];
+      await OKW(u).click(); await pauza(250);
+      if (!(await u.vizibil('[data-lh-tinta="camp:Top"] input'))) return ['după OK pe mesaj, Page Setup s-a închis'];
+      const s = await u.p.evaluate(() => { const a = document.activeElement; return a && a.tagName === 'INPUT' ? [a.value, a.selectionStart, a.selectionEnd] : null; });
+      if (!s || s[0] !== 'abc' || s[1] !== 0 || s[2] !== 3) pb.push(`caseta Top după mesaj: ${J(s)} (trebuia „abc” selectat tot)`);
+      await u.p.keyboard.type('3'); await pauza(60);
+      await OKW(u).click(); await pauza(250);
+      let g = await PAG();
+      if (Math.abs(g.margini_cm.sus - 3) > 0.01) pb.push(`după 3 + OK: ${J(g.margini_cm)}`);
+      await u.p.keyboard.press('Control+z'); await pauza(200);
+      g = await PAG();
+      if (Math.abs(g.margini_cm.sus - 2.5) > 0.01) pb.push(`Ctrl+Z: ${J(g.margini_cm)}`);
+      return pb;
+    });
+    await C('C2-F073b [2007] Left 12 + Right 12: mesajul stânga/dreapta; Esc pe mesaj, apoi Cancel: marginile neatinse', { profil: 'word2007' }, async u => {
+      u2c = u; const pb = [];
+      await u.clic('[data-lh-tinta="fila:Layout"]'); await u.clic('[data-lh-tinta="lansator:Layout/Page Setup"]'); await pauza(300);
+      await camp(u, 'Left', '12'); await camp(u, 'Right', '12');
+      await OKW(u).click(); await pauza(250);
+      if (!/left and right margins.*too large for the page width/.test(await textTot(u))) pb.push('nu apare mesajul stânga/dreapta');
+      await u.p.keyboard.press('Escape'); await pauza(200);
+      if (!(await u.vizibil('[data-lh-tinta="camp:Left"] input'))) return pb.concat(['după Esc pe mesaj, Page Setup s-a închis']);
+      await u.clic('[data-lh-tinta="fereastra:Cancel"]');
+      const g = await PAG();
+      if (Math.abs(g.margini_cm.stanga - 2.5) > 0.01) pb.push(`după Cancel: ${J(g.margini_cm)}`);
+      return pb;
+    });
+    await C('C2-F070p pe telefon (atingere): Margins › Custom Margins, Left 3, OK pe mesajul de margini prea mari, apoi OK', { telefon: true }, async u => {
+      u2c = u; const pb = [];
+      await meniuLay(u, 'Margins', 'Custom Margins', true);
+      const x = u.loc('[data-lh-tinta="camp:Left"] input');
+      await x.tap(); await u.p.keyboard.press('Control+a'); await u.p.keyboard.type('20'); await pauza(60);
+      await OKW(u).tap(); await pauza(250);
+      if (!/too large for the page width/.test(await textTot(u))) pb.push('Left 20: nu apare mesajul');
+      await OKW(u).tap(); await pauza(250);
+      await x.tap(); await u.p.keyboard.press('Control+a'); await u.p.keyboard.type('3'); await pauza(60);
+      await OKW(u).tap(); await pauza(250);
+      const g = await PAG();
+      if (Math.abs(g.margini_cm.stanga - 3) > 0.01) pb.push(`după OK: ${J(g.margini_cm)}`);
+      return pb;
+    });
+    await C('C2-F070o [2007] Page Setup › Landscape (în fereastră): Width/Height și marginile se rotesc, OK = foaia culcată', { profil: 'word2007' }, async u => {
+      u2c = u; const pb = [];
+      await u.clic('[data-lh-tinta="fila:Layout"]'); await u.clic('[data-lh-tinta="lansator:Layout/Page Setup"]'); await pauza(300);
+      await camp(u, 'Top', '2'); await camp(u, 'Left', '3');
+      await u.clic('[data-lh-tinta="fereastra:Landscape"]');
+      const ac = await u.loc('[data-lh-tinta="fereastra:Landscape"]').getAttribute('aria-checked');
+      if (ac !== 'true') pb.push(`Landscape aria-checked ${J(ac)}`);
+      const top = await u.loc('[data-lh-tinta="camp:Top"] input').inputValue();
+      if (top !== '3') pb.push(`Top după Landscape: ${J(top)} (trebuia 3, fosta stângă)`);
+      await OKW(u).click(); await pauza(250);
+      const g = await PAG();
+      if (!(g.orientare === 'vedere' && Math.abs(g.latime_cm - 29.7) < 0.01 && g.margini_cm.sus === 3 && g.margini_cm.dreapta === 2)) pb.push(`după OK: ${J(g)}`);
+      return pb;
+    });
+    // ---- word-F072: cartea de vizită (lectii/vii/m2-l09/surse.md:34): Width 9 / Height 5, mesajul sus/jos, fila Margins 0,5
+    await C('C2-F072a More Paper Sizes: 9 × 5 → mesajul sus/jos; fila Margins 0,5 peste tot (Width păstrat între file) → foaia 9 × 5 culcată', {}, async u => {
+      u2c = u; const pb = [];
+      await meniuLay(u, 'Size', 'More Paper Sizes...');
+      await camp(u, 'Width', '9'); await camp(u, 'Height', '5');
+      await OKW(u).click(); await pauza(250);
+      if (!/The top\/bottom margins are too large for the page height/.test(await textTot(u))) pb.push('nu apare mesajul sus/jos');
+      await OKW(u).click(); await pauza(200);
+      await u.clic('[data-lh-tinta="fila_dialog:Margins"]');
+      for (const k of ['Top', 'Bottom', 'Left', 'Right']) await camp(u, k, '0,5');
+      await u.clic('[data-lh-tinta="fila_dialog:Paper"]');
+      const w = await u.loc('[data-lh-tinta="camp:Width"] input').inputValue();
+      const ps = await u.loc('[data-lh-tinta="camp:Paper size"] input').inputValue().catch(() => '');
+      if (w !== '9') pb.push(`Width după schimbarea filelor: ${J(w)}`);
+      if (ps !== 'Custom size') pb.push(`Paper size: ${J(ps)} (trebuia Custom size)`);
+      await OKW(u).click(); await pauza(250);
+      const g = await PAG();
+      if (!(g.latime_cm === 9 && g.inaltime_cm === 5 && g.orientare === 'vedere' && g.margini_cm.sus === 0.5)) pb.push(`după OK: ${J(g)}`);
+      return pb;
+    });
+    // ---- word-F071: Size pe foaia culcată păstrează orientarea; Page Setup › Paper arată numele; Ctrl+Z
+    await C('C2-F071a [2007] Landscape apoi Size › A5 = 21 × 14,8, marginile neatinse; Page Setup › Paper arată A5; Ctrl+Z = A4 culcat', { profil: 'word2007' }, async u => {
+      u2c = u; const pb = [];
+      await u.scrie('Ana');
+      await meniuLay(u, 'Orientation', 'Landscape');
+      await meniuLay(u, 'Size', 'A5');
+      let g = await PAG();
+      if (!(Math.abs(g.latime_cm - 21) < 0.01 && Math.abs(g.inaltime_cm - 14.8) < 0.01 && g.orientare === 'vedere' && g.margini_cm.sus === 2.5)) pb.push(`A5 culcat: ${J(g)}`);
+      await u.clic('[data-lh-tinta="fila:Layout"]'); await u.clic('[data-lh-tinta="lansator:Layout/Page Setup"]'); await pauza(300);
+      await u.clic('[data-lh-tinta="fila_dialog:Paper"]');
+      const ps = await u.loc('[data-lh-tinta="camp:Paper size"] input').inputValue().catch(() => '');
+      if (ps !== 'A5') pb.push(`Paper size: ${J(ps)}`);
+      await u.clic('[data-lh-tinta="fereastra:Cancel"]');
+      await u.p.keyboard.press('Control+z'); await pauza(200);
+      g = await PAG();
+      if (!(Math.abs(g.latime_cm - 29.7) < 0.01 && Math.abs(g.inaltime_cm - 21) < 0.01)) pb.push(`Ctrl+Z: ${J(g)}`);
+      return pb;
+    });
+    // ---- word-F095 / F096 / F097: zoomul
+    await C('C2-F095a + de trei ori: 108 → 116 → 124 (măsurat în Word real); View › 100% din 124', {}, async u => {
+      const pb = [];
+      const z = [];
+      for (let i = 0; i < 3; i++) { await u.clic('[data-lh-tinta="zoom:Zoom In (Ctrl +)"]'); z.push(await zoomEt(u)); }
+      if (J(z) !== '[108,116,124]') pb.push(`+ + +: ${J(z)}`);
+      await u.clic('[data-lh-tinta="fila:View"]'); await u.clic('[data-lh-tinta="panglica:View/Zoom/100%"]');
+      if ((await zoomEt(u)) !== 100) pb.push(`View › 100%: ${await zoomEt(u)}`);
+      return pb;
+    });
+    await C('C2-F096a glisorul tras spre stânga scade sub 100 % în timpul tragerii; după tragere + merge (câte 2 sub 100)', {}, async u => {
+      const pb = [];
+      const d = await u.loc('[data-lh-suprafata="bara_stare"] [data-lh-tip="Slider"] [data-lh-tip="Thumb"]').boundingBox();
+      await u.p.mouse.move(d.x + 2, d.y + 5); await u.p.mouse.down();
+      await u.p.mouse.move(d.x - 25, d.y + 5, { steps: 6 }); await pauza(100);
+      const zin = await zoomEt(u);
+      await u.p.mouse.up(); await pauza(200);
+      if (!(zin < 100)) pb.push(`în timpul tragerii spre stânga: ${zin} %`);
+      const z1 = await zoomEt(u);
+      await u.clic('[data-lh-tinta="zoom:Zoom In (Ctrl +)"]');
+      if ((await zoomEt(u)) !== Math.min(100, z1 + 2)) pb.push(`+ de la ${z1}: ${await zoomEt(u)}`);
+      return pb;
+    });
+    // ---- word-F094 / F093: vizualizările
+    await C('C2-F094a [2007] Web Layout din bara de stare: foaia pe toată lățimea, butonul apăsat; Print Layout din bara de stare revine', { profil: 'word2007' }, async u => {
+      const pb = [];
+      await u.scrie('Ana');
+      const lat = () => u.p.evaluate(R => document.querySelector(R + ' [data-lh-eticheta="Page 1"]').getBoundingClientRect().width, R);
+      const w0 = await lat();
+      await u.clic('[data-lh-tinta="bara_stare:Web Layout"]');
+      const w1 = await lat();
+      if (!(w1 > w0 + 200)) pb.push(`Web Layout: ${Math.round(w0)}→${Math.round(w1)} px`);
+      const ap = await u.loc('[data-lh-tinta="bara_stare:Web Layout"]').getAttribute('aria-pressed');
+      if (ap !== 'true') pb.push(`butonul Web Layout aria-pressed ${J(ap)}`);
+      await u.clic('[data-lh-tinta="bara_stare:Print Layout"]');
+      if (Math.abs((await lat()) - w0) > 3) pb.push('Print Layout nu revine');
+      return pb;
+    });
+    await C('C2-F093a View › Read Mode: fără panglică, Enter / Backspace nu schimbă; View › Edit Document revine și tastarea scrie', {}, async u => {
+      const pb = [];
+      await u.scrie('Ana');
+      await u.clic('[data-lh-tinta="fila:View"]'); await u.clic('[data-lh-tinta="panglica:View/Views/Read Mode"]'); await pauza(200);
+      if (await u.vizibil('[data-lh-tinta="fila:Home"]')) pb.push('panglica e tot acolo');
+      await u.p.keyboard.press('Enter'); await u.p.keyboard.press('Backspace'); await pauza(100);
+      if (J((await u.st()).text) !== '["Ana"]') pb.push(`în Read Mode: ${J((await u.st()).text)}`);
+      await u.clic('[data-lh-tinta="citire:View"]'); await u.clic(MENIU('Edit Document'));
+      if (!(await u.vizibil('[data-lh-tinta="fila:Home"]'))) pb.push('Edit Document nu aduce panglica');
+      await u.p.keyboard.press('Control+End'); await u.p.keyboard.type('X'); await pauza(100);
+      if (J((await u.st()).text) !== '["AnaX"]') pb.push(`după Edit Document: ${J((await u.st()).text)}`);
+      return pb;
+    });
+    await C('C2-F093b pe telefon (atingere): Read Mode din bara de stare, View › Edit Document', { telefon: true }, async u => {
+      const pb = [];
+      await u.atinge('[data-lh-tinta="bara_stare:Read Mode"]');
+      if (!(await u.vizibil('[data-lh-tinta="citire:View"]'))) return ['nu văd View în Read Mode pe telefon'];
+      await u.atinge('[data-lh-tinta="citire:View"]'); await u.atinge(MENIU('Edit Document'));
+      if (!(await u.vizibil('[data-lh-tinta="fila:Home"]'))) pb.push('panglica nu revine');
+      return pb;
+    });
+    // ---- word-F098 / F103: riglele
+    await C('C2-F098a riglele ascunse la pornire; View › Ruler le arată (bifa pusă), Ctrl+Z nu le ascunde, a doua bifă le ascunde', {}, async u => {
+      const pb = [];
+      await u.scrie('Ana');
+      const rig = () => u.vizibil('[data-lh-eticheta="Horizontal Ruler"], [data-lh-eticheta="Vertical Ruler"]');
+      if (await rig()) pb.push('riglele se văd la pornire');
+      await u.clic('[data-lh-tinta="fila:View"]'); await u.clic('[data-lh-tinta="panglica:View/Show/Ruler"]');
+      if (!(await rig())) pb.push('View › Ruler nu le arată');
+      const ac = await u.loc('[data-lh-tinta="panglica:View/Show/Ruler"]').getAttribute('aria-checked');
+      if (ac !== 'true') pb.push(`bifa Ruler: aria-checked ${J(ac)}`);
+      await u.p.keyboard.press('Control+z'); await pauza(200);
+      if (!(await rig())) pb.push('Ctrl+Z a ascuns riglele');
+      await u.clic('[data-lh-tinta="panglica:View/Show/Ruler"]');
+      if (await rig()) pb.push('a doua bifă nu le ascunde');
+      return pb;
+    });
+    await C('C2-F098b [2007] pe telefon (atingere): View › Ruler arată riglele', { telefon: true, profil: 'word2007' }, async u => {
+      await u.atinge('[data-lh-tinta="fila:View"]'); await u.atinge('[data-lh-tinta="panglica:View/Show/Ruler"]');
+      return (await u.vizibil('[data-lh-eticheta="Horizontal Ruler"]')) ? [] : ['rigla nu apare după atingere'];
+    });
   } finally {
     await browser.close();
     srv.close();
