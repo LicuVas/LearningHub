@@ -652,7 +652,10 @@ proba('powerpoint-F035', 'Shape Fill: pe o formă (stea) și pe o casetă; buton
   if (!(await u.areCuloare(u.forma(3, 1), '#FFC000'))) pb.push('umplerea casetei de titlu (Orange) nu se vede pe diapozitiv');
   // butonul Shape Fill = ultima culoare aleasa (Orange): pe stea
   await u.clic(u.forma(3, iS), 'steaua', { pauza: 250 });
-  await u.clic(u.mso('ShapeFillColorPicker'), 'butonul Shape Fill', { pauza: 300 });
+  // corectat de dirijor 23.11 06:06 (contestatia F035, runda 1): in PowerPointul real centrul SplitButton-ului Shape Fill
+  // [996,83,48,24] cade pe jumatatea ▾ (partea buton = [996,83,24,24], referinte/uia_powerpoint.json) => se apasa partea Button
+  const bShapeFill = u.p.locator(`${R} [data-lh-id-mso="ShapeFillColorPicker"]:visible [data-lh-tip="Button"]`).first();
+  await u.clic((await bShapeFill.count()) ? bShapeFill : u.mso('ShapeFillColorPicker'), 'butonul Shape Fill', { pauza: 300 });
   s = await u.st(); uf = (s.umplere_forme[2] || [])[iS - 1] || {};
   if (hex(uf.culoare) !== '#FFC000') pb.push(`butonul Shape Fill pe stea pune ${JSON.stringify(uf)} (trebuia ultima culoare, Orange #FFC000)`);
   return pb;
