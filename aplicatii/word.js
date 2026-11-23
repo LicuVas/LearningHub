@@ -154,8 +154,13 @@
       if (la.i === lb.i) {
         pa.t = pa.t.slice(0, la.o) + pa.t.slice(lb.o);
         pa.f = pa.f.slice(0, la.o).concat(pa.f.slice(lb.o));
+        /* pozele din bucata ștearsă dispar, cele de după ea se mută cu textul (banda B; capcana 16) */
+        M.img = M.img.filter(x => !(x.p === la.i && (x.o || 0) > la.o && (x.o || 0) < lb.o));
+        M.img.forEach(x => { if (x.p === la.i && (x.o || 0) >= lb.o) x.o = (x.o || 0) - (lb.o - la.o); });
         return;
       }
+      M.img = M.img.filter(x => !((x.p === la.i && (x.o || 0) > la.o) || (x.p > la.i && x.p < lb.i) || (x.p === lb.i && (x.o || 0) < lb.o)));
+      M.img.forEach(x => { if (x.p === lb.i) { x.p = la.i; x.o = (x.o || 0) - lb.o + la.o; } else if (x.p > lb.i) x.p -= lb.i - la.i; });
       pa.t = pa.t.slice(0, la.o) + pb.t.slice(lb.o);
       pa.f = pa.f.slice(0, la.o).concat(pb.f.slice(lb.o));
       if (la.o === 0 && pa.t === pb.t.slice(lb.o)) { pa.al = pb.al; pa.stil = pb.stil; pa.lista = pb.lista; }
@@ -177,10 +182,13 @@
           par.f = par.f.slice(0, l.o);
           M.P.splice(l.i + 1, 0, nou);
           M.tab.forEach(t => { if (t.la > l.i) t.la++; });
+          /* pozele de după cursor coboară cu textul pe paragraful nou (cursorul e DUPĂ o poză aflată chiar la locul lui) */
+          M.img.forEach(x => { if (x.p > l.i) x.p++; else if (x.p === l.i && (x.o || 0) > l.o) { x.p++; x.o = (x.o || 0) - l.o; } });
           l = { i: l.i + 1, o: 0 };
         } else {
           par.t = par.t.slice(0, l.o) + ch + par.t.slice(l.o);
           par.f.splice(l.o, 0, f);
+          M.img.forEach(x => { if (x.p === l.i && (x.o || 0) > l.o) x.o = (x.o || 0) + ch.length; });
           l = { i: l.i, o: l.o + ch.length };
         }
       }
@@ -232,7 +240,7 @@
     const grupeaza = (vechi, nou) => !p2007 && vechi === nou && (nou === 'tastare' || nou === 'stergere_inapoi' || nou === 'stergere_inainte');
     let H = st.istoric(grupeaza);
     const instantaneu = () => ({ P: M.P, tab: M.tab, img: M.img, pag: M.pag, sel: M.sel, cel: M.cel });
-    const pune = s => { M.P = s.P; M.tab = s.tab; M.img = s.img; M.pag = s.pag; M.sel = s.sel; M.cel = s.cel; M.fmtIns = null; M.modificat = true; };
+    const pune = s => { M.P = s.P; M.tab = s.tab; M.img = s.img; M.pag = s.pag; M.sel = s.sel; M.cel = s.cel; M.fmtIns = null; M.modificat = true; M.imgSel = null; };
     function schimba(tip, fn) {
       H.inainte(tip, instantaneu());
       M.modificat = true;
@@ -280,7 +288,10 @@
       return 'scriere';
     }
     function enter() {
-      if (M.cel) return 'fara_efect';
+      /* Enter într-o celulă = paragraf nou în celulă, celula se înalță (word-F052; vechiul wordobj îl avea) */
+      if (M.cel) return scrieCelula('\n');
+      if (aleasa() && (aleasa().wrap || 'inline') === 'inline') return coboaraImaginea();
+      M.imgSel = null;
       schimba('enter', () => {
         if (areSel()) stergeSelectia(false);
         autoMajuscula(M.sel.f);
@@ -304,6 +315,7 @@
       par.t = t.slice(0, s) + cuv[0].toUpperCase() + t.slice(s + 1);
     }
     function backspace() {
+      if (aleasa()) return stergeImagineaAleasa();      // poza aleasă se șterge (word-F067)
       if (M.cel) return stergeCelula(-1);
       if (areSel()) { schimba('stergere', () => stergeSelectia(true)); H.rupe(); return 'stergere'; }
       const p = M.sel.f;
@@ -344,6 +356,7 @@
       return extinde ? 'selectare' : 'cursor';
     }
     function del() {
+      if (aleasa()) return stergeImagineaAleasa();
       if (M.cel) return stergeCelula(1);
       if (areSel()) { schimba('stergere', () => stergeSelectia(true)); H.rupe(); return 'stergere'; }
       const p = M.sel.f;
@@ -655,7 +668,9 @@
         M.cel = { t: M.tab.findIndex(t => t.celule === cel), r: 0, c: 0, a: 0, f: 0 };
       });
       H.rupe();
-      contextActiv = 'tabel';
+      /* fila Table Design / Table Layout apare acum: `actualizeaza` redesenează filele când contextul se schimbă (înainte
+         contextActiv era pus aici dinainte, deci actualizeaza nu vedea schimbarea și filele lipseau — banda B, 23.11) */
+      actualizeaza();
       return 'inserare_tabel';
     }
     function celulaText() { const t = M.tab[M.cel.t]; return t.celule[M.cel.r][M.cel.c]; }
@@ -684,9 +699,12 @@
        (scenarii_real/word-tab-celula-urmatoare.json, word-tab-ultima-celula.json) */
     function tabInTabel(inapoi) {
       const t = M.tab[M.cel.t];
-      let r = M.cel.r, k = M.cel.c + (inapoi ? -1 : 1);
-      if (k >= t.coloane) { k = 0; r++; }
-      if (k < 0) { k = t.coloane - 1; r--; }
+      let r = M.cel.r, k = M.cel.c;
+      do {                                   // celulele acoperite de o îmbinare (Merge Cells) se sar
+        k += inapoi ? -1 : 1;
+        if (k >= t.coloane) { k = 0; r++; }
+        if (k < 0) { k = t.coloane - 1; r--; }
+      } while (r >= 0 && r < t.randuri && acoperita(t, r, k));
       if (r < 0) return 'fara_efect';
       if (r >= t.randuri) {
         schimba('tabel', () => {
@@ -704,6 +722,290 @@
       H.rupe();
       return 'celula_urmatoare';
     }
+    /* ---- tabelul, banda B (noaptea 23.11.2026): stilul (Table Design › Table Styles), bifele Table Style Options,
+       rânduri / coloane (Table Layout › Rows & Columns), Merge Cells, AutoFit, lățimea coloanelor trasă cu mouse-ul sau
+       degetul, View Gridlines. Totul stă pe obiectul tabelului din M.tab, deci intră în Ctrl+Z / Ctrl+Y prin `instantaneu`
+       (capcana 5); starea nouă o arată cheia NOUĂ `tabele_format` — cheile din `tabele` rămân neatinse (capcana 8). */
+    const OPT_TABEL = { antet: true, total: false, benzi_r: true, col1: true, colN: false, benzi_c: false };
+    const optTabel = t => Object.assign({}, OPT_TABEL, t.opt || {});
+    function acoperita(t, r, c) { return (t.uni || []).some(u => r >= u.r && r < u.r + u.rs && c >= u.c && c < u.c + u.cs && !(r === u.r && c === u.c)); }
+    function uniDe(t, r, c) { return (t.uni || []).find(u => u.r === r && u.c === c) || null; }
+    /* celulele alese: de la celula cursorului la M.cel.r2 / c2 (Shift+clic); fără ele, celula cursorului */
+    function celuleAlese() {
+      const r2 = M.cel.r2 == null ? M.cel.r : M.cel.r2, c2 = M.cel.c2 == null ? M.cel.c : M.cel.c2;
+      return { r0: Math.min(M.cel.r, r2), r1: Math.max(M.cel.r, r2), c0: Math.min(M.cel.c, c2), c1: Math.max(M.cel.c, c2) };
+    }
+    function schimbaTabel(fn) {
+      schimba('tabel', () => { M.tab = JSON.parse(JSON.stringify(M.tab)); fn(M.tab[M.cel.t]); });
+      H.rupe();
+    }
+    /* Insert Above / Below: atâtea rânduri câte sunt alese (support.microsoft.com „Insert or delete a row or column in a
+       table”); cursorul rămâne în celula lui [DEDUS] (de_capturat.md, banda B) */
+    function insereazaRand(jos) {
+      if (!M.cel) return 'fara_efect';
+      const { r0, r1 } = celuleAlese(), n = r1 - r0 + 1, la = jos ? r1 + 1 : r0;
+      schimbaTabel(t => {
+        for (let i = 0; i < n; i++) t.celule.splice(la, 0, Array(t.coloane).fill(''));
+        t.randuri += n;
+        (t.uni || []).forEach(u => { if (u.r >= la) u.r += n; else if (u.r + u.rs > la) u.rs += n; });
+        if (!jos) M.cel = Object.assign({}, M.cel, { r: M.cel.r + n, r2: M.cel.r2 == null ? null : M.cel.r2 + n });
+      });
+      return jos ? 'rand_dedesubt' : 'rand_deasupra';
+    }
+    function insereazaColoana(dreapta) {
+      if (!M.cel) return 'fara_efect';
+      const { c0, c1 } = celuleAlese(), n = c1 - c0 + 1, la = dreapta ? c1 + 1 : c0;
+      schimbaTabel(t => {
+        t.celule.forEach(rd => { for (let i = 0; i < n; i++) rd.splice(la, 0, ''); });
+        if (t.lat) { const w = t.lat[dreapta ? c1 : c0]; for (let i = 0; i < n; i++) t.lat.splice(la, 0, w); }
+        t.coloane += n;
+        (t.uni || []).forEach(u => { if (u.c >= la) u.c += n; else if (u.c + u.cs > la) u.cs += n; });
+        if (!dreapta) M.cel = Object.assign({}, M.cel, { c: M.cel.c + n, c2: M.cel.c2 == null ? null : M.cel.c2 + n });
+      });
+      return dreapta ? 'coloana_dreapta' : 'coloana_stanga';
+    }
+    function stergeTabelul() {
+      if (!M.cel) return 'fara_efect';
+      schimba('tabel', () => {
+        const t = M.tab[M.cel.t];
+        M.tab = M.tab.filter((x, i) => i !== M.cel.t);
+        M.cel = null;
+        M.sel = { a: inceput(Math.min(t.la, M.P.length - 1)), f: inceput(Math.min(t.la, M.P.length - 1)) };
+      });
+      H.rupe();
+      return 'stergere_tabel';
+    }
+    /* Delete Rows / Delete Columns: rândurile / coloanele alese; toate = tabelul întreg */
+    function stergeRanduri() {
+      if (!M.cel) return 'fara_efect';
+      const { r0, r1 } = celuleAlese(), n = r1 - r0 + 1;
+      if (n >= M.tab[M.cel.t].randuri) return stergeTabelul();
+      schimbaTabel(t => {
+        t.celule.splice(r0, n);
+        t.randuri -= n;
+        t.uni = (t.uni || []).filter(u => !(u.r >= r0 && u.r + u.rs - 1 <= r1)).map(u => {
+          const a = Math.max(u.r, r0), b = Math.min(u.r + u.rs - 1, r1), sc = b >= a ? b - a + 1 : 0;
+          return Object.assign({}, u, { r: u.r > r1 ? u.r - n : Math.min(u.r, r0), rs: u.rs - sc });
+        }).filter(u => u.rs > 1 || u.cs > 1);
+        const r = Math.min(r0, t.randuri - 1);
+        M.cel = { t: M.cel.t, r, c: Math.min(M.cel.c, t.coloane - 1), a: 0, f: 0 };
+      });
+      return 'stergere_randuri';
+    }
+    function stergeColoane() {
+      if (!M.cel) return 'fara_efect';
+      const { c0, c1 } = celuleAlese(), n = c1 - c0 + 1;
+      if (n >= M.tab[M.cel.t].coloane) return stergeTabelul();
+      schimbaTabel(t => {
+        t.celule.forEach(rd => rd.splice(c0, n));
+        if (t.lat) t.lat.splice(c0, n);
+        t.coloane -= n;
+        t.uni = (t.uni || []).filter(u => !(u.c >= c0 && u.c + u.cs - 1 <= c1)).map(u => {
+          const a = Math.max(u.c, c0), b = Math.min(u.c + u.cs - 1, c1), sc = b >= a ? b - a + 1 : 0;
+          return Object.assign({}, u, { c: u.c > c1 ? u.c - n : Math.min(u.c, c0), cs: u.cs - sc });
+        }).filter(u => u.rs > 1 || u.cs > 1);
+        M.cel = { t: M.cel.t, r: M.cel.r, c: Math.min(c0, t.coloane - 1), a: 0, f: 0 };
+      });
+      return 'stergere_coloane';
+    }
+    /* Merge Cells: celulele alese devin una; textele lor rămân, fiecare pe paragraful lui (ca în Word); cu o singură
+       celulă comanda nu face nimic (în Word e gri) */
+    function imbinaCelule() {
+      if (!M.cel) return 'fara_efect';
+      const { r0, r1, c0, c1 } = celuleAlese();
+      if (r0 === r1 && c0 === c1) return 'fara_efect';
+      schimbaTabel(t => {
+        const texte = [];
+        for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) { if (!acoperita(t, r, c) && t.celule[r][c] !== '') texte.push(t.celule[r][c]); t.celule[r][c] = ''; }
+        t.celule[r0][c0] = texte.join('\n');
+        t.uni = (t.uni || []).filter(u => u.r + u.rs <= r0 || u.r > r1 || u.c + u.cs <= c0 || u.c > c1);
+        t.uni.push({ r: r0, c: c0, rs: r1 - r0 + 1, cs: c1 - c0 + 1 });
+        const v = t.celule[r0][c0];
+        M.cel = { t: M.cel.t, r: r0, c: c0, a: v.length, f: v.length };
+      });
+      return 'imbinare_celule';
+    }
+    /* lățimile coloanelor văzute acum (cm), dintr-un rând fără îmbinări pe coloana respectivă */
+    function latimiMasurate(ti) {
+      const t = M.tab[ti], tb = corp.querySelector('table[data-lh-id="' + (ti + 1) + '"]');
+      const out = [];
+      for (let c = 0; c < t.coloane; c++) {
+        let w = 0;
+        if (tb) for (const td of tb.querySelectorAll('td[data-c="' + c + '"]')) { if ((td.colSpan || 1) === 1) { w = td.offsetWidth; break; } }
+        out.push(+(w / PX_CM).toFixed(3) || 1);
+      }
+      return out;
+    }
+    /* AutoFit (Table Layout › Cell Size › AutoFit): Contents = coloanele se strâng pe text; Window = tabelul cât lățimea
+       paginii; Fixed Column Width = lățimile de acum rămân fixe (etichetele: [DEDUS], de_capturat.md, banda B) */
+    function autoFit(fel) {
+      if (!M.cel) return 'fara_efect';
+      const lat = fel === 'fix' ? latimiMasurate(M.cel.t) : null;
+      schimbaTabel(t => { t.lat = lat; t.fit = fel; });
+      return 'autofit_' + fel;
+    }
+    function bifaTabel(cheie) {
+      if (!M.cel) return 'fara_efect';
+      let on = false;
+      schimbaTabel(t => { const o = optTabel(t); o[cheie] = !o[cheie]; on = o[cheie]; t.opt = o; });
+      return on ? 'bifare' : 'debifare';
+    }
+    function stilTabel(nume) {
+      if (!M.cel) return 'fara_efect';
+      schimbaTabel(t => { t.stil = nume; });
+      return 'stil_tabel';
+    }
+    /* Borders în tabel: No Border / All Borders pe celulele alese (tabelul întreg cu Select › Select Table) */
+    function chenarTabel(fel) {
+      if (!M.cel) return 'fara_efect';
+      const { r0, r1, c0, c1 } = celuleAlese();
+      schimbaTabel(t => {
+        t.chenar = t.chenar || t.celule.map(rd => rd.map(() => null));
+        for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) t.chenar[r][c] = fel;
+      });
+      return 'chenar_' + fel;
+    }
+    /* culorile temei Office: Picture Border „Blue, Accent 1” din uia_word.json ⇒ tema Office 2013-2022; nuanțele și
+       aspectul fiecărei familii de stil (antet plin la Grid Table 4/5, benzi, prima coloană îngroșată) sunt [DEDUS]
+       (de_capturat.md, banda B: „stilurile de tabel”) */
+    const ACCENT = { '': ['#000000', '#7f7f7f', '#bfbfbf', '#f2f2f2'], 1: ['#4472c4', '#8eaadb', '#b4c6e7', '#d9e2f3'],
+      2: ['#ed7d31', '#f4b083', '#f7caac', '#fbe4d5'], 3: ['#a5a5a5', '#c9c9c9', '#dbdbdb', '#ededed'],
+      4: ['#ffc000', '#ffd966', '#ffe599', '#fff2cc'], 5: ['#5b9bd5', '#9cc2e5', '#bdd6ee', '#deeaf6'], 6: ['#70ad47', '#a8d08d', '#c5e0b3', '#e2efd9'] };
+    function aspectCelula(t, r, c) {
+      const s = t.stil || 'Table Grid', o = optTabel(t), n = t.randuri, k = t.coloane;
+      const ant = o.antet && r === 0, tot = o.total && r === n - 1 && n > 1, c1 = o.col1 && c === 0, cN = o.colN && c === k - 1 && k > 1;
+      const rc = r - (o.antet ? 1 : 0), cc = c - (o.col1 ? 1 : 0);
+      const banda = !ant && !tot && ((o.benzi_r && rc % 2 === 0) || (o.benzi_c && !c1 && !cN && cc % 2 === 0));
+      const bold = ant || tot || c1 || cN, css = [];
+      const m = /^(Grid|List) Table (\d)(?: (?:Light|Dark|Colorful))?(?: - Accent (\d))?$/.exec(s);
+      if (s === 'Table Grid') css.push('border:1px solid #000');
+      else if (s === 'Table Grid Light') css.push('border:1px solid #bfbfbf');
+      else if (/^Plain Table \d$/.test(s)) {
+        const nr = +s.slice(-1);
+        css.push(nr === 1 ? 'border:1px solid #bfbfbf' : 'border:none');
+        if (nr === 2) css.push('border-top:1px solid #7f7f7f;border-bottom:1px solid #7f7f7f');
+        if (banda && nr !== 2) css.push('background:#f2f2f2');
+        if (bold && nr !== 5) css.push('font-weight:bold');
+        if (nr === 3 && ant) css.push('text-transform:uppercase');
+        if (nr === 5 && (ant || c1)) css.push('font-style:italic');
+      } else if (m) {
+        const nr = +m[2], A = ACCENT[m[3] || ''], plin = nr === 4 || nr === 5;
+        if (m[1] === 'Grid') css.push('border:1px solid ' + (nr === 1 ? A[2] : A[1]));
+        else css.push('border:none' + (nr !== 3 && nr !== 7 ? ';border-bottom:1px solid ' + A[1] : ''));
+        if (ant && plin) css.push('background:' + A[0] + ';color:#fff;border-color:' + A[0]);
+        else if (nr === 5 && (c1 || cN || tot)) css.push('background:' + A[0] + ';color:#fff');
+        else if (nr === 5) css.push('background:' + A[2]);
+        else if (banda && nr !== 1) css.push('background:' + A[3]);
+        if ((nr === 6 || nr === 7) && !(ant && plin)) css.push('color:' + (m[3] ? A[0] : '#000'));
+        if (ant && !plin) css.push('border-bottom:2px solid ' + A[1]);
+        if (bold) css.push('font-weight:bold');
+      } else css.push('border:1px solid #000');
+      if (t.chenar && t.chenar[r] && t.chenar[r][c] === 'fara') css.push('border:none');
+      if (t.chenar && t.chenar[r] && t.chenar[r][c] === 'toate') css.push('border:1px solid #000');
+      return css.join(';');
+    }
+    /* stilurile din galeria Table Styles a referinței (uia_word.json › panglica_context.Ctx_TableDesign › DataGrid) */
+    function numeStiluriTabel() {
+      const out = [];
+      (function cauta(n) { if (!n) return; if (n.t === 'ListItem' && n.e) out.push(n.e); (n.c || []).forEach(cauta); })(SUP['panglica_context.Ctx_TableDesign']);
+      return out;
+    }
+    function galerieStiluriTabel(anc) {
+      const t = M.cel && M.tab[M.cel.t], ales = (t && t.stil) || 'Table Grid';
+      /* dale mici, 7 pe rând, cu desenul stilului (antet, benzi, chenar), ca în galeria din Word; numele = eticheta și
+         sfatul de la „hover” (title). Mărimea dalelor e a noastră, ca toată galeria să încapă pe ecran fără derulare */
+      const dala = nume => {
+        const fake = { stil: nume, randuri: 4, coloane: 3 };
+        const st = r => aspectCelula(fake, r, 1);
+        const bg = s => ((/background:([^;]+)/.exec(s) || [])[1] || '#fff');
+        const bd = ((/border(?:-bottom)?:1px solid ([^;]+)/.exec(st(1)) || [])[1] || '#bfbfbf');
+        return '<span class="lh-ap-dala-tabel" style="border-color:' + bd + ';background:linear-gradient(' + bg(st(0)) + ' 0 25%,' + bg(st(1)) +
+          ' 25% 50%,' + bg(st(2)) + ' 50% 75%,' + bg(st(3)) + ' 75%)"></span>';
+      };
+      const m = meniuLa(anc, numeStiluriTabel().map(nume => ({ tinta: nume, html: dala(nume), fa: () => stilTabel(nume) })), 'lh-ap-galerie-tabel');
+      m.querySelectorAll('.lh-ap-meniu-rand').forEach(x => { x.title = x.getAttribute('aria-label'); x.toggleAttribute('data-lh-selectat', x.getAttribute('aria-label') === ales); });
+      return 'galerie_stiluri_tabel';
+    }
+    function meniuChenare(anc) {
+      const rand = nume => ({ tinta: nume, text: nume, fa: () => (nume === 'No Border' ? chenarTabel('fara') : nume === 'All Borders' ? chenarTabel('toate')
+        : nume === 'View Gridlines' ? comutaGrila() : I.nesimulat(nume)) });
+      const lista = [];
+      (function cauta(n) { if (!n) return; if ((n.t === 'ListItem' || n.t === 'MenuItem') && n.e) lista.push(n.e); (n.c || []).forEach(cauta); })(SUP['lista.BordersSelectionGallery']);
+      meniuLa(anc, lista.map(rand));
+      return 'meniu_chenare';
+    }
+    /* View Gridlines: setare de vizualizare a aplicației (nu intră în document, nici în Ctrl+Z); liniile punctate se văd
+       doar unde celula n-are chenar. Starea de pornire (oprită) e [DEDUS] (de_capturat.md, banda B) */
+    function comutaGrila() {
+      M.grila = !M.grila;
+      root.classList.toggle('lh-ap-grila-tabel', M.grila);
+      return M.grila ? 'grila_vizibila' : 'grila_ascunsa';
+    }
+    /* lățimea unei coloane trasă de linia din dreapta ei: linia dintre două coloane mută lățimea de la una la cealaltă
+       (tabelul rămâne la fel de lat); linia din dreapta tabelului schimbă doar ultima coloană */
+    let trageCol = null;
+    function linieColoana(e) {
+      const td = e.target && e.target.closest && e.target.closest('[data-lh-tinta="tabel"] td[data-c]');
+      if (!td || dialog || backstage) return null;
+      const b = td.getBoundingClientRect(), x = e.clientX;
+      const tb = td.closest('table'), ti = +tb.getAttribute('data-lh-id') - 1, t = M.tab[ti];
+      if (!t) return null;
+      let c = -1;
+      if (Math.abs(x - b.right) <= 5) c = +td.getAttribute('data-c') + (td.colSpan || 1) - 1;
+      else if (Math.abs(x - b.left) <= 5 && +td.getAttribute('data-c') > 0) c = +td.getAttribute('data-c') - 1;
+      return c < 0 ? null : { ti, c, tb };
+    }
+    function incepeTrageCol(e) {
+      const l = linieColoana(e);
+      if (!l) return false;
+      /* scara văzută a foii (zoom + micșorarea pe telefon): px pe ecran / px în document */
+      const td0 = e.target.closest('td'), z = td0 && td0.offsetWidth ? td0.getBoundingClientRect().width / td0.offsetWidth : (M.zoom || 100) / 100;
+      trageCol = { ti: l.ti, c: l.c, x0: e.clientX, lat0: latimiMasurate(l.ti), z, id: e.pointerId };
+      e.preventDefault(); e.stopPropagation();
+      return true;
+    }
+    function latimiDupaTragere(dx) {
+      const L = trageCol.lat0.slice(), c = trageCol.c, d = dx / (PX_CM * trageCol.z), min = 0.5;
+      if (c < L.length - 1) { const s = L[c] + L[c + 1]; L[c] = Math.max(min, Math.min(s - min, L[c] + d)); L[c + 1] = s - L[c]; }
+      else L[c] = Math.max(min, L[c] + d);
+      return L.map(v => +v.toFixed(3));
+    }
+    root.addEventListener('pointerdown', e => {
+      if (e.button !== 0 || !M.deschis) return;
+      incepeTrageCol(e);
+    }, true);
+    root.addEventListener('pointermove', e => {
+      if (!trageCol) {
+        const l = e.pointerType === 'mouse' && !e.buttons ? linieColoana(e) : null;
+        corp.classList.toggle('lh-ap-linie-coloana', !!l);
+        return;
+      }
+      e.preventDefault(); e.stopPropagation();
+      const tb = corp.querySelector('table[data-lh-id="' + (trageCol.ti + 1) + '"]');
+      const L = latimiDupaTragere(e.clientX - trageCol.x0);
+      if (tb) {
+        tb.style.tableLayout = 'fixed';
+        tb.style.width = (L.reduce((s, v) => s + v, 0) * PX_CM) + 'px';
+        let cg = tb.querySelector('colgroup');
+        if (!cg) { cg = document.createElement('colgroup'); L.forEach(() => cg.appendChild(document.createElement('col'))); tb.insertBefore(cg, tb.firstChild); }
+        [...cg.children].forEach((col, i) => { col.style.width = (L[i] * PX_CM) + 'px'; });
+      }
+      trageCol.ultim = L;
+    }, true);
+    const gataTrageCol = e => {
+      if (!trageCol) return;
+      e.preventDefault(); e.stopPropagation();
+      const tc = trageCol; trageCol = null;
+      if (!tc.ultim || Math.abs(e.clientX - tc.x0) < 1) { actualizeaza(); return; }
+      schimba('tabel', () => { M.tab = JSON.parse(JSON.stringify(M.tab)); const t = M.tab[tc.ti]; t.lat = tc.ultim; t.fit = 'fix'; });
+      H.rupe();
+      gest('comanda', 'Column Width');
+      actualizeaza();
+    };
+    root.addEventListener('pointerup', gataTrageCol, true);
+    root.addEventListener('pointercancel', gataTrageCol, true);
+    /* pe ecranul tactil, atingerea liniei dintre coloane nu derulează pagina (altfel tragerea ar muta foaia) */
+    root.addEventListener('touchstart', e => { const t0 = e.touches[0]; if (t0 && linieColoana({ target: e.target, clientX: t0.clientX })) e.preventDefault(); }, { passive: false, capture: true });
 
     /* ---- pagina (Layout › Margins › Narrow; Orientation › Landscape — scenarii_real/word-margini-ingust.json,
        word-orientare-vedere.json) */
@@ -764,7 +1066,14 @@
         stil_paragrafe: M.P.map(p => p.stil),
         liste: liste(),
         tabele: M.tab.map(t => ({ randuri: t.randuri, coloane: t.coloane, celule: t.celule.map(r => r.slice()) })),
-        imagini: { in_linie: M.img.length, flotante: 0 },
+        /* cheie nouă (banda B, 23.11): formatul fiecărui tabel; `tabele` rămâne cum era (capcana 8) */
+        tabele_format: M.tab.map(t => { const o = optTabel(t); return { stil: t.stil || 'Table Grid', antet: o.antet, rand_total: o.total,
+          benzi_randuri: o.benzi_r, prima_coloana: o.col1, ultima_coloana: o.colN, benzi_coloane: o.benzi_c, autofit: t.fit || null,
+          latimi_cm: t.lat ? t.lat.slice() : null, imbinari: (t.uni || []).map(u => ({ rand: u.r + 1, coloana: u.c + 1, randuri: u.rs, coloane: u.cs })) }; }),
+        linii_grila_tabel: !!M.grila,
+        imagini: { in_linie: M.img.filter(x => (x.wrap || 'inline') === 'inline').length, flotante: M.img.filter(x => (x.wrap || 'inline') !== 'inline').length },
+        /* cheie nouă (banda B): fiecare poză — fișierul, mărimea (cm), încadrarea, dacă e aleasă */
+        imagini_detalii: M.img.map((x, k) => ({ fisier: x.fisier, paragraf: x.p + 1, loc_in_paragraf: x.o || 0, latime_cm: x.w || 6, inaltime_cm: x.h || 4, incadrare: x.wrap || 'inline', aleasa: M.imgSel === k })),
         pagina: JSON.parse(JSON.stringify(M.pag)),
         /* jurnalul gesturilor, în ordine (copii: cine citește nu poate schimba jurnalul) */
         gesturi: gesturi.map(g => Object.assign({}, g)),
@@ -866,6 +1175,8 @@
         /* caseta Font Size: „type the size you want in the Font Size box” (support.microsoft.com/en-US/Office/fonts/change-the-font-size) */
         if (/^panglica/.test(ctx.cheie || '') && n.t === 'Edit' && n.e === 'Font Size') return true;
         if (ctx.cheie === 'dialog.TableInsertDialogWord' && n.t === 'Spinner' && /^Number of/.test(n.e)) return true;
+        /* Picture Format › Size: casetele Shape Height / Shape Width se scriu (banda B, word-F064) */
+        if (/^panglica/.test(ctx.cheie || '') && n.t === 'Spinner' && /^Shape (Height|Width)$/.test(n.e)) return true;
         return false;
       }
     };
@@ -950,6 +1261,7 @@
       pozitie(s, SUP[k].r);
       loculPanglicii.appendChild(s);
       actualizeazaPanglica();
+      panglicaContext();      // filele contextuale își arată starea și după un clic pe filă (banda B)
     }
     function activeazaFila(id) {
       if (!cheieFila(id)) return false;
@@ -970,33 +1282,51 @@
       return ' style="margin:' + (f.sb * PX_PT) + 'px 0 ' + (f.sa * PX_PT) + 'px;padding-left:0;margin-left:' + (f.il * PX_CM) +
         'px;margin-right:' + (f.ir * PX_CM) + 'px;text-indent:' + (f.pl * PX_CM) + 'px;line-height:' + (f.ls * 1.2).toFixed(2) + '"';
     }
-    function spanuri(par, i) {
-      if (!par.t.length) return '';
+    function spanuri(par, i, rupturi) {
+      /* rupturi = { loc: html } — pozele în linie, puse între litere la locul lor (banda B); spanurile se rup acolo */
+      const R0 = rupturi || {};
+      if (!par.t.length) return R0[0] || '';
       const albastru = /^Heading [12]$/.test(par.stil) ? 'color:#2F5496;' : '';
       const s0 = inceput(i), a = selMin(), b = selMax(), cuSel = areSel() && !M.cel;
       let html = '', k = 0;
       while (k < par.t.length) {
+        if (R0[k]) html += R0[k];
         const f = par.f[k] || DEF, inS = cuSel && s0 + k >= a && s0 + k < b;
         let j = k + 1;
-        while (j < par.t.length && egal(par.f[j] || DEF, f) && (cuSel && s0 + j >= a && s0 + j < b) === inS) j++;
+        while (j < par.t.length && !R0[j] && egal(par.f[j] || DEF, f) && (cuSel && s0 + j >= a && s0 + j < b) === inS) j++;
         const cls = (f.b ? ' lh-ap-b' : '') + (f.i ? ' lh-ap-i' : '') + (f.u ? ' lh-ap-u' : '') + (inS ? ' lh-ap-sel' : '');
         html += '<span data-o="' + k + '" class="lh-ap-bucata' + cls + '"' + (f.sz || albastru ? ' style="' + (f.sz ? 'font-size:' + f.sz + 'pt;' : '') + albastru + '"' : '') + '>' + esc(par.t.slice(k, j)) + '</span>';
         k = j;
       }
-      return html;
+      return html + (R0[par.t.length] || '');
     }
     function deseneazaTabel(t, ti) {
-      let h = '<table class="lh-ap-tabel" data-lh-tinta="tabel" data-lh-id="' + (ti + 1) + '"><tbody>';
+      /* lățimile (t.lat, cm) / AutoFit Contents (t.fit = 'continut'): stilul tabelului; fără ele, cât pagina (CSS) */
+      const stT = t.lat ? ' style="table-layout:fixed;width:' + (t.lat.reduce((s, v) => s + v, 0) * PX_CM).toFixed(1) + 'px"'
+        : t.fit === 'continut' ? ' style="table-layout:auto;width:auto"' : '';
+      let h = '<table class="lh-ap-tabel" data-lh-tinta="tabel" data-lh-id="' + (ti + 1) + '" data-lh-stil="' + esc(t.stil || 'Table Grid') + '"' + stT + '>';
+      if (t.lat) h += '<colgroup>' + t.lat.map(w => '<col style="width:' + (w * PX_CM).toFixed(1) + 'px">').join('') + '</colgroup>';
+      h += '<tbody>';
+      const alese = M.cel && M.cel.t === ti && (M.cel.r2 != null || M.cel.c2 != null) ? celuleAlese() : null;
       t.celule.forEach((r, ri) => {
         h += '<tr>';
         r.forEach((v, ci) => {
+          if (acoperita(t, ri, ci)) return;                     // celulă acoperită de o îmbinare
           const act = M.cel && M.cel.t === ti && M.cel.r === ri && M.cel.c === ci;
           let inner = esc(v);
           if (act && M.cel.a !== M.cel.f) {
             const a = Math.min(M.cel.a, M.cel.f), b = Math.max(M.cel.a, M.cel.f);
             inner = esc(v.slice(0, a)) + '<span class="lh-ap-sel">' + esc(v.slice(a, b)) + '</span>' + esc(v.slice(b));
           }
-          h += '<td data-r="' + ri + '" data-c="' + ci + '"' + (act ? ' class="lh-ap-celula-act"' : '') + '><div class="lh-ap-celula">' + inner + '</div></td>';
+          if (/\n$/.test(v)) inner += '<br>';                  // paragraful gol de la capătul celulei (Enter) se vede
+          const u = uniDe(t, ri, ci), cls = [];
+          if (act) cls.push('lh-ap-celula-act');
+          if (alese && ri >= alese.r0 && ri <= alese.r1 && ci >= alese.c0 && ci <= alese.c1) cls.push('lh-ap-celula-aleasa');
+          const asp = aspectCelula(t, ri, ci);
+          const k0 = asp.lastIndexOf('border:none');
+          if (k0 >= 0 && !/border(-(top|bottom|left|right))?:\s*\d/.test(asp.slice(k0))) cls.push('lh-ap-fara-chenar');
+          h += '<td data-r="' + ri + '" data-c="' + ci + '"' + (u ? (u.cs > 1 ? ' colspan="' + u.cs + '"' : '') + (u.rs > 1 ? ' rowspan="' + u.rs + '"' : '') : '') +
+            (cls.length ? ' class="' + cls.join(' ') + '"' : '') + ' style="' + asp + '"><div class="lh-ap-celula">' + inner + '</div></td>';
         });
         h += '</tr>';
       });
@@ -1007,11 +1337,15 @@
       let h = '';
       M.P.forEach((par, i) => {
         M.tab.forEach((t, ti) => { if (t.la === i) h += deseneazaTabel(t, ti); });
-        const imgs = M.img.filter(x => x.p === i).map((x, k) => '<span class="lh-ap-imagine" data-lh-tinta="imagine" data-lh-id="' + (M.img.indexOf(x) + 1) + '" aria-hidden="true"></span>').join('');
+        /* pozele paragrafului, fiecare la locul ei din text (M.img[].o; banda B) */
+        const rup = {};
+        let flot = false;
+        M.img.forEach((x, k) => { if (x.p !== i) return; const o = Math.max(0, Math.min(x.o || 0, par.t.length)); rup[o] = (rup[o] || '') + htmlImagine(x, k); if ((x.wrap || 'inline') !== 'inline') flot = true; });
         const sb = lst[i] ? (lst[i].tip === 'marcatori' ? '•' : lst[i].simbol) : '';
-        h += '<div class="' + clasaPar(par) + '" data-lh-tinta="text" data-lh-id="' + (i + 1) + '"' + (sb ? ' data-simbol="' + esc(sb) + '"' : '') + stilParagraf(par) + '>' + imgs + spanuri(par, i) + '</div>';
+        h += '<div class="' + clasaPar(par) + (flot ? ' lh-ap-cu-flot' : '') + '" data-lh-tinta="text" data-lh-id="' + (i + 1) + '"' + (sb ? ' data-simbol="' + esc(sb) + '"' : '') + stilParagraf(par) + '>' + spanuri(par, i, rup) + '</div>';
       });
       corp.innerHTML = h;
+      deseneazaSelImagine();
       const m = M.pag.margini_cm;
       foaie.style.width = (M.pag.latime_cm * PX_CM) + 'px';
       foaie.style.minHeight = (M.pag.inaltime_cm * PX_CM) + 'px';
@@ -1203,7 +1537,35 @@
         deseneazaFile();
         deseneazaPanglica();
       }
+      panglicaContext();
       pozitioneazaCaret();
+    }
+    /* filele contextuale (banda B, 23.11): bifele Table Style Options arată opțiunile tabelului cu cursorul; galeria Table
+       Styles din panglică arată doar rândul ei vizibil (restul stilurilor: săgeata „Table Styles”, ca în Word);
+       Picture Format › Shape Height / Width = mărimea pozei alese */
+    function panglicaContext() {
+      if (contextActiv === 'tabel' && M.cel && M.tab[M.cel.t]) {
+        const o = optTabel(M.tab[M.cel.t]);
+        const B = { TableStyleHeaderRowWord: o.antet, TableStyleTotalRowWord: o.total, TableStyleBandedRowsWord: o.benzi_r,
+          TableStylesFirstColumnWord: o.col1, TableStyleLastColumnWord: o.colN, TableStyleBandedColumnsWord: o.benzi_c };
+        Object.keys(B).forEach(id => root.querySelectorAll('[data-lh-id-mso="' + id + '"]').forEach(x => { x.setAttribute('aria-checked', B[id] ? 'true' : 'false'); x.classList.toggle('lh-ap-bifat', !!B[id]); }));
+        root.querySelectorAll('[data-lh-id-mso="TableStylesGalleryWord"] [data-lh-tip="ListItem"]').forEach(x => {
+          const r = (x.__nod || {}).r;
+          if (r && r[1] >= 93 + 56) x.style.visibility = 'hidden';      // sub rândul vizibil al galeriei (Pane „Table Styles” [358,93,282,56])
+          x.toggleAttribute('data-lh-selectat', (x.__nod || {}).e === (M.tab[M.cel.t].stil || 'Table Grid'));
+        });
+        /* textul de pe butoane: „Insert Above / Below / Left / Right” (support.microsoft.com „Insert or delete a row or column in
+           a table”: „click Insert Above in the Rows and Columns group”); numele UIA din referință („Insert Row Below”) rămâne
+           eticheta declarată. [DEDUS] pentru textul de pe ecran — de_capturat.md, banda B */
+        const TXT = { TableRowsInsertAboveWord: 'Insert Above', TableRowsInsertBelowWord: 'Insert Below', TableColumnsInsertLeft: 'Insert Left', TableColumnsInsertRight: 'Insert Right' };
+        Object.keys(TXT).forEach(id => root.querySelectorAll('[data-lh-id-mso="' + id + '"] .lh-ap-text').forEach(s => { if (s.textContent !== TXT[id]) s.textContent = TXT[id]; }));
+        /* Merge Cells e gri cu o singură celulă (uia_word.json › Ctx_TableLayout › Merge Cells „activ”: false, cursorul într-o
+           celulă) și activ când sunt alese mai multe celule (Shift+clic) */
+        const ca = celuleAlese(), maiMulte = ca.r0 !== ca.r1 || ca.c0 !== ca.c1;
+        root.querySelectorAll('[data-lh-id-mso="MergeCells"]').forEach(x => { x.setAttribute('aria-disabled', maiMulte ? 'false' : 'true'); x.classList.toggle('lh-ap-gri', !maiMulte); });
+        root.querySelectorAll('[data-lh-id-mso="TableShowGridlines"]').forEach(x => { x.classList.toggle('lh-ap-apasat', !!M.grila); x.setAttribute('aria-pressed', M.grila ? 'true' : 'false'); });
+      }
+      if (typeof panglicaImagine === 'function') panglicaImagine();
     }
     I.focus = () => { try { intrare.focus({ preventScroll: true }); } catch (e) { /* */ } pozitioneazaCaret(); };
     intrare.addEventListener('focus', pozitioneazaCaret);
@@ -1238,13 +1600,35 @@
     }
     function grilaTabel(anc) {
       const it = [];
-      for (let r = 1; r <= 8; r++) for (let k = 1; k <= 10; k++) it.push({ tinta: k + 'x' + r + ' Table', html: '', fa: () => insereazaTabel(r, k) });
+      /* pe ecranul tactil nu există „hover”: prima atingere arată mărimea („3x2 Table” deasupra grilei, pătrățelele
+         colorate), a doua atingere pe același pătrățel pune tabelul (word-F048, ca vechiul wordobj.js:974) */
+      const pune = (r, k) => {
+        const cheie = k + 'x' + r;
+        if (m.__tactil && m.__armat !== cheie) { m.__armat = cheie; arata(k, r); return 'previzualizare_tabel'; }
+        return insereazaTabel(r, k);
+      };
+      for (let r = 1; r <= 8; r++) for (let k = 1; k <= 10; k++) it.push({ tinta: k + 'x' + r + ' Table', html: '', fa: () => pune(r, k) });
+      /* sub grilă, rândurile meniului Table din referință (uia_word.json › meniul Table: „Insert Table...”, „Draw Table”,
+         „Convert Text to Table...”, „Excel Spreadsheet”, „Quick Tables”); Insert Table... deschide fereastra Insert Table */
+      it.push({ tinta: 'Insert Table...', text: 'Insert Table...', fa: () => (deschideDialog('dialog.TableInsertDialogWord') ? 'dialog_tabel' : I.nesimulat('Insert Table...')) });
+      ['Draw Table', 'Convert Text to Table...', 'Excel Spreadsheet', 'Quick Tables'].forEach(x => it.push({ tinta: x, text: x, fa: () => I.nesimulat(x) }));
       const m = meniuLa(anc, it, 'lh-ap-grila');
+      /* textul de deasupra grilei: „Insert Table” până alegi, apoi „<coloane>x<rânduri> Table” (Group „Insert Table” din
+         lista.TableInsertGallery; textul cu numere = vechiul wordobj.js:692, ca în Word) */
+      const et = el('div', 'lh-ap-grila-eticheta', { role: 'presentation' });
+      et.textContent = 'Insert Table';
+      m.insertBefore(et, m.firstChild);
+      m.querySelectorAll('.lh-ap-meniu-rand').forEach(x => { if (!/^\d+x\d+ Table$/.test(x.getAttribute('aria-label'))) x.classList.add('lh-ap-grila-text'); });
+      function arata(k, r) {
+        et.textContent = k + 'x' + r + ' Table';
+        m.querySelectorAll('.lh-ap-meniu-rand').forEach(y => { const q = /^(\d+)x(\d+) Table$/.exec(y.getAttribute('aria-label')); y.classList.toggle('lh-ap-ales', !!q && +q[1] <= k && +q[2] <= r); });
+      }
+      m.addEventListener('pointerdown', e => { m.__tactil = e.pointerType === 'touch' || e.pointerType === 'pen'; }, true);
       m.addEventListener('pointerover', e => {
         const x = e.target.closest('.lh-ap-meniu-rand');
-        if (!x) return;
-        const [k, r] = x.getAttribute('aria-label').split(' ')[0].split('x').map(Number);
-        m.querySelectorAll('.lh-ap-meniu-rand').forEach(y => { const [k2, r2] = y.getAttribute('aria-label').split(' ')[0].split('x').map(Number); y.classList.toggle('lh-ap-ales', k2 <= k && r2 <= r); });
+        const q = x && /^(\d+)x(\d+) Table$/.exec(x.getAttribute('aria-label'));
+        if (!q || e.pointerType === 'touch') return;
+        arata(+q[1], +q[2]);
       });
     }
     function galerieStiluri(anc) {
@@ -1290,6 +1674,8 @@
          salvat_propus_F12); documentul nou, din folderul ferestrei din referință („Adresă: Documente”). Critic 5, GRAV S2 */
       const folderDoc = baza === 'dialog.FileSaveAs' && M.deschis && M.salvat && M.folder ? M.folder : null;
       dialog = { baza, strat: strat2, fila: null, desen: baza, folder: folderDoc || folderAdresa(baza === 'dialog.open' ? 'dialog.open' : 'dialog.FileSaveAs') };
+      /* Insert Picture se deschide în Imagini (uia_word.json › dialog.PictureInsertFromFile › bara de adrese „Imagini”) — banda B */
+      if (baza === 'dialog.PictureInsertFromFile') dialog.folder = 'Imagini';
       if (baza === 'dialog.FileSaveAs' || baza === SALVARE_NOUA || baza === INTREBARE_INCHIDERE) {
         const prim = (M.P.find(p => p.t.trim()) || { t: '' }).t.trim();
         /* document deja salvat: numele fișierului (Word real, COM — runde/4/critic.md:104: după SaveAs2 dă „numele
@@ -1341,7 +1727,10 @@
          până la 70% (sub atât rămâne derularea stratului + aduInVedere la Tab). Doar când e mai lată rădăcina decât
          fereastra (laptop, tablă), nu pe telefon; la 1366x768 și la tablă (fereastra încape) dreptunghiurile rămân ale
          referinței. Felul micșorării nu e în referință: [presupus] R24-3 */
-      const kMic = R.height > 0 && R.height < r[3] && R.width >= r[2] ? Math.max(0.7, (R.height - 2) / r[3]) : 1;
+      /* Insert Picture: în referință fereastra e cât tot ecranul (1920x1032), deci se micșorează cât să încapă întreagă,
+         cu Insert / Cancel la vedere (banda B; altfel butoanele rămâneau în afara ecranului) */
+      const kMic = dialog.baza === 'dialog.PictureInsertFromFile' && R.width > 0 && R.height > 0 ? Math.min(1, (R.width - 4) / r[2], (R.height - 4) / r[3])
+        : R.height > 0 && R.height < r[3] && R.width >= r[2] ? Math.max(0.7, (R.height - 2) / r[3]) : 1;
       if (kMic < 1) { s.style.transformOrigin = '0 0'; s.style.transform = 'scale(' + kMic.toFixed(4) + ')'; }
       dialog.kMic = kMic;   // aceeași micșorare pentru lista deschisă a unei casete din fereastră (listaRef)
       dialog.strat.appendChild(s);
@@ -1349,7 +1738,7 @@
       /* panoul din stânga al ferestrei Save As: elementele IMPLICITE Windows 11 din referință (uia_word.json ›
          lista.FileSaveAs_navigare; cele 19 personale au fost scoase). În captură erau în afara ecranului, deci locul
          rândurilor (unul sub altul, la 24 px) e al nostru — AC-6. Critic runda 3, GRAV A2 */
-      const arb = (dialog.baza === 'dialog.FileSaveAs' || dialog.baza === 'dialog.open') && s.querySelector('[data-lh-tip="Tree"][data-lh-eticheta="Panou de navigare"]');
+      const arb = (dialog.baza === 'dialog.FileSaveAs' || dialog.baza === 'dialog.open' || dialog.baza === 'dialog.PictureInsertFromFile') && s.querySelector('[data-lh-tip="Tree"][data-lh-eticheta="Panou de navigare"]');
       if (arb && SUP['lista.FileSaveAs_navigare']) {
         /* + câte un rând pentru fiecare folder din CONȚINUT (fișierele lecției și folderul ferestrei), în ordinea numelor
            implicite Windows 11 din referinte/acoperire_word_r3.py:57 (NAV_IMPLICIT: Acasă, Galerie, Desktop, Descărcări,
@@ -1364,7 +1753,7 @@
         tot.forEach((nume, i) => {
           const x = el('div', 'lh-ap-n lh-ap-t-TreeItem lh-ap-nav-rand', { 'data-lh-tip': 'TreeItem', 'data-lh-eticheta': nume, role: 'treeitem',
             'data-lh-tinta': 'arbore:' + nume });
-          if (fold.indexOf(nume) >= 0) x.__folder = nume;
+          if (fold.indexOf(nume) >= 0 || dialog.baza === 'dialog.PictureInsertFromFile') x.__folder = nume;   // Insert Picture: orice folder se deschide (banda B)
           x.style.left = '4px'; x.style.top = (6 + 24 * i) + 'px'; x.style.width = lat + 'px'; x.style.height = '22px';
           x.innerHTML = '<span class="lh-ap-text">' + esc(nume) + '</span>';
           arb.appendChild(x);
@@ -1631,13 +2020,176 @@
       const i = cb.querySelector('input');
       return listaRef('lista.FontSize', cb, v => marimeLa(Number(v)), 0, i ? i.value : null);
     }
+    /* ---- imaginea, banda B (noaptea 23.11.2026). Poza din folderul Imagini (pozele de mai jos, gata puse, ca într-un
+       calculator al școlii) sau dintr-un fișier al lecției; se pune LA CURSOR (M.img[].o = locul din paragraf), desenată,
+       ALEASĂ (M.imgSel: chenar, 8 mânere, Layout Options, fila Picture Format). Mărimea (w / h, cm) și încadrarea (wrap)
+       stau pe poză, deci intră în Ctrl+Z (M.img e în `instantaneu`). */
+    const IMAGINI_GATA = [
+      { nume: 'munte.png', w: 6, h: 4, svg: '<rect width="60" height="40" fill="#bfe3ff"/><circle cx="48" cy="10" r="5" fill="#ffd34d"/><path d="M0 40 L18 14 L30 30 L40 18 L60 40Z" fill="#5a7d4f"/><path d="M18 14 L23 21 L13 21Z" fill="#fff"/>' },
+      { nume: 'flori.jpg', w: 6, h: 4, svg: '<rect width="60" height="40" fill="#e8f6dc"/><g fill="#e2457a"><circle cx="15" cy="16" r="5"/><circle cx="32" cy="12" r="5"/><circle cx="47" cy="18" r="5"/></g><g stroke="#3b8a2e" stroke-width="2"><path d="M15 21V40M32 17V40M47 23V40"/></g>' },
+      { nume: 'pisica.png', w: 5, h: 5, svg: '<rect width="50" height="50" fill="#fdf1e2"/><path d="M12 18 L16 6 L22 15 Z M38 18 L34 6 L28 15 Z" fill="#9a6b3f"/><circle cx="25" cy="27" r="15" fill="#b9834f"/><circle cx="19" cy="24" r="2.5"/><circle cx="31" cy="24" r="2.5"/><path d="M22 32 Q25 35 28 32" stroke="#000" fill="none"/>' },
+      { nume: 'soare.png', w: 4, h: 4, svg: '<rect width="40" height="40" fill="#e9f5ff"/><circle cx="20" cy="20" r="9" fill="#ffc21a"/><g stroke="#ffc21a" stroke-width="2.5"><path d="M20 3V8M20 32V37M3 20H8M32 20H37M8 8L11 11M29 29L32 32M8 32L11 29M29 11L32 8"/></g>' }
+    ];
+    const IMG_EXT = /\.(png|jpe?g|gif|bmp|webp|svg)$/i;
+    function imagineGata(nume) { const n = String(nume || '').toLowerCase(); return IMAGINI_GATA.find(x => x.nume === n || faraExt(x.nume) === n) || null; }
+    function desenImagine(x) {
+      const g = imagineGata(x.fisier);
+      const svg = g ? g.svg : '<rect width="60" height="40" fill="#dfe7ef"/><path d="M0 40 L20 18 L34 32 L44 24 L60 40Z" fill="#8aa1b5"/><circle cx="46" cy="12" r="5" fill="#f2c94c"/>';
+      const vb = g ? '0 0 ' + (g.w * 10) + ' ' + (g.h * 10) : '0 0 60 40';
+      return 'url("data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="' + vb + '" preserveAspectRatio="none">' + svg + '</svg>') + '")';
+    }
+    /* fișierele din folderul ferestrei Insert Picture: pozele gata puse (Imagini) + fișierele imagine din conținut */
+    function fisiereImagine(folder) {
+      const gata = folder === 'Imagini' ? IMAGINI_GATA.map(g => ({ nume: g.nume, folder: 'Imagini' })) : [];
+      return gata.concat(M.fs.filter(f => f.folder === folder && IMG_EXT.test(f.nume) && !gata.some(g => g.nume === f.nume.toLowerCase())))
+        .sort((a, b) => a.nume.localeCompare(b.nume));
+    }
     function insereazaImagine() {
-      const v = valoareCamp('camp:nume_fisier').trim();
+      let v = valoareCamp('camp:nume_fisier').trim().replace(/^"|"$/g, '');
       if (!v) return 'fara_efect';
-      schimba('imagine', () => { M.img = M.img.concat([{ p: loc(M.sel.f).i, fisier: v.replace(/^.*[\\/]/, '') }]); });
+      v = v.replace(/^.*[\\/]/, '');
+      const f = dialog && fisiereImagine(dialog.folder).find(x => x.nume.toLowerCase() === v.toLowerCase() || faraExt(x.nume).toLowerCase() === v.toLowerCase());
+      const nume = f ? f.nume : v, g = imagineGata(nume);
+      const l = loc(M.sel.f);
+      let idx = -1;
+      schimba('imagine', () => {
+        if (areSel() && !M.cel) stergeSelectia(false);
+        const l2 = loc(M.sel.f);
+        M.img = M.img.concat([{ p: l2.i, o: l2.o, fisier: nume, w: g ? g.w : 6, h: g ? g.h : 4, wrap: 'inline' }]);
+        idx = M.img.length - 1;
+      });
+      void l;
       H.rupe();
       inchideDialog();
+      M.imgSel = idx; contextActiv = 'imagine'; M.cel = null;
+      deseneazaFile(); actualizeaza();
       return 'inserare_imagine';
+    }
+    function aleasa() { return M.imgSel != null && M.img[M.imgSel] ? M.img[M.imgSel] : null; }
+    function schimbaImaginea(fn) {
+      const i = M.imgSel;
+      schimba('imagine', () => { M.img = JSON.parse(JSON.stringify(M.img)); fn(M.img[i]); });
+      H.rupe();
+      M.imgSel = i;
+    }
+    /* Delete / Backspace cu poza aleasă: poza dispare (word-F067) */
+    function stergeImagineaAleasa() {
+      const i = M.imgSel;
+      schimba('imagine', () => { M.img = M.img.filter((x, k) => k !== i); });
+      H.rupe();
+      M.imgSel = null; contextActiv = null;
+      return 'stergere_imagine';
+    }
+    /* Enter cu poza aleasă (în linie cu textul): paragraful se rupe înaintea pozei, poza coboară pe rândul următor
+       (word-F066; vechiul wordobj îl avea; comportamentul Word real e [DEDUS] — de_capturat.md, banda B) */
+    function coboaraImaginea() {
+      const x = aleasa();
+      if (!x) return 'fara_efect';
+      const i = M.imgSel;
+      schimba('enter', () => {
+        M.img = JSON.parse(JSON.stringify(M.img));
+        const par = M.P[x.p], o = Math.min(x.o || 0, par.t.length);
+        const nou = { t: par.t.slice(o), f: par.f.slice(o), al: par.al, stil: par.stil, lista: par.lista ? Object.assign({}, par.lista) : null };
+        par.t = par.t.slice(0, o); par.f = par.f.slice(0, o);
+        M.P.splice(x.p + 1, 0, nou);
+        M.tab.forEach(t => { if (t.la > x.p) t.la++; });
+        M.img.forEach((y, k) => { if (y.p > x.p) y.p++; else if (y.p === x.p && (k === i || (y.o || 0) > o)) { y.p++; y.o = Math.max(0, (y.o || 0) - o); } });
+        M.sel = { a: inceput(x.p + 1), f: inceput(x.p + 1) };
+      });
+      H.rupe();
+      M.imgSel = i;
+      return 'enter';
+    }
+    /* Wrap Text (Picture Format › Arrange, și butonul Layout Options): textele opțiunilor sunt [DEDUS] (de_capturat.md,
+       banda B); stare().imagini numără pozele în linie / flotante */
+    const WRAP = [['In Line with Text', 'inline'], ['Square', 'square'], ['Tight', 'tight'], ['Through', 'through'], ['Top and Bottom', 'topbottom'],
+      ['Behind Text', 'behind'], ['In Front of Text', 'front']];
+    function meniuWrap(anc) {
+      if (!aleasa()) return I.nesimulat('Wrap Text');
+      const cur = aleasa().wrap || 'inline';
+      const m = meniuLa(anc, WRAP.map(([text, w]) => ({ tinta: text, text, fa: () => { schimbaImaginea(x => { x.wrap = w; }); contextActiv = 'imagine'; return 'incadrare_imagine'; } })));
+      m.querySelectorAll('.lh-ap-meniu-rand').forEach(r => r.toggleAttribute('data-lh-selectat', (WRAP.find(q => q[0] === r.getAttribute('aria-label')) || [])[1] === cur));
+      return 'meniu_wrap';
+    }
+    function htmlImagine(x, k) {
+      const w = (x.w || 6) * PX_CM, h = (x.h || 4) * PX_CM, sel = M.imgSel === k;
+      let s = '<span class="lh-ap-imagine lh-ap-img-' + (x.wrap || 'inline') + '" data-lh-tinta="imagine" data-lh-id="' + (k + 1) + '" aria-hidden="true"' +
+        (sel ? ' data-lh-selectat=""' : '') + ' style="width:' + w.toFixed(1) + 'px;height:' + h.toFixed(1) + 'px;background-image:' + desenImagine(x) + '">';
+      return s + '</span>';
+    }
+    /* chenarul pozei alese (8 mânere + Layout Options) stă într-un strat peste poză, în corp, NU în paragraf: în paragraf
+       ar rupe textul văzut (innerText pune rând nou la elementele poziționate) — „ecranul = starea”, capcana 9 */
+    function deseneazaSelImagine() {
+      const el = aleasa() && corp.querySelector('[data-lh-tinta="imagine"][data-lh-selectat]');
+      if (!el) return;
+      if (getComputedStyle(corp).position === 'static') corp.style.position = 'relative';
+      const cr = corp.getBoundingClientRect(), er = el.getBoundingClientRect(), k = corp.offsetWidth ? cr.width / corp.offsetWidth : 1;
+      const o = document.createElement('div');
+      o.className = 'lh-ap-sel-imagine';
+      o.style.left = ((er.left - cr.left) / k) + 'px'; o.style.top = ((er.top - cr.top) / k) + 'px';
+      o.style.width = (er.width / k) + 'px'; o.style.height = (er.height / k) + 'px';
+      let h = '';
+      ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'].forEach(m => { h += '<span class="lh-ap-maner lh-ap-maner-' + m + '" data-maner="' + m + '"></span>'; });
+      o.innerHTML = h + '<span class="lh-ap-layout-options" data-lh-eticheta="Layout Options" aria-label="Layout Options" role="button"></span>';
+      corp.appendChild(o);
+    }
+    /* mânerele: colțul păstrează proporția (Lock aspect ratio, implicit la poze), latura schimbă o singură dimensiune */
+    let trageImg = null;
+    root.addEventListener('pointerdown', e => {
+      const m = e.target && e.target.closest && e.target.closest('.lh-ap-maner');
+      if (!m || !aleasa() || dialog || backstage) return;
+      const x = aleasa(), pe = corp.querySelector('[data-lh-tinta="imagine"][data-lh-selectat]'), z = pe && pe.offsetWidth ? pe.getBoundingClientRect().width / pe.offsetWidth : (M.zoom || 100) / 100;
+      if (!pe) return;
+      trageImg = { i: M.imgSel, m: m.getAttribute('data-maner'), x0: e.clientX, y0: e.clientY, w0: x.w || 6, h0: x.h || 4, k: PX_CM * z, el: pe, sel: m.parentElement };
+      e.preventDefault(); e.stopPropagation();
+    }, true);
+    function marimeDupaTragere(e) {
+      const t = trageImg, dx = (e.clientX - t.x0) / t.k, dy = (e.clientY - t.y0) / t.k, m = t.m;
+      let w = t.w0, h = t.h0;
+      const sx = m.includes('e') ? 1 : m.includes('w') ? -1 : 0, sy = m.includes('s') ? 1 : m.includes('n') ? -1 : 0;
+      if (sx && sy) { const f = Math.max((t.w0 + sx * dx) / t.w0, (t.h0 + sy * dy) / t.h0); w = t.w0 * f; h = t.h0 * f; }
+      else if (sx) w = t.w0 + sx * dx;
+      else h = t.h0 + sy * dy;
+      return { w: Math.max(0.2, +w.toFixed(3)), h: Math.max(0.2, +h.toFixed(3)) };
+    }
+    root.addEventListener('pointermove', e => {
+      if (!trageImg) return;
+      e.preventDefault(); e.stopPropagation();
+      const r = marimeDupaTragere(e);
+      trageImg.el.style.width = (r.w * PX_CM) + 'px'; trageImg.el.style.height = (r.h * PX_CM) + 'px';
+      if (trageImg.sel) { trageImg.sel.style.width = (r.w * PX_CM) + 'px'; trageImg.sel.style.height = (r.h * PX_CM) + 'px'; }
+      trageImg.ultim = r;
+    }, true);
+    const gataTrageImg = e => {
+      if (!trageImg) return;
+      e.preventDefault(); e.stopPropagation();
+      const t = trageImg; trageImg = null;
+      M.imgSel = t.i;
+      if (t.ultim) { schimbaImaginea(x => { x.w = t.ultim.w; x.h = t.ultim.h; }); gest('comanda', 'Picture Size'); }
+      actualizeaza();
+    };
+    root.addEventListener('pointerup', gataTrageImg, true);
+    root.addEventListener('pointercancel', gataTrageImg, true);
+    /* Shape Height / Shape Width (Picture Format › Size): „3 cm” / „3” / „3,5” + Enter; cu Lock aspect ratio (implicit la
+       poze) cealaltă dimensiune urmează proporția. Afișarea valorii (virgulă, „ cm”) e [DEDUS] (de_capturat.md, banda B) */
+    function cmDin(v) { const m = /^\s*(\d+(?:[.,]\d+)?)\s*(cm)?\s*$/i.exec(String(v)); return m ? parseFloat(m[1].replace(',', '.')) : NaN; }
+    root.addEventListener('keydown', e => {
+      if (e.key !== 'Enter') return;
+      const sp = e.target && e.target.closest && e.target.closest('[data-lh-id-mso="ShapeWidth"],[data-lh-id-mso="ShapeHeight"]');
+      if (!sp || !aleasa()) return;
+      e.preventDefault(); e.stopPropagation();
+      const v = cmDin(e.target.value), latime = sp.getAttribute('data-lh-id-mso') === 'ShapeWidth';
+      if (!(v > 0)) { panglicaImagine(); return; }
+      schimbaImaginea(x => { const r = (x.h || 4) / (x.w || 6); if (latime) { x.w = v; x.h = +(v * r).toFixed(3); } else { x.h = v; x.w = +(v / r).toFixed(3); } });
+      gest('comanda', latime ? 'Shape Width' : 'Shape Height');
+      actualizeaza();
+      I.focus();
+    }, true);
+    const cmText = v => (Math.round(v * 100) / 100).toString().replace('.', ',') + ' cm';
+    function panglicaImagine() {
+      const x = aleasa();
+      if (!x || contextActiv !== 'imagine') return;
+      [['ShapeWidth', x.w || 6], ['ShapeHeight', x.h || 4]].forEach(([id, v]) => root.querySelectorAll('[data-lh-id-mso="' + id + '"] input').forEach(i => { if (document.activeElement !== i) i.value = cmText(v); }));
     }
     function okTabel() {
       const k = parseInt(valoareCamp('camp:Number of columns'), 10), r = parseInt(valoareCamp('camp:Number of rows'), 10);
@@ -1772,6 +2324,7 @@
       const nf = dialog.el.querySelector('[data-lh-tinta="camp:nume_fisier"] input');
       if (nf) nf.value = faraExt(x.__fisier.nume);
     }
+    let alegereImg = null;
     function navigheaza(folder) {
       dialog.folder = folder;
       umpleFolder(dialog.el);
@@ -1781,8 +2334,8 @@
        CONȚINUT (uia_word.json › dialog.open › List „Vizualizare elemente”: 8 ListItem, texte redactate); pe ecran numele
        fără extensie, ca la Recent (AC-7); ținta lista:<nume.ext> (api §3). Critic runda 4, GRAV N4 */
     function umpleFolder(s) {
-      if (!dialog || !(dialog.baza === 'dialog.FileSaveAs' || dialog.baza === 'dialog.open')) return;
-      const f0 = folderAdresa(dialog.baza === 'dialog.open' ? 'dialog.open' : 'dialog.FileSaveAs');
+      if (!dialog || !(dialog.baza === 'dialog.FileSaveAs' || dialog.baza === 'dialog.open' || dialog.baza === 'dialog.PictureInsertFromFile')) return;
+      const f0 = dialog.baza === 'dialog.PictureInsertFromFile' ? 'Imagini' : folderAdresa(dialog.baza === 'dialog.open' ? 'dialog.open' : 'dialog.FileSaveAs');
       /* butonul folderului din bara de adrese e găsit O DATĂ pe desen (după eticheta din referință) și ținut minte: după prima
          navigare eticheta lui devine noul folder, iar căutarea după „Documente” nu-l mai găsea — bara rămânea pe primul folder
          ales (critic 5, GRAV S1; referința: uia_word.json › dialog.FileSaveAs / dialog.open › ToolBar „Adresă: Documente” =
@@ -1800,7 +2353,7 @@
          elemente”: 8 ListItem; lecția m1-l03:171-172 „nu da clic pe fișierul colegei”), doar cele de tipul din „Save as
          type” (*.docx / *.pdf, valoarea casetei din referință; filtrul = de_verificat R16-2). Critic 5, GRAV S5 */
       const ext = dialog.baza === 'dialog.open' ? [] : (String(dialog.tip || '').match(/\*\.[a-z0-9]+/gi) || []).map(x => x.slice(1).toLowerCase());
-      const fis = M.fs.filter(f => f.folder === dialog.folder && (!ext.length || ext.some(x => f.nume.toLowerCase().endsWith(x))))
+      const fis = dialog.baza === 'dialog.PictureInsertFromFile' ? fisiereImagine(dialog.folder) : M.fs.filter(f => f.folder === dialog.folder && (!ext.length || ext.some(x => f.nume.toLowerCase().endsWith(x))))
         .sort((a, b) => a.nume.localeCompare(b.nume));
       const randuri = s.__randuriOpen || (s.__randuriOpen = [...s.querySelectorAll('[data-lh-tip="List"][data-lh-eticheta="Vizualizare elemente"] [data-lh-tip="ListItem"]')]);
       randuri.forEach((x, k) => {
@@ -1899,6 +2452,36 @@
       LineSpacingGallery: e => { meniuLa(e, INTERLINII.map(([t, v]) => ({ tinta: t, text: t, fa: () => interlinie(v) }))
         .concat([{ tinta: 'Line Spacing Options…', text: 'Line Spacing Options…', fa: () => (paragrafDialog() && 'dialog_paragraf') }])); return 'meniu_interlinie'; },
       TableInsertGallery: e => { grilaTabel(e); return 'meniu_tabel'; },
+      TextWrapGallery: e => meniuWrap(e),
+      /* Table Design / Table Layout (banda B, 23.11): id-urile din date/word.json › panglica_context.Ctx_Table* */
+      TableStyleHeaderRowWord: () => bifaTabel('antet'),
+      TableStyleTotalRowWord: () => bifaTabel('total'),
+      TableStyleBandedRowsWord: () => bifaTabel('benzi_r'),
+      TableStylesFirstColumnWord: () => bifaTabel('col1'),
+      TableStyleLastColumnWord: () => bifaTabel('colN'),
+      TableStyleBandedColumnsWord: () => bifaTabel('benzi_c'),
+      TableStylesGalleryWord: e => galerieStiluriTabel(e),
+      TableRowsInsertAboveWord: () => insereazaRand(false),
+      TableRowsInsertBelowWord: () => insereazaRand(true),
+      TableColumnsInsertLeft: () => insereazaColoana(false),
+      TableColumnsInsertRight: () => insereazaColoana(true),
+      /* Delete ▾: rândurile meniului [DEDUS] (de_capturat.md, banda B) */
+      TableDeleteRowsAndColumnsMenuWord: e => { meniuLa(e, [
+        { tinta: 'Delete Cells...', text: 'Delete Cells...', fa: () => I.nesimulat('Delete Cells...') },
+        { tinta: 'Delete Columns', text: 'Delete Columns', fa: stergeColoane },
+        { tinta: 'Delete Rows', text: 'Delete Rows', fa: stergeRanduri },
+        { tinta: 'Delete Table', text: 'Delete Table', fa: stergeTabelul }]); return 'meniu_stergere_tabel'; },
+      MergeCells: () => imbinaCelule(),
+      TableAutoFitMenu: e => { meniuLa(e, [
+        { tinta: 'AutoFit Contents', text: 'AutoFit Contents', fa: () => autoFit('continut') },
+        { tinta: 'AutoFit Window', text: 'AutoFit Window', fa: () => autoFit('fereastra') },
+        { tinta: 'Fixed Column Width', text: 'Fixed Column Width', fa: () => autoFit('fix') }]); return 'meniu_autofit'; },
+      TableShowGridlines: () => comutaGrila(),
+      /* Borders ▾ în tabel: rândurile din referință (uia_word.json › lista.BordersSelectionGallery); No Border / All Borders
+         pe celulele alese, View Gridlines ca butonul din Table Layout; restul = mesajul R12. Clicul pe partea de sus a
+         butonului deschide tot lista [DEDUS] (de_capturat.md, banda B) */
+      BordersSelectionGallery: e => (M.cel ? meniuChenare(e) : I.nesimulat('Borders')),
+      BordersSelectionGallery_Dropdown: e => (M.cel ? meniuChenare(e) : I.nesimulat('Borders ▾')),
       /* listele deschise NU sunt în referința UIA: doar rândurile citate — „Narrow Margins” (scenarii_real/word-margini-ingust.json),
          „Custom Margins”, „Portrait”/„Landscape” (support.microsoft.com/en-US/Word/training/change-document-layout),
          „This Device”, „Stock Images”, „Online Pictures” (support.microsoft.com/en-us/word/training/insert-pictures) */
@@ -1940,7 +2523,11 @@
       /* galeria de stiluri din panglică: un stil = clic pe dala lui; săgeata „Styles” deschide galeria întreagă */
       if (/^meniu:/.test(tinta) && elx.closest('[data-lh-id-mso="QuickStylesGallery"]')) return stil(tinta.slice(6));
       if (n.t === 'Button' && n.e === 'Styles' && elx.closest('[data-lh-id-mso="QuickStylesGallery"]')) { galerieStiluri(elx); return 'galerie_stiluri'; }
-      if (elx.__fa) { const r = elx.__fa(); inchideMeniu(); actualizeaza(); return r; }
+      /* galeria Table Styles din fila Table Design: dala = stilul; săgeata „Table Styles” = galeria întreagă (banda B) */
+      if (n.t === 'ListItem' && n.e && elx.closest('[data-lh-id-mso="TableStylesGalleryWord"]')) { const r = stilTabel(n.e); actualizeaza(); return r; }
+      if (n.t === 'Button' && n.e === 'Table Styles' && elx.closest('[data-lh-id-mso="TableStylesGalleryWord"]')) return galerieStiluriTabel(elx);
+      /* 'previzualizare_tabel' = prima atingere pe grila Insert › Table (ecran tactil): meniul rămâne deschis */
+      if (elx.__fa) { const r = elx.__fa(); if (r !== 'previzualizare_tabel') inchideMeniu(); actualizeaza(); return r; }
       if (strat && strat.contextual && strat.contains(elx)) {
         if (n.e === 'Keep Text Only') { inchideMeniuContextual(); return lipeste(true); }
       }
@@ -1977,13 +2564,27 @@
       if (td) {
         const tb = td.closest('table'), ti = +tb.getAttribute('data-lh-id') - 1;
         const v = M.tab[ti].celule[+td.getAttribute('data-r')][+td.getAttribute('data-c')];
+        /* Shift+clic în altă celulă a aceluiași tabel: celulele dintre ele se aleg (pentru Merge Cells, Delete Rows …) */
+        if (e.shiftKey && numarClic === 1 && M.cel && M.cel.t === ti) {
+          const r2 = +td.getAttribute('data-r') + (td.rowSpan || 1) - 1, c2 = +td.getAttribute('data-c') + (td.colSpan || 1) - 1;
+          M.cel = Object.assign({}, M.cel, { r2, c2, a: 0, f: 0 });
+          H.rupe(); actualizeaza(); return 'selectie';
+        }
         M.cel = { t: ti, r: +td.getAttribute('data-r'), c: +td.getAttribute('data-c'), a: numarClic > 1 ? 0 : v.length, f: v.length };
         H.rupe();
         actualizeaza();
         return 'selectie';
       }
       /* clic pe o imagine: imaginea aleasă aduce fila contextuală Picture Format (CONVENTIE_ARBORE.md §4.5) */
-      if (tg.closest('[data-lh-tinta="imagine"]')) { contextActiv = 'imagine'; M.cel = null; deseneazaFile(); actualizeaza(); return 'selectie'; }
+      if (tg.closest('.lh-ap-layout-options') && aleasa()) { meniuWrap(tg.closest('.lh-ap-layout-options')); return 'meniu_wrap'; }
+      if (tg.closest('.lh-ap-sel-imagine')) return 'selectie';      // mânerele pozei alese: le tratează tragerea (poza rămâne aleasă)
+      const im = tg.closest('[data-lh-tinta="imagine"]');
+      if (im) {
+        /* poza aleasă: chenar, 8 mânere, Layout Options (banda B); butonul Layout Options deschide opțiunile de încadrare */
+        M.imgSel = +im.getAttribute('data-lh-id') - 1; contextActiv = 'imagine'; M.cel = null; H.rupe();
+        deseneazaFile(); actualizeaza(); return 'selectie';
+      }
+      M.imgSel = null;
       if (contextActiv === 'imagine') contextActiv = null;
       const pos = clamp(pozDinPunct(e.clientX, e.clientY));
       if (M.cel) M.cel = null;
@@ -2083,6 +2684,18 @@
           if (v === 'Save') { const cum = M.dupaInchidere, r = salveaza(); return r === 'salvare' ? inchideDocument(cum, 'salvare_si_inchidere') : r; }
           return I.nesimulat(v);   // More options… aici: efectul nu e în referință (AC-5)
         }
+      }
+      /* fereastra Insert Picture (Insert › Pictures › This Device...; banda B, word-F060): folderul Imagini cu pozele gata
+         puse, panoul de navigare, clic pe poză = numele ei în File name, dublu-clic sau Insert = poza în document */
+      if (dialog && dialog.baza === 'dialog.PictureInsertFromFile') {
+        if (fel === 'lista' && elx.__fisier) {
+          const acum = Date.now(), dublu = alegereImg && alegereImg.el === elx && acum - alegereImg.t < 500;
+          alegereImg = { el: elx, t: acum };
+          alegeRandOpen(elx);
+          return dublu ? insereazaImagine() : 'selectare';
+        }
+        if (fel === 'arbore') return elx.__folder ? navigheaza(elx.__folder) : I.nesimulat(v);
+        if (fel === 'fereastra' && v === dialog.folder) return navigheaza(dialog.folder);
       }
       /* fereastra Open (uia_word.json › dialog.open; Ctrl+F12 / File › Open › Browse) — critic runda 4, GRAV N4 + T4 */
       if (dialog && dialog.baza === 'dialog.open') {
