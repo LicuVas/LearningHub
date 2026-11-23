@@ -817,21 +817,23 @@ proba('word-F094', 'View › Web Layout (textul pe toată lățimea), apoi Print
   return pb;
 }, { ok: 'Web Layout lățește, Print Layout revine', v2007: true });
 
-proba('word-F095', 'Zoom cu − / + din bara de stare (câte 10 %)', async u => {
+proba('word-F095', 'Zoom cu − / + din bara de stare (pasul lui Word: 8 %)', async u => {
   const pb = [];
   const z = async () => { const e = await u.p.locator(sel('zoom', 'Zoom')).first().getAttribute('data-lh-eticheta').catch(() => ''); const m = /(\d+)\s*%/.exec(e || await u.p.locator(sel('zoom', 'Zoom')).first().innerText().catch(() => '')); return m ? +m[1] : NaN; };
   const lat = () => u.p.evaluate(R => { const e = [...document.querySelectorAll(R + ' [data-lh-eticheta="Page 1"]')].find(x => x.getBoundingClientRect().width > 0); return e ? e.getBoundingClientRect().width : 0; }, R);
   const z0 = await z(), w0 = await lat();
   await u.clic(u.loc('zoom', 'Zoom In (Ctrl +)'), 'Zoom In (+)', { pauza: 300 });
   const z1 = await z(), w1 = await lat();
-  if (z1 !== z0 + 10) pb.push(`după + zoom ${z0}→${z1} % (${(await u.nesim())[0] || ''})`);
+  // corectată de dirijor 23.11: în Word real + din bara de stare mută cu 8 % (100 → 108 → 116 → 124), măsurat de judecător:
+  // lectii/vii/m1-l03/surse.md:68 (arbitru_ui.json). Sub 100 % pasul nu e măsurat: proba cere doar să scadă.
+  if (z1 !== z0 + 8) pb.push(`după + zoom ${z0}→${z1} % (${(await u.nesim())[0] || ''})`);
   if (w1 <= w0) pb.push(`după + foaia ${Math.round(w0)}→${Math.round(w1)} px`);
   await u.clic(u.loc('zoom', 'Zoom Out (Ctrl -)'), 'Zoom Out (−)', { pauza: 300 });
   await u.clic(u.loc('zoom', 'Zoom Out (Ctrl -)'), 'Zoom Out (−)', { pauza: 300 });
   const z2 = await z();
-  if (z2 !== z0 - 10) pb.push(`după + − − zoom ${z0}→${z2} %`);
+  if (!(z2 < z0)) pb.push(`după + − − zoom ${z0}→${z2} %`);
   return pb;
-}, { ok: '+ și − câte 10 %', v2007: true });
+}, { ok: '+ mută cu 8 %, − coboară', v2007: true });
 
 proba('word-F098', 'View › bifa Ruler arată / ascunde riglele', async u => {
   const pb = []; const p = u.p;
