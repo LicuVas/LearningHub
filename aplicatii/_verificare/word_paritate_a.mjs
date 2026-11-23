@@ -525,7 +525,8 @@ proba('word-F080', 'Save pe un nume care există: întrebarea lui Word, apoi Rep
   await pauza(300);
   const s2 = await u.st();
   const f = (s2.fisiere || []).find(x => x.nume === 'tema.docx');
-  if (!f || f.text.join('\n') !== 'textul meu') return [`după Replace tema.docx are ${J(f && f.text)}`];
+  // corectată de dirijor 23.11: AutoCorrect-ul real pune majuscula la început (scenarii_real/word-tastare-majuscula-automata.json)
+  if (!f || f.text.join('\n').toLowerCase() !== 'textul meu') return [`după Replace tema.docx are ${J(f && f.text)}`];
   return [];
 }, { w2007: true, continut: { fisiere: [{ nume: 'tema.docx', folder: 'Documente', text: ['textul colegei'] }] }, ok: 'întrebarea și Replace' });
 

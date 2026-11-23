@@ -321,7 +321,8 @@ ambele('word-F023', 'Ctrl+tragere copiază textul selectat (originalul rămâne)
   await u.scrie('uno dos tres');
   const a = await u.cuvant('uno'), b = await u.cuvant('tres');
   if (!a || !b) return ['nu găsesc cuvintele scrise în pagină'];
-  await u.p.mouse.dblclick(a.cx, a.cy); await pauza(300);
+  // corectată de dirijor 23.11: sub 500 ms după dublul clic, a treia apăsare e triplu clic (scenarii_real/word-triplu-clic-paragraf.json)
+  await u.p.mouse.dblclick(a.cx, a.cy); await pauza(650);
   await u.trageMouse(a.cx, a.cy, b.x + 1, b.cy, null, { ctrl: true });   // lasat inaintea lui „tres”
   const t = (await T(u)).join('\n');
   const n = (t.match(/uno/gi) || []).length;

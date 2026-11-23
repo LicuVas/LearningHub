@@ -677,12 +677,14 @@ proba('word-F054', 'Bifa Header Row din Table Style Options scoate formatarea r�
   const pb = [];
   const e = await u.tabelGrila(3, 3); if (e) return ['nu pot pune tabelul: ' + e];
   if (!(await u.fila('Table Design'))) return ['cu cursorul în tabel nu apare fila Table Design'];
-  await u.clicEt(/^Grid Table 4 - Accent 1$/);
+  // corectată de dirijor 23.11: în panglică se vede doar primul rând de stiluri (word.json › Ctx_TableDesign); ca la F053, galeria întreagă
+  let g = await u.clicEt(/^Grid Table 4 - Accent 1$/);
+  if (!g) { await u.marcheaza(); const more = await u.clicEt(/^(More|Table Styles)$/); if (more) g = await u.clicEt(/^Grid Table 4 - Accent 1$/, { noi: true }); }
   const b = await u.gaseste(/^Header Row$/);
   if (!b) return ['fila Table Design n-are bifa Header Row'];
-  const c0 = await u.celule(); const t0 = ((await u.st()).tabele || [])[0];
+  const s0 = await u.st(); const c0 = await u.celule(); const t0 = Object.assign({}, (s0.tabele || [])[0], (s0.tabele_format || [])[0]);
   await u.p.mouse.click(b.x, b.y); await pauza(250);
-  const c1 = await u.celule(); const t1 = ((await u.st()).tabele || [])[0];
+  const s1 = await u.st(); const c1 = await u.celule(); const t1 = Object.assign({}, (s1.tabele || [])[0], (s1.tabele_format || [])[0]);
   const stare = t1 && 'antet' in t1 && t1.antet === false && (!t0 || t0.antet !== false);
   const vazut = c0 && c1 && c0[0][0].bg !== c1[0][0].bg;
   if (!stare && !vazut) pb.push(`după Header Row debifat nimic nu s-a schimbat (stare antet ${t1 && t1.antet}, fundal antet ${c0 && c0[0][0].bg}→${c1 && c1[0][0].bg})`);
@@ -745,7 +747,7 @@ proba('word-F059', 'Îmbină celulele primului rând (selectat) cu Table Layout 
   const pb = []; const p = u.p;
   const e = await u.tabelGrila(3, 2); if (e) return ['nu pot pune tabelul: ' + e];
   const c0 = await u.celule();
-  if (c0) { await p.mouse.click(c0[0][0].x + 4, c0[0][0].y + c0[0][0].h / 2); await p.mouse.click(c0[0][2].x + c0[0][2].w - 6, c0[0][2].y + c0[0][2].h / 2, { modifiers: ['Shift'] }); await pauza(150); }
+  if (c0) { await p.mouse.click(c0[0][0].x + 4, c0[0][0].y + c0[0][0].h / 2); await p.keyboard.down('Shift'); await p.mouse.click(c0[0][2].x + c0[0][2].w - 6, c0[0][2].y + c0[0][2].h / 2); await p.keyboard.up('Shift'); await pauza(150); }   // corectată de dirijor 23.11: Mouse.click n-are `modifiers`
   else { await p.keyboard.press('Shift+ArrowRight'); await p.keyboard.press('Shift+ArrowRight'); }
   if (!(await u.fila('Table Layout')) && !(await u.fila('Layout'))) return ['cu cursorul în tabel nu apare fila Table Layout'];
   if (!(await u.clicEt(/^Merge Cells$/))) {
