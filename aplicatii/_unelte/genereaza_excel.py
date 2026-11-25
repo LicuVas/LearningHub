@@ -7,7 +7,10 @@ Aceleași reguli ca la Word: funcțiile de transformare vin din `genereaza_word.
 fel). Nicio etichetă nu e scrisă de mână aici: ce lipsește din referință rămâne lipsă și se notează în `lipsa`.
 În plus față de Word: `zona` = geometria foii citită din `zona_document` (Name Box, Formula Bar, antetele coloanelor și
 rândurilor, filele foilor, barele de derulare), ca `excel.js` să așeze grila la coordonatele reale.
-Pictogramele: Fluent UI System Icons (MIT, Microsoft), din `jocuri/_motor/panglica-excel.js` (doar citit), după idMso.
+Pictogramele: Fluent UI System Icons (MIT, Microsoft), din `jocuri/_motor/panglica-excel.js` (doar citit), după idMso, iar
+PE LÂNGĂ ele cele din `aplicatii/_unelte/icoane_excel.json` (maparea bibliotecii; vezi `icoane_bib.py`): sursa veche are
+întâietate, fișierul bibliotecii umple ce lipsește. `fara_icoana` = idMso-urile care AR TREBUI să aibă pictogramă și nu au;
+`fara_icoana_real` = cele care nici în Excel nu au (casete, bife, săgeata ▾, lansatoare), fiecare cu motivul.
 
 Rulare:
     python C:/00/Projects/LearningHub_fidel/aplicatii/_unelte/genereaza_excel.py            # scrie aplicatii/date/excel.json
@@ -24,6 +27,7 @@ from pathlib import Path
 AICI = Path(__file__).resolve().parent
 sys.path.insert(0, str(AICI))
 import genereaza_word as GW  # noqa: E402  (aceleași reguli de transformare; modulul nu scrie nimic la import)
+import icoane_bib as IB  # noqa: E402  (pictogramele bibliotecii, pe lângă sursa veche)
 
 BIB = AICI.parent
 REF = GW.D / "referinte" / "uia_excel.json"
@@ -130,11 +134,13 @@ def genereaza():
             d["id_mso"] = m.group(1)
     zona = geometria_zonei(S["zona_document"], lipsa)
     ic, licenta = icoane_fluent()
+    ic_bib, ic_nume, unelte, fara_manual = IB.citeste("excel")
+    ic = {**ic_bib, **ic}                      # sursa veche are întâietate; biblioteca umple ce lipsește
     folosite = set()
     for v in sup.values():
         GW.toate_id(v, folosite)
     icoane = {k: v for k, v in sorted(ic.items()) if k in folosite}
-    fara_icoana = sorted(i for i in folosite if i not in ic)
+    fara_icoana, fara_icoana_real = IB.imparte(sup, ic, fara_manual)
     return {
         "_despre": "GENERAT de aplicatii/_unelte/genereaza_excel.py din referința UI Automation a lui Excel real — nu edita "
                    "de mână; schimbarea vine din referință (o rundă `acoperire`) sau din generator.",
@@ -142,7 +148,8 @@ def genereaza():
         "sursa": {"referinta": "_campaign/aplicatii_fidele_2026_11/referinte/uia_excel.json",
                   "sha256": hashlib.sha256(brut).hexdigest(), "versiune_excel": ref.get("versiune"),
                   "generat_referinta": ref.get("generat"), "fereastra": ref.get("fereastra"),
-                  "icoane": "jocuri/_motor/panglica-excel.js › icoane (" + licenta + ")"},
+                  "icoane": "jocuri/_motor/panglica-excel.js › icoane (" + licenta + ") + aplicatii/_unelte/icoane_excel.json ("
+                            + IB.VERSIUNE + ", MIT)"},
         "chei": {"t": "tip (ControlType UIA)", "e": "eticheta (numele accesibil real)", "id": "idMso", "r": "rect_css absolut",
                  "a": "0 = gri (activ:false)", "b": "bifat (ToggleState)", "v": "valoare", "k": "scurtătura", "h": "sfatul",
                  "ta": "KeyTip", "ascuns": "1 = în afara ecranului în referință", "c": "copiii"},
@@ -154,8 +161,11 @@ def genereaza():
         "zona": zona,
         "suprafete": sup,
         "icoane": icoane,
+        "icoane_nume": ic_nume,
+        "unelte": {k: v for k, v in unelte.items() if not k.startswith("_")},
         "lipsa": lipsa,
         "fara_icoana": fara_icoana,
+        "fara_icoana_real": fara_icoana_real,
     }
 
 

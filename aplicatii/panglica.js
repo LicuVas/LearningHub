@@ -53,6 +53,34 @@
     }
     return I._numeId[nume] || I._numeId[String(nume || '').replace(/(\.\.\.|…)$/, '')] || null;
   }
+  /* pictograma după numele nodului fără idMso (date › icoane_nume, din _unelte/icoane_<aplicatie>.json): numele întreg sau
+     partea dinainte de „:” („Eraser: Use the eraser…” -> Eraser) */
+  function icoanaNume(I, nume, marime) {
+    const T = I.date && I.date.icoane_nume;
+    if (!T || !nume) return '';
+    const e = String(nume).trim(), p = T[e] || T[e.replace(/(\.\.\.|…)$/, '')] || T[e.split(':')[0].trim()];
+    return p ? svg(p.map(d => '<path d="' + esc(d) + '"/>').join(''), marime) : '';
+  }
+  /* o unealtă dintr-o galerie de unelte (List cu SplitButton fără părți: Draw › Drawing Tools). Numele real e
+     „<fel>: <culoare>, <grosime>…” (Pen: Red, 0.35 mm); felul și culoarea se citesc din nume, forma și codul culorii din
+     date › unelte. Desen propriu, simplu (nu captură Microsoft): unealta stă în picioare, cu vârful colorat în sus. */
+  const CORP = 'fill="#f3f2f1" stroke="#605e5c" stroke-width=".7"';
+  const FORME_UNEALTA = {
+    pix: c => '<path d="M12 3 15.5 13h-7z" fill="' + c + '" stroke="#605e5c" stroke-width=".7"/><path d="M8.5 13h7v27h-7z" ' + CORP + '/><path d="M8.5 17h7v3h-7z" fill="' + c + '"/>',
+    creion: c => '<path d="M12 3 16 14H8z" fill="#f1d6a8" stroke="#605e5c" stroke-width=".7"/><path d="M12 3 13.6 7.4h-3.2z" fill="' + c + '"/><path d="M8 14h8v26H8z" fill="' + c + '" stroke="#605e5c" stroke-width=".7"/><path d="M10.7 14v26M13.3 14v26" stroke="#fff" stroke-opacity=".45" stroke-width=".7"/>',
+    marker: c => '<path d="M8.5 4h7v6l2 4h-11l2-4z" fill="' + c + '" stroke="#605e5c" stroke-width=".7"/><path d="M5.5 14h13v26h-13z" ' + CORP + '/><path d="M5.5 18h13v4h-13z" fill="' + c + '"/>',
+    stilou: c => '<path d="M12 2 16 10l-1.5 5h-5L8 10z" fill="' + c + '" stroke="#605e5c" stroke-width=".7"/><path d="M12 5v6" stroke="#fff" stroke-width=".8"/><path d="M9 15h6v25H9z" ' + CORP + '/><path d="M9 19h6v3H9z" fill="' + c + '"/>',
+    pensula: c => '<path d="M12 2c3 4 4.5 7 4.5 10 0 1.5-1 3-2 3h-5c-1 0-2-1.5-2-3C7.5 9 9 6 12 2z" fill="' + c + '" stroke="#605e5c" stroke-width=".7"/><path d="M9.5 15h5v25h-5z" ' + CORP + '/><path d="M9.5 19h5v3h-5z" fill="' + c + '"/>'
+  };
+  function unealta(I, n) {
+    const U = (I.date && I.date.unelte) || {}, e = String(n.e || '');
+    const fel = e.split(':')[0].trim(), rest = e.indexOf(':') >= 0 ? e.slice(e.indexOf(':') + 1) : '';
+    const forma = (U.forme || {})[fel];
+    if (!forma || !FORME_UNEALTA[forma]) return icoanaNume(I, e, 24) || icoana(I, idDupaNume(I, fel), 24);
+    const culoare = (U.culori || {})[rest.split(',')[0].trim()] || '#605e5c';
+    return '<svg class="lh-ap-ico lh-ap-ico-unealta" aria-hidden="true" width="24" height="42" viewBox="0 0 24 42" focusable="false">' +
+      FORME_UNEALTA[forma](esc(culoare)) + '</svg>';
+  }
   /* un buton fără pictogramă Fluent: săgeată după nume (derulare, navigare) sau un pătrățel neutru — niciodată text */
   function faraIcoana(n, marime) {
     const e = String(n.e || '');
@@ -87,7 +115,9 @@
   /* ce se vede pe un nod: {text, icoana, sageata, mare} — regulile după forma elementului real (lățime/înălțime) */
   function afisare(n, ctx) {
     const t = n.t, w = (n.r || [0, 0, 0, 0])[2], h = (n.r || [0, 0, 0, 0])[3], fel = ctx.fel;
-    const eLansator = t === 'Button' && w <= 18 && h <= 18 && /\.\.\.$/.test(n.e || '');
+    /* lansatorul unui grup: butonul mic din colțul grupului; pe panglică îl recunoaștem după mărime (12–18 px), fiindcă numele
+       lui nu se termină mereu în „...” (Excel: „Page Setup”, „Sheet Options”, „Recommended Charts”) */
+    const eLansator = t === 'Button' && w <= 18 && h <= 18 && (/\.\.\.$/.test(n.e || '') || (fel === 'panglica' && w >= 12 && h >= 12));
     if (/^\[/.test(n.e || '')) return {};   // elementele de listă nesalvate în referință („[element de listă, nesalvat]”)
     if (fel === 'stare') {
       if (ctx.parinteUnit && ctx.parinteUnit.t === 'Slider') return {};
@@ -115,6 +145,7 @@
     if (eLansator) return { lansator: true };
     const mare = h >= 56;
     if (fel === 'panglica' || fel === 'meniu') {
+      if (ctx.inUnelte && t === 'SplitButton') return { unealta: true };
       if (ctx.inGalerie && t === 'ListItem') return ctx.galerieStiluri ? { text: n.e, previzualizare: true } : { icoana: true };
       if (ctx.inGalerie && t === 'Button') return { sageata: true };
       if (mare) return { icoana: true, text: faraPuncte(n.e), mare: true, sageata: t === 'MenuItem' };
@@ -159,7 +190,7 @@
       }
       if (ctx.parinteUnit && ctx.parinteUnit.t === 'ComboBox') return n.t === 'Button' ? 'meniu_derulant:' + baza + '/' + nume : null;
       if (ctx.inGalerie && n.t === 'ListItem') return 'meniu:' + e.replace(/^¶\s*/, '');
-      if (n.t === 'SplitButton') return null;   // părțile lui (butonul și săgeata) poartă țintele
+      if (n.t === 'SplitButton') return (n.c && n.c.length) || !e ? null : 'panglica:' + baza + '/' + e;   // părțile lui (butonul și săgeata) poartă țintele; fără părți = el însuși
       if (n.t === 'Button' && (n.r || [0, 0, 99])[2] <= 18 && /\.\.\.$/.test(e)) return 'lansator:' + baza;
       if (n.t === 'MenuItem' && !e) return null;
       if (n.t === 'MenuItem') return 'meniu_derulant:' + baza + '/' + e;
@@ -228,15 +259,16 @@
       html = '<span class="lh-ap-pista" aria-hidden="true"></span>';
     } else if (t === 'Thumb') {
       html = '<span class="lh-ap-cursor" aria-hidden="true"></span>';
-    } else if (eUnit && !(t === 'SplitButton')) {
+    } else if (eUnit && (t !== 'SplitButton' || !(n.c && n.c.length))) {
       const m = a.mare ? 32 : 16;
       let ic = '';
-      if (a.lansator) ic = glif('lansator', 12);
+      if (a.unealta) ic = unealta(I, n) || literaFaraIcoana(n, 24);
+      else if (a.lansator) ic = glif('lansator', 12);
       else if (a.caseta) ic = '<span class="lh-ap-caseta' + (t === 'RadioButton' ? ' lh-ap-radio' : '') + '" aria-hidden="true">' +
         (n.b === 1 ? glif(t === 'RadioButton' ? 'punct' : 'bifa', 12) : '') + '</span>';
       else if (a.icoana) {
         const id = n.id || (ct.parinteUnit && ct.parinteUnit.id) || idDupaNume(I, n.e) || (ct.parinteUnit && idDupaNume(I, ct.parinteUnit.e));
-        ic = icoana(I, id, m);
+        ic = (!n.id && ct.fel === 'panglica' && icoanaNume(I, n.e, m)) || icoana(I, id, m);
         if (!ic && ct.fel === 'titlu') ic = glif(/Minimize/.test(n.e) ? 'minim' : /Maximize|Restore/.test(n.e) ? 'maxim' : /Close/.test(n.e) ? 'inchide' : /Help/.test(n.e) ? 'ajutor' : 'cauta', 16);
         if (!ic && ct.inTitluDialog) ic = glif(/Închidere|Close/.test(n.e) ? 'inchide' : 'ajutor', 14);
         if (!ic && ct.fel === 'stare') ic = glif(/Zoom Out/.test(n.e) ? 'minus' : /Zoom In/.test(n.e) ? 'plus' : /Read Mode/.test(n.e) ? 'citire' : /Web Layout/.test(n.e) ? 'web' : /Print Layout/.test(n.e) ? 'pagina' : 'punct', 14);
@@ -249,6 +281,20 @@
       const sag = a.sageata ? glifSageata : '';
       if (a.mare) el.classList.add('lh-ap-mare');
       if (a.rand) el.classList.add('lh-ap-rand');
+      if (a.unealta) {
+        /* unealta aleasă: una singură în galerie; alegerea se ține minte pe instanță (panglica se redesenează la schimbarea filei) */
+        const cheieU = ct.cheie + '/' + ((ct.listaUnelte || {}).e || '');
+        I._unealta = I._unealta || {};
+        el.classList.add('lh-ap-unealta');
+        const pune = on => { el.classList.toggle('lh-ap-ales', on); el.setAttribute('aria-pressed', on ? 'true' : 'false'); };
+        pune(I._unealta[cheieU] === n.e);
+        el.addEventListener('click', () => {
+          if (n.a === 0) return;
+          I._unealta[cheieU] = n.e;
+          if (el.parentNode) el.parentNode.querySelectorAll('.lh-ap-unealta').forEach(x => { x.classList.remove('lh-ap-ales'); x.setAttribute('aria-pressed', 'false'); });
+          pune(true);
+        });
+      }
       if (a.previzualizare) el.classList.add('lh-ap-dala');
       html = prev + ic + txt + sag;
       if (!a.text && n.e) el.setAttribute('aria-label', n.e);
@@ -295,6 +341,8 @@
       if (ct.fel === 'panglica' && t === 'Group' && ct.adancime === 2) c2.grup = n.e;
       if (eUnit) c2.parinteUnit = n;
       if (t === 'DataGrid' || (t === 'MenuItem' && !n.e)) c2.inGalerie = true;
+      /* galeria de unelte: orice List ai cărei copii sunt SplitButton fără idMso și fără părți (Draw › Drawing Tools) */
+      if (t === 'List' && n.c.some(c => c.t === 'SplitButton' && !c.id && !(c.c && c.c.length))) { c2.inUnelte = true; c2.listaUnelte = n; }
       if (n.id === 'QuickStylesGallery') c2.galerieStiluri = true;
       if (t === 'TitleBar') c2.inTitluDialog = ct.fel === 'dialog';
       if (t === 'SplitButton' && h(n) >= 56) c2.splitMare = true;
@@ -338,5 +386,5 @@
     return el;
   }
 
-  L._modul('panglica', { deseneaza, icoana, glif, svg, felSuprafata, tintaImplicita, afisare, esc });
+  L._modul('panglica', { deseneaza, icoana, icoanaNume, unealta, glif, svg, felSuprafata, tintaImplicita, afisare, esc });
 })();
