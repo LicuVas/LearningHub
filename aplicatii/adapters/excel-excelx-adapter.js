@@ -19,6 +19,10 @@
      o [...], ok                          variante de răspuns sub foaie (foaia e de încercat; verdictul = clicul pe variantă)
      verifica {...}, teste [{ce, ...}]    vezi mai jos
      cols, rows, panglica                 NU se folosesc: Excelul din bibliotecă are mărimea și panglica lui (nu se reduce interfața)
+     doarMouse true                       Copierea și Lipirea trebuie date cu mouse-ul (meniul de clic dreapta sau panglica), nu cu
+                                          Ctrl+C / Ctrl+V: se citește din evenimentele bibliotecii (gestul fiecărei copieri / lipiri)
+     variante true                        după „Corect” apare „Exersează pe variante”: aceeași sarcină pe un tabel mutat, cu alte nume și
+                                          numere (3 corecte la rând = stăpânit; seria se ține în aceeași cheie ca pe simulatorul vechi)
    VERIFICAREA (Q.verifica; toate cheile prezente trebuie să fie adevărate), pe starea bibliotecii:
      unde 'caseta'|'bara'|'fx'|'fila:data'|'grup:Number'|'foaie:Excursie'|'zoom'|'stare'|'coloana:C'|'rand:3'|'celula:B2'|'x:*'
                                           ultimul loc ATINS din fereastră (un șir sau o listă de variante)
@@ -336,6 +340,157 @@
     return c;
   }
 
+  /* ---------- „Exersează pe variante” (Q.variante): aceeași sarcină pe un tabel mutat, cu alte nume și numere ----------
+     Regulile variantei și cheia în care se ține seria sunt cele ale simulatorului vechi (jocuri/_motor/tip-excel.js, 25-27.09.2026),
+     aduse aici întocmai, ca elevul să-și păstreze seria: tabelul se mută cu 1-2 rânduri / o coloană, numele se schimbă doar în
+     tabelele cu elevi (același gen), numerele se schimbă dacă verificarea nu le așteaptă ca atare; textul sarcinii și ce se
+     așteaptă se schimbă împreună. Foaia variantei e tot Excelul din bibliotecă (altă instanță, sub sarcină). */
+  const COL = i => { let t = ''; for (let n = i + 1; n > 0; n = Math.floor((n - 1) / 26)) t = String.fromCharCode(65 + (n - 1) % 26) + t; return t; };
+  const NUME = ['Andrei', 'Bianca', 'Cristi', 'Diana', 'Eric', 'Flavia', 'George', 'Ioana', 'Luca', 'Maria', 'Nicu', 'Oana', 'Radu', 'Sara', 'Tudor', 'Vlad'];
+  const MASC = new Set(['Andrei', 'Cristi', 'Eric', 'George', 'Luca', 'Nicu', 'Radu', 'Tudor', 'Vlad', 'Dan', 'Bogdan', 'Mihai', 'Matei', 'Ion']);
+  const rnd = n => Math.floor(Math.random() * n);
+  const esteFem = n => !MASC.has(n) && /(a|Carmen)$/.test(n);
+  const genitivFem = n => /ca$/.test(n) ? n.slice(0, -1) + 'ăi' : /a$/.test(n) ? n.slice(0, -1) + 'ei' : n + 'ei';
+  const CAP_ELEVI = /^(Elev|Elevul|Elevi|Nume|Numele)$/;
+  const DEPL = [[0, 1], [1, 0], [1, 1], [2, 0], [2, 1]];
+  const colIdx = c => c.split('').reduce((x, ch) => x * 26 + ch.charCodeAt(0) - 64, 0) - 1;
+  const mutaAdr = (a, dr, dc) => String(a).replace(/(\$?)([A-Z]{1,2})(\$?)(\d+)/g, (m, d1, c, d2, r) => d1 + COL(colIdx(c) + dc) + d2 + (Number(r) + dr));
+  function mutaFormula(f, dr, dc) {
+    let out = '', q = false, buf = '';
+    const flush = () => { out += buf.replace(/(^|[^A-Za-z])(\$?[A-Z]{1,2}\$?\d+)(?![A-Za-z(])/g, (m, pre, ref) => pre + mutaAdr(ref, dr, dc)); buf = ''; };
+    for (const ch of f) { if (ch === '"') { if (!q) flush(); else { out += buf; buf = ''; } q = !q; out += ch; continue; } buf += ch; }
+    if (q) out += buf; else flush();
+    return out;
+  }
+  /* adresele din textul sarcinii: „B6”, „coloana B”, „rândul 6”; nu în etichete și nici între <kbd> și </kbd> (o tastă, ex. F4) */
+  function rescrieText(t, mA, mC, mR, nume) {
+    let kbd = false;
+    return String(t || '').split(/(<[^>]*>)/).map(b => {
+      if (b.startsWith('<')) { if (/^<kbd/i.test(b)) kbd = true; else if (/^<\/kbd/i.test(b)) kbd = false; return b; }
+      if (kbd) return b;
+      return b.replace(/\$?\b[A-Z]{1,2}\$?\d{1,2}\b/g, r => mA(r))
+        .replace(/\b(coloan(?:a|ei|ele))(\s+)([A-Z]{1,2})\b/g, (m, w, sp, c) => w + sp + mC(c))
+        .replace(/(rând(?:ul|ului))(\s+)(\d+)\b/g, (m, w, sp, n) => w + sp + mR(Number(n)))
+        .replace(/[A-ZĂÂÎȘȚ][a-zăâîșț]+/g, w => (nume && nume[w]) || w);
+    }).join('');
+  }
+  const areCheie = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
+  function varianta(Q) {
+    const [dr, dc] = DEPL[rnd(DEPL.length)], V = JSON.parse(JSON.stringify(Q.verifica || {}));
+    const cells = {}, folosite = new Set(), nume = {};
+    const ramanNr = new Set(Object.values((Q.verifica || {}).valori || {}).filter(v => typeof v === 'number'));
+    const capElevi = Object.entries(Q.cells || {}).filter(([a, v]) => /^A\d+$/.test(a) && typeof v === 'string' && CAP_ELEVI.test(v.trim())).map(([a]) => Number(a.slice(1))).sort((x, y) => x - y)[0];
+    Object.entries(Q.cells || {}).forEach(([a, v]) => {
+      let x = v; const p = a.match(/^([A-Z]+)(\d+)$/);
+      if (typeof v === 'number') { if (ramanNr.has(v)) x = v; else if (Number.isInteger(v) && v >= 1 && v <= 10) x = 1 + rnd(10); else if (Number.isInteger(v)) x = Math.max(1, Math.round(v * (0.5 + Math.random()))); else { const d = (String(v).split('.')[1] || '').length; x = Number((v * (0.6 + Math.random() * 0.8)).toFixed(d)); } }
+      else if (typeof v === 'string' && capElevi && p[1] === 'A' && Number(p[2]) > capElevi && /^[A-ZĂÂÎȘȚ][a-zăâîșț]+$/.test(v) && !/^(Suma|Media|Maxim|Minim|Total|Luni|Marți|Miercuri|Joi|Vineri|Sâmbătă|Duminică)$/.test(v)) {
+        if (!nume[v]) {
+          const fem = esteFem(v), pool = NUME.filter(n => esteFem(n) === fem && !folosite.has(n)), din = pool.length ? pool : NUME.filter(n => !folosite.has(n));
+          const n = din[rnd(din.length)]; folosite.add(n); nume[v] = n;
+          if (fem && esteFem(n)) nume[genitivFem(v)] = genitivFem(n);
+        }
+        x = nume[v];
+      } else if (typeof v === 'string' && v.startsWith('=')) x = mutaFormula(v, dr, dc);
+      cells[mutaAdr(a, dr, dc)] = x;
+    });
+    const mA = a => mutaAdr(a, dr, dc), mZ = z => String(z).split(':').map(mA).join(':');
+    const mO = o => Object.fromEntries(Object.entries(o).map(([k, v]) => [mZ(k), typeof v === 'string' && v.startsWith('=') ? mutaFormula(v, dr, dc) : v]));
+    if (V.sel) V.sel = mA(V.sel);
+    if (V.zona) V.zona = mZ(V.zona);
+    if (V.activa) V.activa = mA(V.activa);
+    ['valori', 'formule', 'format', 'tip'].forEach(k => { if (V[k]) V[k] = mO(V[k]); });
+    if (Object.keys(nume).length) {
+      const nn = t => typeof t === 'string' && areCheie(nume, t) ? nume[t] : t;
+      const nf = t => typeof t === 'string' && t.startsWith('=') ? t.replace(/"([^"]*)"/g, (m, x) => '"' + x.replace(/[A-ZĂÂÎȘȚ][a-zăâîșț]+/g, w => areCheie(nume, w) ? nume[w] : w) + '"') : t;
+      if (V.valori) V.valori = Object.fromEntries(Object.entries(V.valori).map(([k, v]) => [k, nn(v)]));
+      if (V.formule) V.formule = Object.fromEntries(Object.entries(V.formule).map(([k, v]) => [k, nf(v)]));
+      Object.keys(cells).forEach(a => { cells[a] = nf(cells[a]); });
+    }
+    if (V.umplut) V.umplut = Object.fromEntries(Object.entries(V.umplut).map(([k, d]) => [mA(k), d.map(mA)]));
+    if (V.gol) V.gol = V.gol.map(mA);
+    if (V.imbinat) V.imbinat = mZ(V.imbinat);
+    if (V.sortat) V.sortat = Object.assign({}, V.sortat, { zona: mZ(V.sortat.zona), dupa: V.sortat.dupa.map(k => Object.assign({}, k, { col: mA(k.col + '1').replace(/\d+$/, '') })) });
+    if (V.grafic) V.grafic = Object.assign({}, V.grafic, { zona: mZ(V.grafic.zona) });
+    let q = rescrieText(Q.q, r => mutaAdr(r, dr, dc), c => COL(colIdx(c) + dc), n => n + dr, nume);
+    /* „Alege celula …”: tabelul mutat ar cere aceeași celulă față de tabel; varianta cere ALTĂ celulă din tabel */
+    if (Object.keys(V).length === 1 && V.sel) {
+      const p = V.sel.match(/^([A-Z]+)(\d+)$/), poz = Object.keys(cells).map(a => a.match(/^([A-Z]+)(\d+)$/)).filter(Boolean);
+      if (p && poz.length > 1) {
+        const cs = poz.map(m => colIdx(m[1])), rs = poz.map(m => Number(m[2]));
+        const c1 = Math.min(...cs), c2 = Math.max(...cs), r1 = Math.min(...rs), r2 = Math.max(...rs);
+        const orig = String((Q.verifica || {}).sel || ''); let nc, nr, g = 0;
+        do { nc = c1 + rnd(c2 - c1 + 1); nr = r1 + rnd(r2 - r1 + 1); g++; }
+        while (g < 200 && (COL(nc) + nr === V.sel || COL(nc) + nr === orig || (COL(nc) === p[1] || nr === Number(p[2])) && rnd(3)));
+        const nou = COL(nc) + nr, vc = p[1], vr = Number(p[2]);
+        q = rescrieText(q, r => r.replace(/\$/g, '') === V.sel ? nou : r, c => c === vc ? COL(nc) : c, n => n === vr ? nr : n, null);
+        V.sel = nou;
+      }
+    }
+    return Object.assign({}, Q, { cells, verifica: V, q, _practica: true });
+  }
+  const doarRecitire = () => { try { return !!(W.JocMotor && W.JocMotor.recitire && W.JocMotor.recitire()); } catch (e) { return false; } };
+  function cheiePractica(Q) {
+    let h = 0; const t = (Q.q || '') + JSON.stringify(Q.verifica || {});
+    for (let i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) >>> 0;
+    let p = ''; try { p = localStorage.getItem('learninghub_active_profile') || ''; } catch (e) { /* */ }
+    return 'lh_excel_exersat' + (p && p !== '_guest' ? '@' + p : '') + '|' + h.toString(36);
+  }
+  const inchideFoaia = el => { const c = el && CTX.get(el); if (c && c.inst) { try { c.inst.inchide(); } catch (e) { /* */ } c.inst = null; } };
+  /* butonul de sub sarcina rezolvată */
+  function ofera(Q, body, api) {
+    if (!Q.variante || Q._practica || body.querySelector('.xl-exloc')) return;
+    const loc = document.createElement('div'); loc.className = 'xl-exloc'; body.appendChild(loc);
+    const k = cheiePractica(Q);
+    loc._ofera = () => {
+      let st = {}; try { st = JSON.parse(localStorage.getItem(k)) || {}; } catch (e) { /* */ }
+      loc.innerHTML = `<button class="btn ghost" type="button" data-exs="1" style="margin-top:10px">🔁 Exersează pe variante${st.stapanit ? ' (✓ stăpânit)' : ' (3 la rând = stăpânit)'}</button>`;
+      loc.querySelector('[data-exs]').onclick = () => exerseaza(Q, loc, api);
+    };
+    loc._ofera();
+  }
+  function exerseaza(Q, loc, api) {
+    const k = cheiePractica(Q); let st = { serie: 0, stapanit: false };
+    try { st = JSON.parse(localStorage.getItem(k)) || st; } catch (e) { /* */ }
+    const Qv = varianta(Q);
+    inchideFoaia(loc.querySelector('#xexb'));
+    /* o singură foaie pe ecran: cât exersează, sarcina de bază, mesajul ei și „Mai departe” stau ascunse */
+    if (!loc._ascunse) {
+      const corp = loc.parentElement, stiva = corp && corp.closest('.stack');
+      const frati = stiva ? [...stiva.children].filter(x => x !== corp && !x.contains(loc)) : [];
+      loc._ascunse = [...(corp ? corp.children : [])].filter(x => x !== loc).concat(frati).filter(x => x.style.display !== 'none');
+      loc._ascunse.forEach(x => { x.style.display = 'none'; });
+    }
+    loc.innerHTML = `<div class="xl-ex" style="margin-top:4px">
+    <div class="row" style="justify-content:space-between;align-items:center"><div class="eyebrow">Exersează pe o variantă · serie: ${st.serie}/3 corecte la rând${st.stapanit ? ' · ✓ stăpânit' : ''}</div>
+    <button class="btn ghost sm" type="button" data-exg="1">✕ Gata cu exersarea</button></div>
+    <div class="q" style="margin:6px 0">${Qv.q}</div><div id="xexb"></div><div id="xexf" aria-live="polite"></div><div class="row" id="xexn"></div></div>`;
+    const foaie = loc.querySelector('#xexb'), fb = loc.querySelector('#xexf'), nav = loc.querySelector('#xexn');
+    loc.querySelector('[data-exg]').onclick = () => {
+      inchideFoaia(foaie); (loc._ascunse || []).forEach(x => { x.style.display = ''; }); loc._ascunse = null; loc._ofera();
+      /* foaia sarcinii de bază revine cum a rămas: rezolvată (biblioteca a închis-o când s-a deschis foaia variantei) */
+      const baza = CTX.get(loc.parentElement);
+      if (baza && !(baza.root && baza.root.isConnected)) { baza.inst = null; baza.root = null; baza.deschide().then(() => { if (baza.inst) executa(baza); }); }
+    };
+    try { loc.scrollIntoView({ block: 'start', behavior: 'smooth' }); } catch (e) { /* */ }
+    let gata = false;
+    const salveaza = () => { try { if (!doarRecitire()) localStorage.setItem(k, JSON.stringify(st)); } catch (e) { /* */ } };
+    const alta = () => { nav.innerHTML = '<button class="btn" type="button" data-exa="1">🔁 Altă variantă</button>'; nav.querySelector('[data-exa]').onclick = () => exerseaza(Q, loc, api); };
+    const apiP = {
+      esc: api.esc, shuffle: api.shuffle, done: () => gata, attempts: () => 0,
+      checkButton: fn => { nav.innerHTML = '<button class="btn primary" type="button" data-exv="1">Verifică varianta</button>'; nav.querySelector('[data-exv]').onclick = () => { if (!gata) fn(); }; return nav; },
+      resolve: (ok, msg) => {
+        if (ok) { gata = true; st.serie++; if (st.serie >= 3) st.stapanit = true; fb.innerHTML = `<div class="fb ok"><strong>Corect!</strong> Serie: ${st.serie}/3${st.serie >= 3 ? ' — <b>stăpânit ✓</b>. Poți merge mai departe sau mai exersa.' : ''}</div>`; }
+        else { st.serie = 0; fb.innerHTML = `<div class="fb bad"><strong>Nu încă.</strong> ${msg || ''} Seria o iei de la capăt.</div>`; }
+        salveaza();
+        if (ok) alta();
+      },
+      revealButton: fn => { if (!nav.querySelector('[data-exr]')) { nav.insertAdjacentHTML('beforeend', '<button class="btn ghost" type="button" data-exr="1">Arată-mi</button>'); nav.querySelector('[data-exr]').onclick = fn; } },
+      giveUp: html => { gata = true; st.serie = 0; salveaza(); fb.innerHTML = `<div class="fb bad"><strong>Așa se face:</strong> ${html}</div>`; alta(); },
+      feedback: () => {}, nav: () => nav
+    };
+    render(Qv, foaie, apiP);
+  }
+
   /* ---------- render / rezolva / gresit ---------- */
   function render(Q, body, api) {
     css();
@@ -353,6 +508,18 @@
       ctx.loc = l;
       if (!ctx.robot && /^(celula:|rand:|coloana:|colt$)/.test(l)) { const s = stare(ctx); if (!s || l !== 'celula:' + activaPe(s, s.foaie_activa)) ctx.clicInFoaie = true; }
     }, true);
+
+    /* doarMouse: de unde au venit Copierea și Lipirea (gestul din evenimentul bibliotecii: ctrl_c / ctrl_v / Enter = taste) */
+    if (Q.doarMouse) {
+      const asculta = ev => {
+        if (!host.isConnected) { W.removeEventListener('lh-aplicatie', asculta); return; }
+        const d = ev.detail || {};
+        if (d.aplicatie !== 'excel' || ctx.robot || /^(ctrl_|tasta_)/.test(d.gest || '')) return;
+        if (d.actiune === 'copiere') ctx.mc = true;
+        if (d.actiune === 'lipire') ctx.mp = true;
+      };
+      W.addEventListener('lh-aplicatie', asculta);
+    }
 
     /* testele numite, bifate pe loc */
     let semn = '';
@@ -385,15 +552,18 @@
       api.checkButton(() => {
         const s = stare(ctx);
         if (!s) { api.resolve(false, 'Excel încă se încarcă. Așteaptă un moment și apasă din nou.'); return; }
+        if (Q.doarMouse && !(ctx.mc && ctx.mp)) { api.resolve(false, 'De data asta dă comenzile cu mouse-ul: clic dreapta pe zonă › Copiere (Copy), apoi clic dreapta pe celula nouă › Lipire (Paste), sau butoanele din fila Pornire (Home).'); return; }
         const p = probleme(ctx, V, s);
-        if (!p.length) { api.resolve(true); return; }
+        if (!p.length) { api.resolve(true); ofera(Q, body, api); return; }
         api.resolve(false, p.slice(0, 2).join(' '));
         api.revealButton(() => { executa(ctx); bifeaza(); api.giveUp(solutie(ctx, V)); });
         try { ctx.inst.focus(); } catch (e) { /* */ }   // după „Nu încă”, tastele (Ctrl+Z) ajung iar la foaie
       });
     }
 
-    L.gata.then(() => L.deschide('excel', { loc: host, continut: continutDe(Q), focus: !!Q.start }))
+    /* deschiderea foii; se cheamă din nou după „Exersează pe variante” (biblioteca ține un singur Excel deschis pe pagină:
+       foaia variantei a luat locul foii sarcinii) */
+    ctx.deschide = () => L.gata.then(() => L.deschide('excel', { loc: host, continut: continutDe(Q), focus: !!Q.start }))
       .then(inst => {
         if (!host.isConnected) { try { inst.inchide(); } catch (e) { /* */ } return; }
         ctx.inst = inst;
@@ -411,12 +581,14 @@
         bifeaza();
       })
       .catch(e => { nota.textContent = 'Excel nu s-a încărcat: ' + (e && e.message ? e.message : e) + '. Reîncarcă pagina.'; });
+    ctx.deschide();
   }
   function rezolva(Q, body) {
     const ctx = CTX.get(body);
     if (!ctx) return;
     if (Q.o) { const b = body.querySelector(`.opt[data-k="${Q.ok}"]`); if (b) b.click(); return; }
     executa(ctx);
+    if (Q.doarMouse) ctx.mc = ctx.mp = true;
   }
   function gresit(Q, body) {
     const ctx = CTX.get(body);
@@ -431,4 +603,9 @@
      lecția care folosește adaptorul). ExcelI = lecția 2 (legată); celelalte sunt pregătite pentru lecțiile 4-11, care se leagă
      doar după ce cheile lor de verificare (vezi sus) sunt aduse aici și probate. */
   ['ExcelX', 'ExcelI', 'ExcelPlus', 'ExcelXF', 'ExcelF', 'ExcelFn', 'ExcelD', 'ExcelS', 'ExcelG'].forEach(n => { W[n] = TipExcelX; });
+  /* Lecția 4 își definește ExcelPlus chiar în pagină (un înveliș peste JocExcel din tip-excel.js: meniul de clic dreapta,
+     ștergerea de rânduri … desenate peste foaia veche). Cu biblioteca, învelișul acela nu mai are ce înveli: primește aici
+     JocExcel = tipul de pe bibliotecă și îi dă exercițiul mai departe neschimbat (ascultătorii lui caută foaia veche, `.gw`,
+     care nu mai există, deci nu fac nimic). Așa lecția se leagă doar din blocul de <script src>, fără să i se atingă pagina. */
+  if (!W.JocExcel) W.JocExcel = TipExcelX;
 })();
