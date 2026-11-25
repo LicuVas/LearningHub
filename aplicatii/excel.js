@@ -560,10 +560,13 @@
         if (p && o && o.imbinat && f.merge.indexOf(o.imbinat) < 0) f.merge.push(o.imbinat);
       });
     }
+    /* legarea lecțiilor excelx (25.11.2026; vechiul excelx-interfata.js: Q.zoom = zoom-ul de pornire, zoom-ul e al fiecărei foi):
+       CONȚINUT opțional `zoom` (registrul cu o foaie) și `foi[i].zoom`, 10-400; lipsă = 100 */
+    const zoomBun = z => z != null && isFinite(+z) && +z >= 10 && +z <= 400;
     /* parametrii de CONȚINUT (lecția alege foaia, nu interfața): celule, selectie, format (formatul `start` al scenariilor),
        plus foi: [{nume, celule, format}] și nume (registrul deja salvat) */
-    if (Array.isArray(c.foi) && c.foi.length) c.foi.forEach((x, i) => { const f = foaieNoua(String(x.nume || 'Sheet' + (i + 1))); puneStart(f, x.celule, x.format, x.latimi); if (/^#?[0-9a-f]{6}$/i.test(String(x.culoare || ''))) f.culoare = '#' + String(x.culoare).replace('#', '').toUpperCase(); M.foi.push(f); });
-    else { const tab = ((Z.file_foi || {}).c || []).find(x => x.t === 'TabItem'); M.foi.push(foaieNoua(tab ? tab.e : 'Sheet1')); puneStart(M.foi[0], c.celule, c.format, c.latimi); }
+    if (Array.isArray(c.foi) && c.foi.length) c.foi.forEach((x, i) => { const f = foaieNoua(String(x.nume || 'Sheet' + (i + 1))); puneStart(f, x.celule, x.format, x.latimi); if (/^#?[0-9a-f]{6}$/i.test(String(x.culoare || ''))) f.culoare = '#' + String(x.culoare).replace('#', '').toUpperCase(); if (zoomBun(x.zoom)) f.zoom = +x.zoom; M.foi.push(f); });
+    else { const tab = ((Z.file_foi || {}).c || []).find(x => x.t === 'TabItem'); M.foi.push(foaieNoua(tab ? tab.e : 'Sheet1')); puneStart(M.foi[0], c.celule, c.format, c.latimi); if (zoomBun(c.zoom)) M.foi[0].zoom = +c.zoom; }
     if (c.selectie) {
       const parti = String(c.selectie).split(',').map(zonaDin).filter(Boolean);
       if (parti.length) F().sel = { activa: { r: parti[0].r0, c: parti[0].c0 }, zone: parti };
@@ -1118,6 +1121,10 @@
       if (activa && M.edit && M.edit.text === '') delete cel[M.edit.a];
       return cel;
     }
+    /* eticheta filei deschise a panglicii, citită de pe rândul filelor (ecranul = starea); null cât panglica nu e desenată */
+    function filaPanglicaStare() {
+      try { const t = RAND_FILE.querySelector('[data-lh-tip="TabItem"][aria-selected="true"]'); return t ? t.getAttribute('data-lh-eticheta') : null; } catch (e) { return null; }
+    }
     I.stare = () => {
       const f = F(), cel = celuleDe(f, true), fmt = {};
       Object.keys(f.fmt).forEach(a => {
@@ -1145,6 +1152,10 @@
       Object.keys(INALT).forEach(r => { inaltimi[String(+r + 1)] = INALT[r]; });
       return { celule: cel, format_celule: fmt, latimi_coloane: latimi, inaltimi_randuri: inaltimi, selectie: selectieStare(), nume_fisier: M.nume, fereastra_mesaj: M.mesaj,
         ramane_in_editare: !!M.edit, foi: M.foi.map(x => x.nume), foaie_activa: F().nume, foi_ascunse: M.foi.filter(x => x.ascunsa).map(x => x.nume), zoom: M.zoom, culori_file: culoriFile(), dialog: dialogStare(),
+        /* legarea lecțiilor excelx (25.11.2026): ce verificau simulatoarele vechi și nu era în stare — fila panglicii deschisă (eticheta de
+           pe ecran: „Home”, „Data”…), zoom-ul fiecărei foi (zoom = doar al foii active) și selecția fiecărei foi ({activa, zona}, ca `selectie`) */
+        fila_panglica: filaPanglicaStare(), zoom_foi: Object.fromEntries(M.foi.map(x => [x.nume, x.zoom || 100])),
+        selectii_foi: Object.fromEntries(M.foi.map(x => [x.nume, { activa: adr(x.sel.activa.r, x.sel.activa.c), zona: x.sel.zone.map(zonaText).join(',') }])),
         modificat: !!M.mod, foi_celule: Object.fromEntries(M.foi.map(x => [x.nume, celuleDe(x, x === f)])), inchideri: nInchideri, deschideri: nDeschideri,
         pagina_backstage: backstage ? backstage.pagina : null, titlu_fereastra: titlu(),
         grafice: stareGrafice(), grafic_activ: !!M.gr, grafic_element_ales: M.gr ? (M.gr.parte === 'titlu' ? 'Chart Title' : M.gr.parte === 'legenda' ? 'Legend' : M.gr.parte === 'serie' ? 'Series' : 'Chart Area') : null,
@@ -1504,6 +1515,33 @@
     pozitie(stareEl, SUP.bara_stare.r, [0, SUP.bara_stare.r[1]]);
     josIn.appendChild(stareEl);
     jos.appendChild(josIn);
+    /* legarea lecțiilor excelx (25.11.2026): fereastra îngustă (coloana lecției, ~670 px). Bara de stare e desenată la lățimea
+       referinței (1366 px), deci zoom-ul și butoanele de vedere rămâneau în afara ferestrei, la capătul unei benzi de 22 px de
+       derulat lateral; simulatoarele vechi (excelx-interfata.js) aveau zoom-ul mereu pe ecran, iar lecția VIII/2 îl cere
+       („Zoom-ul e jos, în capătul din dreapta al barei de stare”). Ca în Excel, partea din DREAPTA a barei (rezumatul selecției,
+       Display Settings, vederile, zoom-ul) stă lipită de marginea din dreapta a ferestrei: se mută spre stânga cu cât lipsește
+       din lățime, cel mult până lângă partea din stânga; ce n-ar mai avea loc înaintea butoanelor de vedere se ascunde (Excel
+       scoate și el din bară ce nu încape). La lățimea referinței sau mai mult, nimic nu se mișcă. Sub ~570 px (telefon) vederile
+       ajung lângă textul din stânga, iar restul rămâne de derulat lateral, ca panglica. */
+    const LAT_STARE = SUP.bara_stare.r[2] + 2 * SUP.bara_stare.r[0] || 1366;
+    let latJos = LAT_STARE;
+    function ancoreazaStare() {
+      try {
+        const copii = [...stareEl.children], st = c => parseFloat(c.style.left) || 0, PRAG = LAT_STARE * 0.45;
+        const dreapta = copii.filter(c => st(c) >= PRAG), stanga = copii.filter(c => st(c) < PRAG);
+        if (!dreapta.length || !jos.clientWidth) return;
+        const k = (josIn.getBoundingClientRect().width / latJos) || 1;   // zoom-ul CSS al barei pe ecranele mici
+        const viz = jos.clientWidth / k;
+        const cap = Math.max(0, ...stanga.map(c => st(c) + (parseFloat(c.style.width) || 0))) + 8;
+        const vederi = dreapta.find(c => /^bara_stare/.test(c.getAttribute('data-lh-tinta') || '') && c.getAttribute('data-lh-id') === 'Normal') || dreapta[dreapta.length > 1 ? 1 : 0];
+        const d = Math.round(Math.max(0, Math.min(LAT_STARE - viz, st(vederi) - cap)));
+        dreapta.forEach(c => { c.style.transform = d ? 'translateX(' + (-d) + 'px)' : ''; c.style.visibility = d && st(c) - d < cap - 0.5 ? 'hidden' : ''; });
+        latJos = LAT_STARE - d;
+        josIn.style.width = d ? latJos + 'px' : '';
+        stareEl.style.width = (SUP.bara_stare.r[2] - d) + 'px';
+      } catch (e) { /* */ }
+    }
+    if (typeof ResizeObserver === 'function') { try { new ResizeObserver(() => ancoreazaStare()).observe(jos); } catch (e) { /* */ } }
     /* A2 (runda 10): rezumatul selecției în bara de stare. Referința uia_excel.json › bara_stare#selectie_numere (B2:C4 = 9, 7 /
        8, 10 / 6, 5): „Average 7,5” [859,2; 74,4], „Count 6” [933,6; 55,2], „Sum 45” [988,8; 53,6], lipite, Sum se termină la
        1042,4, sus 746,4, înalte 20,8; Display Settings nu apare. Lățimea unui buton = textul + marginea lui din referință;
@@ -2061,6 +2099,7 @@
       if (elMod) { elMod.firstChild.textContent = mod; elMod.setAttribute('data-lh-eticheta', 'Cell Mode ' + mod); }
       if (elZoomText) { const t = elZoomText.querySelector('.lh-ap-text') || elZoomText; t.textContent = M.zoom + ' %'; elZoomText.setAttribute('data-lh-eticheta', 'Zoom ' + M.zoom + ' %'); }
       rezumatSelectie();
+      ancoreazaStare();
       baraAvertisment();
       if (elTitlu) { const t = elTitlu.querySelector('.lh-ap-x-titlu'); if (t) t.textContent = titlu(); elTitlu.setAttribute('data-lh-eticheta', titlu()); }
       const gri = (sel, on) => root.querySelectorAll(sel).forEach(x => { x.classList.toggle('lh-ap-gri', !on); if (on) x.removeAttribute('aria-disabled'); else x.setAttribute('aria-disabled', 'true'); });
