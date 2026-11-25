@@ -51,7 +51,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--ui-panglica")
     a = ap.parse_args()
-    srv = http.server.ThreadingHTTPServer(("127.0.0.1", 8781), functools.partial(Tacut, directory=str(SITE)))
+    srv = http.server.ThreadingHTTPServer(("127.0.0.1", 0), functools.partial(Tacut, directory=str(SITE)))
     threading.Thread(target=srv.serve_forever, daemon=True).start()
     from playwright.sync_api import sync_playwright
     sageti = 0
@@ -72,7 +72,7 @@ def main():
                 pg = ctx.new_page()
                 erori = []
                 pg.on("pageerror", lambda e: erori.append(str(e)[:160]))
-                pg.goto("http://127.0.0.1:8781/" + cale, wait_until="load")
+                pg.goto("http://127.0.0.1:%d/" % srv.server_address[1] + cale, wait_until="load")
                 pg.evaluate("localStorage.clear();localStorage.setItem('lh_prezenta',JSON.stringify({refuz:Date.now()}))")
                 pg.reload(wait_until="load")
                 pg.evaluate("JocMotor.test.deblocheaza();document.getElementById('go-home').click()")

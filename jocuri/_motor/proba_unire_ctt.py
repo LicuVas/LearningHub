@@ -71,9 +71,9 @@ class _Tacut(http.server.SimpleHTTPRequestHandler):
 def server_local():
     h = functools.partial(_Tacut, directory=str(LH))
     http.server.ThreadingHTTPServer.allow_reuse_address = True
-    srv = http.server.ThreadingHTTPServer(("127.0.0.1", 8768), h)
+    srv = http.server.ThreadingHTTPServer(("127.0.0.1", 0), h)
     threading.Thread(target=srv.serve_forever, daemon=True).start()
-    return "http://127.0.0.1:8768"
+    return "http://127.0.0.1:%d" % srv.server_address[1]
 
 
 def context(br, prez_vechi=None, eu=None, lat=390):

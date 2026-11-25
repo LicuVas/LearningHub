@@ -41,7 +41,7 @@ def main():
     ap.add_argument("--tip-excel", help="servește ALT tip-excel.js (ex. versiunea dinainte de reparație), fără să-l pui pe disc")
     ap.add_argument("--capat", action="store_true", help="doar cazul „pagina derulată până la capăt” (vezi README §10)")
     a = ap.parse_args()
-    srv = http.server.ThreadingHTTPServer(("127.0.0.1", 8776), functools.partial(Tacut, directory=str(SITE)))
+    srv = http.server.ThreadingHTTPServer(("127.0.0.1", 0), functools.partial(Tacut, directory=str(SITE)))
     threading.Thread(target=srv.serve_forever, daemon=True).start()
     from playwright.sync_api import sync_playwright
     trageri = 0
@@ -57,7 +57,7 @@ def main():
             pg = ctx.new_page()
             erori = []
             pg.on("pageerror", lambda e: erori.append(str(e)[:160]))
-            pg.goto("http://127.0.0.1:8776/jocuri/%s/index.html" % a.joc, wait_until="load")
+            pg.goto("http://127.0.0.1:%d/jocuri/%s/index.html" % (srv.server_address[1], a.joc), wait_until="load")
             pg.evaluate("localStorage.clear();localStorage.setItem('lh_prezenta',JSON.stringify({refuz:Date.now()}))")
             pg.reload(wait_until="load")
             pg.evaluate("JocMotor.test.deblocheaza();document.getElementById('go-home').click()")
@@ -72,6 +72,7 @@ def main():
             pg.wait_for_timeout(300)
             celule = pg.evaluate("[...document.querySelectorAll('#body .gw td[data-a]')].map(t=>t.dataset.a)")
             cols = sorted({c[0] for c in celule})
+            cols_toate = list(cols)
             if not a.capat:   # loc de derulare sub pagină, ca foaia să poată fi dusă la marginea de SUS a ecranului
                 pg.evaluate("document.body.style.paddingBottom=(innerHeight*2)+'px'")
             # foaia tăiată SUS (antetul ei deasupra ecranului) și JOS (ultimele rânduri sub marginea de jos);
@@ -83,12 +84,16 @@ def main():
                   if(s==='capat'){window.scrollTo(0,document.documentElement.scrollHeight);return}
                   const tinta=typeof s==='number'?s:innerHeight-r.height+Number(String(s).split('-')[1]);window.scrollBy(0,r.top-tinta)}""", sus)
                 pg.wait_for_timeout(80)
-                # rândurile ale căror celule se văd întregi acum: elevul trage doar între ce vede
+                # rândurile și COLOANELE ale căror celule se văd întregi acum: elevul trage doar între ce vede
                 # „se vede” = în ecran ȘI neacoperită (bara de sus a jocului e lipită sus și acoperă ce trece pe sub ea)
-                vaz = pg.evaluate("""h=>{const eu=(t,x,y)=>{const e=document.elementFromPoint(x,y);return !!e&&e.closest('td[data-a]')===t};
-                  return [...new Set([...document.querySelectorAll('#body .gw td[data-a]')].filter(t=>{const r=t.getBoundingClientRect(),x=r.x+r.width/2;
-                    return r.top>=0&&r.bottom<=h&&eu(t,x,r.top+2)&&eu(t,x,r.bottom-2)}).map(t=>+t.dataset.a.slice(1)))].sort((x,y)=>x-y)}""", inalt)
-                if len(vaz) < 2:
+                # 07.11.2026: și coloanele. Din 29.09 foaia arată cel puțin A–J, mai lată decât caseta ei (1280 px: I–J
+                # ascunse în derularea casetei; 390 px: E–J), iar proba ochea J7, pe care elevul nu-l vede: 36 de „abateri”.
+                vede = pg.evaluate("""h=>{const eu=(t,x,y)=>{const e=document.elementFromPoint(x,y);return !!e&&e.closest('td[data-a]')===t};
+                  const v=[...document.querySelectorAll('#body .gw td[data-a]')].filter(t=>{const r=t.getBoundingClientRect(),x=r.x+r.width/2,y=r.y+r.height/2;
+                    return r.top>=0&&r.bottom<=h&&r.left>=0&&r.right<=innerWidth&&eu(t,x,r.top+2)&&eu(t,x,r.bottom-2)&&eu(t,r.left+2,y)&&eu(t,r.right-2,y)}).map(t=>t.dataset.a.match(/^([A-Z]+)(\\d+)$/));
+                  return {r:[...new Set(v.map(m=>+m[2]))].sort((x,y)=>x-y),c:[...new Set(v.map(m=>m[1]))].sort((x,y)=>x.length-y.length||(x<y?-1:x>y?1:0))}}""", inalt)
+                vaz, cols = vede["r"], vede["c"]
+                if len(vaz) < 2 or len(cols) < 3:
                     continue
                 perechi = [(cols[0] + str(vaz[0]), cols[-1] + str(vaz[-1])), (cols[-1] + str(vaz[-1]), cols[0] + str(vaz[0])),
                            (cols[1] + str(vaz[0]), cols[-2] + str(vaz[-1]))]
@@ -118,6 +123,49 @@ def main():
                     if not ok:
                         probleme.append("%dpx, foaia la %s: tras %s→%s, selectat %s (trebuia %s), pagina a sărit %d px" % (lat, sus, start, final, z, ast, salt))
                         print("  RĂU  " + probleme[-1])
+            if not a.capat:
+                # DINCOLO DE MARGINEA CASETEI (07.11.2026), ca în Excel: ținut apăsat dincolo de marginea din dreapta (stânga)
+                # a casetei foii -> caseta se derulează și zona crește până la ultima coloană de la început (până la A).
+                # Ridicat dincolo de foaie -> tragerea se încheie: caseta de nume arată iar celula activă, zona rămâne.
+                ultima = max(cols_toate, key=lambda c: (len(c), c))
+                cheie = lambda c: (len(c), c)
+                for sens in ("dreapta", "stanga"):
+                    pg.evaluate("""s=>{const g=document.querySelector('#body .gw');document.activeElement&&document.activeElement.blur&&document.activeElement.blur();
+                      g.scrollIntoView({block:'center'});g.scrollLeft=s==='dreapta'?0:g.scrollWidth}""", sens)
+                    pg.wait_for_timeout(150)
+                    info = pg.evaluate("""s=>{const g=document.querySelector('#body .gw'),b=g.getBoundingClientRect(),st=b.left+g.clientLeft,dr=st+g.clientWidth;
+                      const eu=(t,x,y)=>{const e=document.elementFromPoint(x,y);return !!e&&e.closest('td[data-a]')===t};
+                      const v=[...g.querySelectorAll('td[data-a]')].filter(t=>{const r=t.getBoundingClientRect();
+                        return r.left>=st&&r.right<=dr&&r.top>=0&&r.bottom<=innerHeight&&eu(t,r.x+r.width/2,r.y+r.height/2)});
+                      const rd=t=>+t.dataset.a.match(/\\d+/)[0],rs=[...new Set(v.map(rd))].sort((x,y)=>x-y),rand=rs.includes(3)?3:rs[0];
+                      const pe=v.filter(t=>rd(t)===rand).sort((x,y)=>x.getBoundingClientRect().left-y.getBoundingClientRect().left);
+                      const t=s==='dreapta'?pe[0]:pe[pe.length-1],r=t.getBoundingClientRect();
+                      return {a:t.dataset.a,x:r.x+r.width/2,y:r.y+r.height/2,st,dr,sl:g.scrollLeft}}""", sens)
+                    tx = info["dr"] + 40 if sens == "dreapta" else info["st"] - 40
+                    pg.mouse.move(info["x"], info["y"]); pg.mouse.down()
+                    for k in range(1, 7):
+                        pg.mouse.move(info["x"] + (tx - info["x"]) * k / 6, info["y"])
+                    pg.wait_for_timeout(900)
+                    z = pg.evaluate(ZONA) or ""
+                    sl = pg.evaluate("document.querySelector('#body .gw').scrollLeft")
+                    pg.mouse.up(); pg.wait_for_timeout(120)
+                    nb = (pg.evaluate("(document.querySelector('#body .nb')||{}).textContent||''") or "").strip()
+                    z2 = pg.evaluate(ZONA) or ""
+                    trageri += 1
+                    capete = [x.rstrip("0123456789") for x in z.split(":")] if ":" in z else []
+                    if sens == "dreapta":
+                        ok = len(capete) == 2 and z.startswith(info["a"] + ":") and cheie(capete[1]) >= cheie(ultima) and sl > info["sl"]
+                        trebuia = "de la %s până cel puțin la coloana %s, cu caseta derulată" % (info["a"], ultima)
+                    else:
+                        ok = len(capete) == 2 and capete[0] == "A" and z.endswith(":" + info["a"]) and sl < info["sl"]
+                        trebuia = "de la A până la %s, cu caseta derulată înapoi" % info["a"]
+                    ok = ok and nb == info["a"] and z2 == z
+                    if not ok:
+                        probleme.append("%dpx, dincolo de marginea din %s: pornit din %s, zona %s (după ridicare %s), caseta de nume %r, derulat %d→%d px (trebuia %s)"
+                                        % (lat, sens, info["a"], z, z2, nb, info["sl"], sl, trebuia))
+                        print("  RĂU  " + probleme[-1])
+                    else:
+                        print("  ok   %dpx, dincolo de marginea din %s: %s, caseta de nume %s, derulat %d→%d px" % (lat, sens, z, nb, info["sl"], sl))
             if erori:
                 probleme.append("%dpx: erori JavaScript: %s" % (lat, erori[:2]))
             ctx.close()

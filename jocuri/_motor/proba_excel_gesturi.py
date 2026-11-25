@@ -38,9 +38,9 @@ class Tacut(http.server.SimpleHTTPRequestHandler):
 def server_local():
     h = functools.partial(Tacut, directory=str(SITE))
     http.server.ThreadingHTTPServer.allow_reuse_address = True
-    srv = http.server.ThreadingHTTPServer(("127.0.0.1", 8771), h)
+    srv = http.server.ThreadingHTTPServer(("127.0.0.1", 0), h)
     threading.Thread(target=srv.serve_forever, daemon=True).start()
-    return "http://127.0.0.1:8771"
+    return "http://127.0.0.1:%d" % srv.server_address[1]
 
 
 def main():
@@ -53,6 +53,7 @@ def main():
     with sync_playwright() as p:
         br = p.chromium.launch()
         ctx = br.new_context(viewport={"width": 1366, "height": 900}, permissions=["clipboard-read", "clipboard-write"])
+        ctx.route("**/*", lambda r: r.continue_() if ("127.0.0.1" in r.request.url or "localhost" in r.request.url) else r.abort())   # REGULA 24 (07.11.2026): nimic spre serverele vii (contorul de vizitatori din prezenta.js pleca la teste-vasile)
         ctx.route("**/api/activitate", lambda r: r.fulfill(status=200, body='{"ok":true}', headers={"access-control-allow-origin": "*"}))
         pg = ctx.new_page()
         erori = []
@@ -117,7 +118,9 @@ def main():
         cel("A1").click(); pg.keyboard.type("Elev"); pg.keyboard.press("Tab")
         verifica(nb() == "B1", "Tab după scriere -> trece la dreapta (B1)")
         pg.keyboard.type("Nota"); pg.keyboard.press("Enter")
-        verifica(nb() == "B2", "Enter după scriere -> coboară (B2)")
+        # 07.11.2026: așteptarea veche (B2, scrisă pe 25.09) era dinainte de proba în Excel-ul REAL din 28.09
+        # (README §9, „Enter după Tab”): după un șir de Tab-uri, Enter coboară în coloana de START a șirului -> A2.
+        verifica(nb() == "A2", "Enter după Tab -> rândul următor, în coloana din care a pornit șirul (A2, ca în Excel): %s" % nb())
         verifica(cel("A1").inner_text().strip() == "Elev", "A1 arată „Elev”")
         verifica_corect("capul de tabel scris direct în celulă, acceptat")
         la(2, 1)

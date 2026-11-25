@@ -39,6 +39,15 @@ def blocheaza_externe(ctx):
     ctx.route("**/*", ruta)
 
 
+def primul_gest(pg):
+    """Ca elevul (07.11.2026): primul lui gest în pagină e o derulare. La el, întrebarea „Spune cine ești” a evidenței
+    (assets/js/prezenta.js, 300 px pe Pixel 7) se strânge într-o etichetă care nu stă peste nimic de apăsat. Fără gestul
+    ăsta, derularea poartei (programatică, fără gest) lăsa întrebarea pe loc: pe `excel-antrenament-viii` singurul nivel
+    stătea sub ea, iar clicul expira („Page.click: Timeout 6000ms”), deși elevul trece."""
+    pg.mouse.wheel(0, 1)
+    pg.wait_for_timeout(150)
+
+
 def strip_tags(s):
     return htmlmod.unescape(re.sub(r"<[^>]+>", " ", s or ""))
 
@@ -272,6 +281,7 @@ def run(slug, fails, warns):
             pg.on("pageerror", lambda e: errs.append(str(e)))
             pg.goto(url, timeout=30000)  # fonturile Google pot întârzia încărcarea peste 6 s
             pg.wait_for_timeout(300)
+            primul_gest(pg)
             if cfg is None:
                 cfg = pg.evaluate("JSON.parse(JSON.stringify(JocMotor.test.config(),(k,v)=>typeof v==='function'?'[fn]':v))")
                 # antrenament: nivelul are bazin + cate; poarta joacă TOT bazinul (vezi toateIntrebarile mai jos)
@@ -435,6 +445,7 @@ def run(slug, fails, warns):
             pg = ctx.new_page()
             pg.set_default_timeout(6000)
             pg.goto(url, timeout=30000); pg.wait_for_timeout(300)
+            primul_gest(pg)
             pg.evaluate("JocMotor.test.deblocheaza()"); pg.evaluate("document.getElementById('go-home').click()")
             lv0 = cfg["nivele"][0]
             draws = []

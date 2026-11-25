@@ -25,9 +25,9 @@ class T(http.server.SimpleHTTPRequestHandler):
         pass
 
 
-srv = http.server.ThreadingHTTPServer(("127.0.0.1", 8781), functools.partial(T, directory=str(SITE)))
+srv = http.server.ThreadingHTTPServer(("127.0.0.1", 0), functools.partial(T, directory=str(SITE)))
 threading.Thread(target=srv.serve_forever, daemon=True).start()
-baza = "http://127.0.0.1:8781"
+baza = "http://127.0.0.1:%d" % srv.server_address[1]
 from playwright.sync_api import sync_playwright
 
 # regula 24 (05_STANDARD_LECTIE.md): pagina vorbește doar cu situl local; /api/activitate și /api/progres sunt simulate

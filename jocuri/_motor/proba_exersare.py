@@ -41,13 +41,14 @@ def main():
     ap.add_argument("--joc", default="excel-pas-cu-pas-viii")
     a = ap.parse_args()
     if not a.baza:
-        srv = http.server.ThreadingHTTPServer(("127.0.0.1", 8773), functools.partial(Tacut, directory=str(SITE)))
+        srv = http.server.ThreadingHTTPServer(("127.0.0.1", 0), functools.partial(Tacut, directory=str(SITE)))
         threading.Thread(target=srv.serve_forever, daemon=True).start()
-        a.baza = "http://127.0.0.1:8773"
+        a.baza = "http://127.0.0.1:%d" % srv.server_address[1]
     from playwright.sync_api import sync_playwright
     with sync_playwright() as p:
         br = p.chromium.launch()
         ctx = br.new_context(viewport={"width": 1366, "height": 900})
+        ctx.route("**/*", lambda r: r.continue_() if ("127.0.0.1" in r.request.url or "localhost" in r.request.url) else r.abort())   # REGULA 24 (07.11.2026): nimic spre serverele vii (contorul de vizitatori din prezenta.js pleca la teste-vasile)
         ctx.route("**/api/activitate", lambda r: r.fulfill(status=200, body='{"ok":true}', headers={"access-control-allow-origin": "*"}))
         pg = ctx.new_page()
         erori = []
