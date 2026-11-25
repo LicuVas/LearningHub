@@ -38,8 +38,13 @@
      neatinsa 'Note'                      foaia a rămas ca la pornire
      doarTaste true                       niciun clic în foaie în afara celulei active
      mesajActiva 'text cu {a}'            mesajul propriu pentru `activa`
-   O cheie pe care adaptorul nu o știe NU trece (și se scrie în consolă): tip, forma, functie, gest, umplut, sortat, format,
-   imbinat, grafic — ale lecțiilor 5-11, de adus când se leagă acelea (vezi raportul pilotului).
+     tip {B2:{numar:7.5}, C2:{text:'007'}, D2:{data:'05.10.2026'}}   TIPUL de date înțeles de Excel (lecția 5, setări românești):
+                                          stare().tip_celule (numar / data / text, din valoare + forma celulei) și valoarea;
+                                          mesajele spun ce a TASTAT elevul (citit din evenimentele bibliotecii: celula în editare
+                                          înainte de Enter), ca simulatorul vechi (lectii/_sim/excelx.js › problema)
+   gresitLipit ['B2']                     greșeala porții (`gresit`) la B2 = numărul scris PESTE o dată (forma de dată rămâne: 07.ian)
+   O cheie pe care adaptorul nu o știe NU trece (și se scrie în consolă): forma, functie, gest, umplut, sortat, format,
+   imbinat, grafic — ale lecțiilor 6-11, de adus când se leagă acelea (vezi raportul pilotului).
    TESTELE numite (Q.teste: [{ce, …aceleași chei…, fara: ['x']}]) se bifează singure deasupra foii.
 
    AJUTOARELE: indiciul e al motorului (Q.ajutor). „Nu încă” spune CE e greșit (aceleași texte ca simulatorul vechi).
@@ -140,8 +145,67 @@
   const potriveste = (loc, exp) => [].concat(exp).some(e => e === loc || (e.endsWith(':*') && loc && loc.startsWith(e.slice(0, -1))));
   const primul = unde => [].concat(unde)[0].replace(/:\*$/, '');
 
+  /* ---------- tipul de date (Q.verifica.tip, lecția 5): mesajele simulatorului vechi (lectii/_sim/excelx.js › problema) ----------
+     Pe bibliotecă panglica e mereu acolo, deci repararea formei de dată rămase e mereu Golire totală (Clear All); pe vechi, la
+     foile fără panglică (`panglica:false`), mesajul spunea „Ctrl+Z până dispare …”. */
+  const PE_GOLIRE = a => `selectează ${a}, apoi, pe fila Pornire (Home), butonul cu radieră Golire (Clear), al treilea din grupul Editare (Editing) (dacă nu vezi grupul, derulează panglica spre dreapta) › Golire totală (Clear All): celula rămâne goală, fără forma de dată`;
+  /* parserul setărilor românești al bibliotecii (excel.js › tipuri): ce face Excel dintr-un text tastat. Adaptorul NU citește
+     singur numere / date (R6): îl întreabă pe el ce zi e data cerută și dacă textul cerut ar rămâne text fără apostrof */
+  const tipuriBiblioteca = () => {
+    const m = L._module && L._module.excel;
+    if (!m || !m.tipuri) throw new Error('excel-excelx-adapter: parserul aplicatii/excel.js (tipuri) nu e încărcat');
+    return m.tipuri;
+  };
+  /* numărul zilei datei CERUTE de lecție ('05.10.2026'), cum îl face Excel la tastare */
+  const serialCerut = d => { const x = tipuriBiblioteca().afisare(String(d)); return x.tip === 'data' ? x.v : NaN; };
+  /* textul cerut trebuie scris cu apostrof ca să rămână text (007 → numărul 7 fără el) */
+  const cuApostrof = t => tipuriBiblioteca().afisare(String(t)).tip !== 'text';
+  /* ce a tastat elevul în celula a, pentru valoarea de acum (și după Anulare: textul lui, nu ce arată celula) */
+  const tastatIn = (ctx, a, c) => { const h = ctx.ist && ctx.ist[a], k = c ? JSON.stringify(c.valoare) : ''; return (h && h[k] != null) ? h[k] : (c ? String(c.text != null ? c.text : brut(c)) : ''); };
+  function infoTip(s, R, a) {
+    const c = R[a], t = (s.tip_celule || {})[a];
+    if (!c || c.editare || brut(c) === '') return { tip: 'gol', afisat: '' };
+    return { tip: t ? t.tip : (typeof c.valoare === 'number' ? 'numar' : 'text'), v: c.valoare, afisat: String(c.text != null ? c.text : c.valoare).trim(), apostrof: !!(t && t.apostrof) };
+  }
+  function problemaTip(ctx, s, R, a, exp) {
+    const i = infoTip(s, R, a), tastat = tastatIn(ctx, a, R[a]), af = esc(i.afisat), ts = esc(tastat);
+    if ('numar' in exp) {
+      const x = exp.numar, xs = numarRo(x);
+      if (i.tip === 'gol') return `${a} e goală: scrie în ea ${xs}.`;
+      if (i.tip === 'numar' && Math.abs(i.v - x) < 1e-9) return '';
+      if (i.tip === 'data' || i.tip === 'ora') {
+        /* număr simplu tastat (7,5) care arată o dată = forma rămasă de la o greșeală de mai devreme (07.ian) */
+        const p0 = tipuriBiblioteca().afisare(tastat);
+        if (Math.abs(i.v - x) < 1e-9 || (p0.tip === 'numar' && p0.fmt === 'General')) return `În ${a} ai scris un număr, dar celula a păstrat forma de dată de la o greșeală de mai devreme și arată ${af}. Ca s-o scoți, ${PE_GOLIRE(a)}. Apoi scrie ${xs}.`;
+        return `În ${a} ai scris „${ts}”, iar Excel a făcut din el o dată: ${af}. Pe setări românești zecimala se scrie cu virgulă: ${xs}. Dacă a fost ultimul lucru făcut, apasă Ctrl+Z (sau ↶); altfel ${PE_GOLIRE(a)}. Apoi scrie ${xs}.`;
+      }
+      if (i.tip === 'text') return i.apostrof ? `În ${a} ai pus un apostrof în față, deci Excel ține „${af}” ca text. Scrie doar ${xs}, fără apostrof.` : `În ${a}, „${af}” a rămas text (stă la stânga), nu număr. Scrie doar cifrele, cu virgulă la zecimale: ${xs}.`;
+      return `În ${a} se vede ${af}, dar trebuie numărul ${xs}.`;
+    }
+    if ('data' in exp) {
+      const d = esc(exp.data);
+      if (i.tip === 'gol') return `${a} e goală: scrie în ea data ${d}.`;
+      if (i.tip === 'data' && Math.floor(i.v + 1e-9) === serialCerut(exp.data)) return '';
+      if (i.tip === 'text') return `În ${a}, „${af}” a rămas text, la stânga: Excel nu l-a recunoscut ca dată. Scrie ziua, punct, luna, punct, anul: ${d}.`;
+      if (i.tip === 'data') return `În ${a} e data ${af}, dar se cere ${d}.`;
+      return `În ${a} e un număr, nu o dată. Scrie data cu puncte: ${d}.`;
+    }
+    if ('text' in exp) {
+      const t = String(exp.text), te = esc(t);
+      if (i.tip === 'gol') return `${a} e goală: scrie în ea ${te}.`;
+      if (i.tip === 'text' && String(i.v).trim().toLowerCase() === t.toLowerCase()) return '';
+      /* tastatura românească: tasta din stânga lui Enter scrie ț (apostroful = AltGr + aceeași tastă); telefonul poate pune ’ */
+      if (i.tip === 'text' && /^[țȚ]/.test(i.v)) return `În ${a} a apărut „${af}”: tastatura e românească, iar tasta din stânga lui Enter scrie ț. Apostroful îl faci ținând apăsată tasta AltGr (Alt din dreapta) și apăsând aceeași tastă. Scrie din nou: '${te}.`;
+      if (i.tip === 'text' && /^[’‘`´]/.test(i.v)) return `În ${a} a apărut „${af}”: în loc de apostroful drept ' s-a pus alt semn (${esc(i.afisat[0])}), pe care Excel îl ține ca pe o literă. Pe telefon, atinge butonul ' din bara de taste de sub foaie și scrie din nou ${te}.`;
+      if (i.tip === 'numar' && /^0\d/.test(t)) return `În ${a} Excel a făcut din „${ts}” numărul ${af} (la dreapta) și a pierdut zerourile din față. Scrie un apostrof înainte: '${te}.`;
+      if (i.tip !== 'text') return `În ${a} Excel a făcut din „${ts}” ${i.tip === 'data' ? 'o dată' : 'un număr'}: ${af}. Ca să rămână text, scrie un apostrof înainte: '${te}.`;
+      return `În ${a} trebuie să se vadă „${te}”.`;
+    }
+    return '';
+  }
+
   /* ---------- verificarea ---------- */
-  const CHEI = ['unde', 'fila', 'foaie', 'pe', 'zoom', 'valori', 'formule', 'gol', 'sel', 'activa', 'zona', 'neatinsa', 'doarTaste', 'mesajActiva', 'fara'];
+  const CHEI = ['unde', 'fila', 'foaie', 'pe', 'zoom', 'valori', 'formule', 'gol', 'sel', 'activa', 'zona', 'neatinsa', 'doarTaste', 'mesajActiva', 'fara', 'tip'];
   function probleme(ctx, V, s) {
     const out = [];
     if (!V) return out;
@@ -171,6 +235,7 @@
       const x = R[a], are = x && typeof x === 'object' ? x.formula : null;
       if (formulaNorm(are) !== formulaNorm(f)) { out.push(`În ${a} trebuie formula ${esc(f)}${are ? `, iar acum e ${esc(are)}` : afisat(x) ? `, iar acum e „${esc(afisat(x))}”, fără formulă` : ''}.`); break; }
     }
+    Object.entries(V.tip || {}).forEach(([a, e]) => { const p = problemaTip(ctx, s, R, a, e); if (p) out.push(p); });
     (V.gol || []).forEach(a => { if (afisat(R[a]) !== '') out.push(`${a} nu e goală încă. Alege-o și apasă Delete.`); });
     (V.fara || []).forEach(x => { if (Object.values(R).some(c => egalNume(String(afisat(c)).trim(), String(x).trim()))) out.push(`În foaie mai e „${esc(x)}”.`); });
     if (V.neatinsa) {
@@ -198,7 +263,9 @@
     (V.gol || []).forEach(a => s.push(`alegi ${a} și apeși Delete`));
     if (V.activa) s.push(`la final celula activă e ${V.activa}`);
     if (V.zoom != null) s.push(`duci zoom-ul${V.pe && multe ? ' foii ' + esc(V.pe) : ''} la ${V.zoom} % cu + și −`);
-    return s.length ? s.join('; ') + '.' : '';
+    const tp = Object.entries(V.tip || {}).map(([a, e]) => `în ${a} scrii <code>${esc('numar' in e ? numarRo(e.numar) : 'data' in e ? e.data : (cuApostrof(e.text) ? "'" : '') + e.text)}</code>`);
+    if (tp.length) s.push(tp.join(', '));
+    return s.length ? s.join('; ') + '.' + (tp.length ? ' Dacă o celulă a rămas cu forma de dată (scrii un număr și apare o dată), o selectezi și alegi, pe fila Pornire (Home), butonul cu radieră Golire (Clear), al treilea din grupul Editare (Editing), apoi Golire totală (Clear All); apoi scrii din nou.' : '') : '';
   }
 
   /* ---------- „mâinile”: aceleași gesturi ca elevul, trimise elementelor bibliotecii (ca bara de taste a bibliotecii) ---------- */
@@ -236,6 +303,19 @@
     try { nb.focus({ preventScroll: true }); nb.value = a; nb.dispatchEvent(new Event('input', { bubbles: true })); } catch (e) { /* */ }
     nb.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, cancelable: true, key: 'Enter' }));
     return true;
+  }
+  /* Golire totală pe celula a, din panglică: Pornire (Home) › Golire (Clear) ▾ › Golire totală (Clear All) */
+  function golireTotala(ctx, a) {
+    laCelula(ctx, a);
+    apasaTinta(ctx, 'fila:Home');
+    if (!apasaTinta(ctx, 'meniu_derulant:Home/Editing/Clear')) apasaTinta(ctx, 'panglica:Home/Editing/Clear');
+    apasaTinta(ctx, 'meniu:Clear All');
+  }
+  /* tipurile cerute (lecția 5): numărul pe o celulă rămasă cu forma de dată se scrie după Golire totală; textul de cifre, cu apostrof */
+  function scrieTipuri(ctx, V) {
+    const s = stare(ctx), F0 = (s && s.format_celule) || {};
+    Object.entries(V.tip).forEach(([a, e]) => { if ('numar' in e && F0[a] && F0[a].format_numar) golireTotala(ctx, a); });
+    scrieCelule(ctx, Object.entries(V.tip).map(([a, e]) => [a, 'numar' in e ? numarRo(e.numar) : 'data' in e ? String(e.data) : (cuApostrof(e.text) ? "'" : '') + e.text]));
   }
   function laFoaie(ctx, nume) { const s = stare(ctx); if (s && nume != null && !egalNume(s.foaie_activa, nume)) apasaTinta(ctx, 'fila_foii:' + numeFoaie(s, nume)); }
   /* scrie valorile rând cu rând, ca în lecție: Tab între coloanele vecine, Enter la capătul rândului */
@@ -285,6 +365,7 @@
       (V.gol || []).forEach(a => { laCelula(ctx, a); tasta(ctx, 'Delete'); });
       const deScris = Object.entries(V.valori || {}).map(([a, v]) => [a, numarRo(v)]).concat(Object.entries(V.formule || {}).map(([a, f]) => [a, String(f)]));
       if (deScris.length) scrieCelule(ctx, deScris);
+      if (V.tip) scrieTipuri(ctx, V);
       if (V.zoom != null) laZoom(ctx, V.zoom);
       const cel = V.activa || V.sel;
       s = stare(ctx);
@@ -314,6 +395,18 @@
       if (V.foaie && egalNume(s.foaie_activa, V.foaie)) { const alta = (s.foi || []).find(n => !egalNume(n, V.foaie)); if (alta) laFoaie(ctx, alta); }
       const chei = Object.keys(V.valori || {}).concat(Object.keys(V.formule || {}), V.gol || []);
       if (chei.length) scrieCelule(ctx, chei.map(a => [a, 'x']));
+      /* tipul greșit, ca pe simulatorul vechi: 7.5 cu punct (o dată) / 150 cu apostrof (text); data cu virgule (text); 007 fără
+         apostrof (numărul 7), alt text cu „?”; gresitLipit = numărul scris PESTE o dată (forma rămâne: 07.ian) */
+      if (V.tip) {
+        const lipit = ctx.Q.gresitLipit || [], simple = [];
+        Object.entries(V.tip).forEach(([a, e]) => {
+          if ('numar' in e && lipit.indexOf(a) >= 0) {
+            laCelula(ctx, a); tasteaza(ctx, String(e.numar).indexOf('.') >= 0 ? String(e.numar) : '1.1'); tasta(ctx, 'Enter');
+            laCelula(ctx, a); tasteaza(ctx, numarRo(e.numar)); tasta(ctx, 'Enter');
+          } else simple.push([a, 'numar' in e ? (Number.isInteger(e.numar) ? "'" + e.numar : String(e.numar)) : 'data' in e ? String(e.data).replace(/\./g, ',') : cuApostrof(e.text) ? String(e.text) : e.text + '?']);
+        });
+        if (simple.length) scrieCelule(ctx, simple);
+      }
       if (V.zoom != null) laZoom(ctx, V.zoom === 100 ? 90 : 100);
       const cel = V.activa || V.sel || (V.zona ? String(V.zona).split(':')[0] : null);
       if (cel) laCelula(ctx, cel === 'A1' ? 'B2' : 'A1');
@@ -521,6 +614,25 @@
       W.addEventListener('lh-aplicatie', asculta);
     }
 
+    /* tipul de date (lecția 5): ce a TASTAT elevul în fiecare celulă, pentru mesaje („În B2 ai scris „9.5”…”). Din evenimentele
+       bibliotecii: celula în editare ÎNAINTE (textul tastat) și primită DUPĂ; ținut pe valoarea primită, ca după Anulare
+       mesajul să vorbească tot de ce a scris elevul (ca simulatorul vechi: excelx.js › sync, IST) */
+    if ((V && V.tip) || (Q.teste || []).some(T => T && T.tip)) {
+      ctx.ist = {};
+      const scris = ev => {
+        if (!host.isConnected) { W.removeEventListener('lh-aplicatie', scris); return; }
+        const d = ev.detail || {};
+        if (d.aplicatie !== 'excel') return;
+        const ci = (d.inainte && d.inainte.celule) || {}, cd = (d.dupa && d.dupa.celule) || {};
+        Object.keys(ci).forEach(a => {
+          const x = ci[a], y = cd[a];
+          if (!x || !x.editare || (y && y.editare)) return;
+          (ctx.ist[a] = ctx.ist[a] || {})[y ? JSON.stringify(y.valoare) : ''] = String(x.valoare);
+        });
+      };
+      W.addEventListener('lh-aplicatie', scris);
+    }
+
     /* testele numite, bifate pe loc */
     let semn = '';
     function bifeaza() {
@@ -608,4 +720,8 @@
      JocExcel = tipul de pe bibliotecă și îi dă exercițiul mai departe neschimbat (ascultătorii lui caută foaia veche, `.gw`,
      care nu mai există, deci nu fac nimic). Așa lecția se leagă doar din blocul de <script src>, fără să i se atingă pagina. */
   if (!W.JocExcel) W.JocExcel = TipExcelX;
+  /* Lecția 5 își desenează mini-foile „Uite cum” din text cu window.ExcelTipuri.afisare(textTastat, forma) — parserul setărilor
+     românești din simulatorul vechi (lectii/_sim/excelx.js). Numele vechi trimite aici la parserul bibliotecii (excel.js › tipuri),
+     pe care lecția îl are încărcat cu <script src> înaintea textului ei; adaptorul doar leagă numele, nu citește nimic singur. */
+  if (!W.ExcelTipuri) W.ExcelTipuri = { afisare: (text, forma) => tipuriBiblioteca().afisare(text, forma) };
 })();

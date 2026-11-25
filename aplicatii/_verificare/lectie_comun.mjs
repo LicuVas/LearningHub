@@ -42,12 +42,13 @@ export function cuBloc(html, bloc) {
   if (a < 0 || !m) throw new Error('nu găsesc blocul de <script src> al lecției');
   return html.slice(0, a) + bloc + html.slice(a + m.index);
 }
-export function serve(lectie, scripturiVechi) {
+/* scripturiNoi (opțional) = blocul bibliotecii propriu lecției (lecția 5 încarcă și excel.js, pentru mini-foile din text) */
+export function serve(lectie, scripturiVechi, scripturiNoi) {
   return new Promise(resolve => {
     const srv = http.createServer((q, s) => {
       const rel = decodeURIComponent(new URL(q.url, 'http://x').pathname);
       if (rel === '/favicon.ico') { s.writeHead(204); return s.end(); }
-      if ((VECHI || NOU) && rel === lectie) { s.writeHead(200, { 'Content-Type': MIME['.html'] }); return s.end(cuBloc(fs.readFileSync(path.join(ROOT, lectie), 'utf8'), VECHI ? scripturiVechi : SCRIPTURI_NOI)); }
+      if ((VECHI || NOU) && rel === lectie) { s.writeHead(200, { 'Content-Type': MIME['.html'] }); return s.end(cuBloc(fs.readFileSync(path.join(ROOT, lectie), 'utf8'), VECHI ? scripturiVechi : (scripturiNoi || SCRIPTURI_NOI))); }
       const f = path.join(ROOT, rel);
       if (!f.startsWith(ROOT) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { s.writeHead(404); return s.end('nu'); }
       s.writeHead(200, { 'Content-Type': MIME[path.extname(f)] || 'application/octet-stream' });
@@ -67,7 +68,7 @@ export function scrie(ok, nume, detalii) {
 const TR = R => t => { const i = t.indexOf(':'), f = i < 0 ? t : t.slice(0, i), v = i < 0 ? null : t.slice(i + 1); return v == null ? `${R} [data-lh-tinta="${f}"]:not([data-lh-id])` : `${R} [data-lh-tinta="${f}"][data-lh-id="${v}"], ${R} [data-lh-tinta="${t}"]`; };
 const colIdx = L => L.split('').reduce((x, ch) => x * 26 + ch.charCodeAt(0) - 64, 0);
 /* numele comenzilor din meniul de clic dreapta, pe simulatorul vechi (românește, cu numele englezesc în paranteză) */
-const MENIU_VECHI = { Copy: /Copiere \(Copy\)/, Cut: /Decupare \(Cut\)/, Paste: /Lipire \(Paste\)/, Delete: /^Ștergere \(Delete\)/, 'Delete...': /^Ștergere…/, 'Clear Contents': /Golire conținut/ };
+const MENIU_VECHI = { Copy: /Copiere \(Copy\)/, Cut: /Decupare \(Cut\)/, Paste: /Lipire \(Paste\)/, Delete: /^Ștergere \(Delete\)/, 'Delete...': /^Ștergere…/, 'Clear Contents': /Golire conținut/, 'Clear All': /Golire totală \(Clear All\)/ };
 /* pe bibliotecă, rândul de lipire din meniul de clic dreapta poartă numele din captura de referință („Keep Text Only”) */
 const MENIU_NOU = { Paste: 'Keep Text Only' };
 /* R = rădăcina în care se fac gesturile: '#body' (foaia sarcinii) sau '#body .xl-ex' (foaia de la „Exersează pe variante”) */
@@ -100,7 +101,7 @@ export function interfata(p, R = '#body') {
       clicPe: t => clic(loc(t)),
       meniu: async n => { await p.locator('.xp-meniu button').filter({ hasText: MENIU_VECHI[n] || n }).first().click({ timeout: 8000 }); await p.waitForTimeout(150); },
       /* butonul din panglică (partea de sus, pictograma, la butoanele despărțite) */
-      panglica: async n => { const s = `${R} [data-nesim="${{ Delete: 'CellsDeleteSmart' }[n] || n}"]`; await p.locator(s).first().scrollIntoViewIfNeeded(); const b = await p.locator(s).first().boundingBox(); await p.mouse.click(b.x + b.width / 2, b.y + Math.min(12, b.height / 3)); await p.waitForTimeout(150); },
+      panglica: async n => { const s = `${R} [data-nesim="${{ Delete: 'CellsDeleteSmart', Clear: 'ClearMenu' }[n] || n}"]`; await p.locator(s).first().scrollIntoViewIfNeeded(); const b = await p.locator(s).first().boundingBox(); await p.mouse.click(b.x + b.width / 2, b.y + Math.min(12, b.height / 3)); await p.waitForTimeout(150); },
       dialogOK: async () => { await p.locator('.xp-dlg [data-ok]').click({ timeout: 8000 }); await p.waitForTimeout(200); },
       sariLa: async a => { await clic(R + ' .nb'); await p.keyboard.press('Control+a'); await p.keyboard.type(a, { delay: 15 }); await p.keyboard.press('Enter'); }
     });
@@ -111,27 +112,35 @@ export function interfata(p, R = '#body') {
     clicDreapta: async t => { await clic(loc(t), { button: 'right' }); await p.waitForTimeout(200); },
     clicPe: t => clic(loc(t)),
     meniu: async n0 => { const n = MENIU_NOU[n0] || n0; await clic(`[data-lh-aplicatie="excel"] [data-lh-tinta="meniu"][data-lh-id="${n}"]:visible, [data-lh-aplicatie="excel"] [data-lh-tinta="meniu:${n}"]:visible`); await p.waitForTimeout(200); },
-    panglica: async n => { await clic(T('panglica:' + ({ Copy: 'Home/Clipboard/Copy', Cut: 'Home/Clipboard/Cut', Paste: 'Home/Clipboard/Paste', Delete: 'Home/Cells/Delete' }[n] || n))); await p.waitForTimeout(200); },
+    /* Clear ▾ (Home › Editing) e doar listă: ținta lui e meniu_derulant (sau panglica, după desen) */
+    panglica: async n => { const s = n === 'Clear' ? `${T('meniu_derulant:Home/Editing/Clear')}, ${T('panglica:Home/Editing/Clear')}` : T('panglica:' + ({ Copy: 'Home/Clipboard/Copy', Cut: 'Home/Clipboard/Cut', Paste: 'Home/Clipboard/Paste', Delete: 'Home/Cells/Delete' }[n] || n)); await clic(s); await p.waitForTimeout(200); },
     dialogOK: async () => { await clic('[data-lh-aplicatie="excel"] [data-lh-tinta="fereastra"][data-lh-id="OK"], [data-lh-aplicatie="excel"] [data-lh-tinta="fereastra:OK"]'); await p.waitForTimeout(200); },
     sariLa: async a => { await clic(T('camp:Name Box')); await p.keyboard.press('Control+a'); await p.keyboard.type(a, { delay: 15 }); await p.keyboard.press('Enter'); }
   });
 }
-/* ce se vede pe ecran în foaie: {activa (caseta de nume), cel {A1: text}} — pe ambele interfețe */
+/* ce se vede pe ecran în foaie: {activa (caseta de nume), cel {A1: text}, al {A1: 'dreapta'|'stanga'|'centru'} (marginea de care
+   s-a lipit conținutul), tri [celulele cu triunghiul verde]} — pe ambele interfețe */
 export const ecran = (p, R = '#body') => p.evaluate(([vechi, R]) => {
-  const cel = {};
+  const cel = {}, al = {}, tri = [];
   if (vechi) {
     const w = document.querySelector(R + ' #xwrap'); if (!w) return null;
-    w.querySelectorAll('.gw td[data-a]').forEach(e => { const t = e.textContent.trim(); if (t) cel[e.dataset.a] = t; });
+    w.querySelectorAll('.gw td[data-a]').forEach(e => { const t = e.textContent.trim(); if (!t) return; const a = e.dataset.a; cel[a] = t; al[a] = e.classList.contains('n') ? 'dreapta' : e.classList.contains('e') ? 'centru' : 'stanga'; if (e.classList.contains('xtri')) tri.push(a); });
     const nb = w.querySelector('.nb');
-    return { activa: nb ? nb.textContent.trim() : null, cel };
+    return { activa: nb ? nb.textContent.trim() : null, cel, al, tri };
   }
   const r = document.querySelector(R + ' [data-lh-aplicatie="excel"]');
   if (!r) return null;
   const nb = r.querySelector('[data-lh-tinta="camp"][data-lh-id="Name Box"], [data-lh-tinta="camp:Name Box"]');
-  r.querySelectorAll('[data-lh-zona] [data-lh-tinta="celula"], [data-lh-zona] [data-lh-tinta^="celula:"]').forEach(e => { const t = e.textContent.trim(); if (t) cel[e.getAttribute('data-lh-id') || e.getAttribute('data-lh-tinta').slice(7)] = t; });
+  r.querySelectorAll('[data-lh-zona] [data-lh-tinta="celula"], [data-lh-zona] [data-lh-tinta^="celula:"]').forEach(e => {
+    const t = e.textContent.trim(); if (!t) return;
+    const a = e.getAttribute('data-lh-id') || e.getAttribute('data-lh-tinta').slice(7); cel[a] = t;
+    const d = e.matches('[class*="lh-ap-x-al-"]') ? e : e.querySelector('[class*="lh-ap-x-al-"]'), m = d && /lh-ap-x-al-(\w+)/.exec(d.className);
+    if (m) al[a] = m[1];
+    if (e.querySelector('.lh-ap-x-tri')) tri.push(a);
+  });
   /* zona selectată nu are un text al ei pe ecran (caseta de nume arată doar celula activă): se citește din starea bibliotecii */
   let zona = null; try { zona = window.LH.aplicatii.stare('excel').selectie.zona; } catch (e) { /* */ }
-  return { activa: nb ? (nb.value != null ? nb.value : nb.textContent).trim() : null, cel, zona };
+  return { activa: nb ? (nb.value != null ? nb.value : nb.textContent).trim() : null, cel, zona, al, tri };
 }, [VECHI, R]);
 
 export async function deschide(p, base, lectie, ex) {
@@ -182,19 +191,31 @@ async function joaca(browser, base, cfg, ex) {
     if (erori.length) return 'eroare în pagină: ' + erori.join(' | ');
     return f.ok && /Corect/.test(f.text) ? true : 'lecția nu arată „Corect”: ' + (f.text || '(nimic)') + ' | ecran: ' + JSON.stringify(await ecran(p));
   };
-  const respins = async fn => {
+  /* mesaj (opțional) = expresia mesajului din inventar: respingerea trebuie să spună CE e greșit, ca pe simulatorul vechi */
+  const respins = async (fn, mesaj) => {
     if (!pornit) return 'exercițiul nu s-a deschis: ' + erori.join(' | ');
     await fn(u);
     const f = await fb(p);
     if (ARATA) console.log(`   [${ex.id} greșit] ${f.text}`);
     if (f.ok || /Corect!/.test(f.text)) return 'lecția arată „Corect” la o rezolvare greșită';
-    return f.bad && /Nu încă/.test(f.text) ? true : 'lecția nu spune „Nu încă”: ' + (f.text || '(nimic)');
+    if (!(f.bad && /Nu încă/.test(f.text))) return 'lecția nu spune „Nu încă”: ' + (f.text || '(nimic)');
+    return !mesaj || mesaj.test(f.text) ? true : `mesajul nu spune ${mesaj}: ${f.text}`;
+  };
+  /* o pagină proaspătă pe „telefon” (360 px, ecran cu atingere), cu aceeași rețea oprită și același drum parcurs */
+  const telefon = async () => {
+    const c2 = await browser.newContext({ viewport: { width: 360, height: 780 }, hasTouch: true, isMobile: true, deviceScaleFactor: 2 });
+    await c2.route('**/*', r => { const h = new URL(r.request().url()).hostname; if (h === '127.0.0.1' || h === 'localhost') return r.continue(); afara.push(h); return r.abort(); });
+    await c2.addInitScript(([k, lv]) => { try { if (!localStorage.getItem(k)) localStorage.setItem(k, JSON.stringify({ nume: '', lv: { 0: lv } })); } catch (e) { /* */ } }, [cfg.cheie, cfg.parcurs]);
+    const p2 = await c2.newPage();
+    p2.on('pageerror', e => erori.push(e.message));
+    await deschide(p2, base, cfg.lectie, ex);
+    return { p: p2, u: interfata(p2), inchide: () => c2.close() };
   };
   await proba('a', `corect: ${ex.ce}`, () => corect(ex.ok));
   // ---- pagina 2: greșeala tipică (b), a doua greșeală, „Arată-mi răspunsul” (c2)
   pornit = await proaspat();
   if (ex.indiciuDupa) await c1();
-  await proba('b', 'greșeala tipică e respinsă', () => respins(ex.rau));
+  await proba('b', 'greșeala tipică e respinsă' + (ex.mesaj ? ', cu mesajul ei' : ''), () => respins(ex.rau, ex.mesaj));
   await proba('c2', '„Arată-mi răspunsul” apare după a doua greșeală și arată răspunsul' + (VECHI ? '' : ' (și îl execută)'), async () => {
     if (!pornit) return 'exercițiul nu s-a deschis';
     if (ex.rau2) await ex.rau2(u); else await u.verifica();
@@ -214,7 +235,7 @@ async function joaca(browser, base, cfg, ex) {
   for (const x of ex.extra || []) {
     if (x.doarNou && VECHI) continue;
     pornit = await proaspat();
-    await proba(x.lit, x.nume, () => x.corect ? corect(x.corect) : x.respins ? respins(x.respins) : (pornit ? x.fa(u, p, { fb, ecran, VECHI }) : 'exercițiul nu s-a deschis'));
+    await proba(x.lit, x.nume, () => x.corect ? corect(x.corect) : x.respins ? respins(x.respins, x.mesaj) : (pornit ? x.fa(u, p, { fb, ecran, VECHI, telefon }) : 'exercițiul nu s-a deschis'));
   }
   await ctx.close();
   return afara;
@@ -222,7 +243,7 @@ async function joaca(browser, base, cfg, ex) {
 
 /* cfg = {lectie: '/lectii/viii/m1-l04/index.html', cheie, parcurs: {ps, pn, at, re, qm}, scripturiVechi, vechiNume, EX} */
 export async function ruleaza(cfg) {
-  const srv = await serve(cfg.lectie, cfg.scripturiVechi);
+  const srv = await serve(cfg.lectie, cfg.scripturiVechi, cfg.scripturiNoi);
   const base = `http://127.0.0.1:${srv.address().port}`;
   const browser = await chromium.launch({ channel: 'chrome', headless: true });
   const afara = new Set();

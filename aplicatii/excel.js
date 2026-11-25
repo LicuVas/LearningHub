@@ -355,6 +355,8 @@
     return null;
   }
   const textNumeric = s => { const t = String(s).trim(); return /^[+-]?(\d+(,\d*)?|,\d+)$/.test(t) ? parseFloat(t.replace(',', '.')) : null; };
+  /* un text care arată ca un număr (păstrat ca text: '007, 1.250) — triunghiul verde „Number Stored as Text” */
+  const NR_CA_TEXT = /^\s*[+-]?(\d+(,\d+)?|\d{1,3}(\.\d{3})+(,\d+)?)\s*$/;
 
   /* ============================================================ formulele */
   const ERR = e => ({ e });
@@ -1121,6 +1123,24 @@
       if (activa && M.edit && M.edit.text === '') delete cel[M.edit.a];
       return cel;
     }
+    /* legarea lecției VIII/5 (26.11.2026): ce TIP de date a înțeles Excel în fiecare celulă primită a foii — ce judeca simulatorul
+       vechi (lectii/_sim/excelx.js › afisare): „numar”, „data” (numărul cu formă de dată: 7.5 → 07.mai; 7,5 scris peste → 07.ian),
+       „ora”, „text”, „logic”, „eroare”; la text, `apostrof` (scris cu ' în față) și `numar_ca_text` (triunghiul verde) */
+    function tipCelule(f) {
+      const out = {};
+      Object.keys(f.cel).forEach(a => {
+        const p = pa(a), x = f.cel[a], v = valoare(f, p.r, p.c);
+        let tip = 'text';
+        if (eErr(v)) tip = 'eroare';
+        else if (typeof v === 'boolean') tip = 'logic';
+        else if (typeof v === 'number') { const fel = felFmt(fmtDe(f, a).format_numar); tip = fel === 'data' || fel === 'data_ora' ? 'data' : fel === 'ora' ? 'ora' : 'numar'; }
+        const o = { tip };
+        if (x.ap) o.apostrof = true;
+        if (tip === 'text' && triunghi(f, a) === 'text') o.numar_ca_text = true;
+        out[a] = o;
+      });
+      return out;
+    }
     /* eticheta filei deschise a panglicii, citită de pe rândul filelor (ecranul = starea); null cât panglica nu e desenată */
     function filaPanglicaStare() {
       try { const t = RAND_FILE.querySelector('[data-lh-tip="TabItem"][aria-selected="true"]'); return t ? t.getAttribute('data-lh-eticheta') : null; } catch (e) { return null; }
@@ -1165,7 +1185,9 @@
         /* lot 1 (F128): numele definite din Name Box, {nume: 'Foaie!B2:C3'} */
         nume_definite: Object.fromEntries([].concat(...M.foi.map(x => Object.values(x.nume_def || {}).map(d => [d.nume, x.nume + '!' + d.zona])))),
         /* runda 3: înălțimile puse de mână ({"3": 40} px) și lățimea standard a foii active (px) */
-        inaltimi_manuale: Object.fromEntries(Object.keys(f.inalt || {}).map(r => [String(+r + 1), f.inalt[r]])), latime_standard: f.latStd || 64 };
+        inaltimi_manuale: Object.fromEntries(Object.keys(f.inalt || {}).map(r => [String(+r + 1), f.inalt[r]])), latime_standard: f.latStd || 64,
+        /* tipul de date al fiecărei celule a foii active (vezi tipCelule) */
+        tip_celule: tipCelule(f) };
     };
     /* `dialog` (§5): fereastra deschisă; „Save your changes to this file?” = fereastra care ÎNTREABĂ, în forma din
        scenarii_real/excel-ctrl-w-modificat.json: {titlu: '' (bara de titlu goală), intrebare, butoane: rândul de jos, de la
@@ -1977,7 +1999,7 @@
       const x = f.cel[a];
       if (!x || x.ign) return null;
       if (x.f) { const p = pa(a), v = valoare(f, p.r, p.c); return eErr(v) && AVERT[v.e] ? v.e : null; }
-      return typeof x.v === 'string' && /^\s*[+-]?(\d+(,\d+)?|\d{1,3}(\.\d{3})+(,\d+)?)\s*$/.test(x.v) ? 'text' : null;
+      return typeof x.v === 'string' && NR_CA_TEXT.test(x.v) ? 'text' : null;
     }
     propEl.style.display = 'none';
     /* runda 21: o zonă care începe deasupra / la stânga ferestrei se desenează de la marginea ferestrei (nu de la −20 de milioane de px) */
@@ -6545,8 +6567,30 @@
     void scenariu;
   }
 
+  /* legarea lecției VIII/5 (26.11.2026): parserul setărilor românești FĂRĂ foaie — ce arată o celulă în care s-a tastat `text`
+     (constanta: 7.5 → data 07.mai; 7,5 → 7,5; '007 → textul 007 cu triunghi verde), opțional cu forma rămasă în celulă (`forma`,
+     ex. 'dd.mmm': 7,5 scris peste 07.mai → 07.ian). Lecțiile își desenează cu el mini-foile „Uite cum” din textul paginii (vechiul
+     window.ExcelTipuri.afisare din lectii/_sim/excelx.js, pus de adaptor pe numele vechi): de aceea lecția 5 încarcă excel.js
+     direct, cu <script src>, înaintea textului ei (aplicatii.js nu-l mai încarcă a doua oară) */
+  const TIPURI = {
+    afisare(text, forma) {
+      const s = text == null ? '' : String(text);
+      if (s === '') return { tip: 'gol', afisat: '', dreapta: false };
+      if (s.charAt(0) === '=') return { tip: 'formula', afisat: '', dreapta: false };
+      const k = constanta(s);
+      if (typeof k.v === 'number') {
+        const fn = forma || k.fn || 'General', fel = felFmt(fn);
+        return { tip: fel === 'data' || fel === 'data_ora' ? 'data' : fel === 'ora' ? 'ora' : 'numar', v: k.v, fmt: fn, afisat: afisat(k.v, fn), dreapta: true };
+      }
+      if (typeof k.v === 'boolean') return { tip: 'logic', v: k.v, afisat: k.v ? 'TRUE' : 'FALSE', dreapta: false, centru: true };
+      const t = String(k.v);
+      return { tip: 'text', v: t, afisat: t, dreapta: false, apostrof: !!k.ap, tri: NR_CA_TEXT.test(t) };
+    }
+  };
+
   L._modul('excel', {
     creeaza,
+    tipuri: TIPURI,
     /* §4.4: tragerea (mutarea zonei) are sens pe o zonă aleasă; umplerea pornește de pe pătrățelul celulei alese */
     demonstratie: {}
   });
