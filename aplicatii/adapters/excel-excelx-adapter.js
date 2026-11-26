@@ -88,6 +88,7 @@
 .xa-teste ul{list-style:none;padding:0;margin:4px 0 0}
 .xa-teste li{display:flex;gap:8px;margin:2px 0;color:var(--ink2,#546358)}
 .xa-teste li.ok{color:var(--ok,#0f6e3a)}
+.xa-teste .xa-motiv{display:block;margin:3px 0 4px;padding:5px 9px;border-left:3px solid var(--accent,#107c41);border-radius:6px;background:var(--paper,#fff);color:var(--ink,#1d1d1b);font-weight:400;font-size:.92rem;line-height:1.4;overflow-wrap:anywhere}
 .xa-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 .xa-nota{margin:6px 0 0;padding:6px 10px;font-size:.88rem;border-radius:6px;background:var(--sel,#d4eddc);color:var(--ink,#15201a)}
 .xa-nota:empty{display:none}
@@ -311,8 +312,126 @@
     return s.join('; ');
   }
 
+  /* ---------- formulele (lecția 7): judecate prin REZULTAT, ca simulatorul vechi ----------
+     jocuri/_motor/tip-excel.js › probleme: formula elevului față de cea cerută, pe datele de acum și pe date schimbate (numerele
+     din `cells` + 3 / + 6 / + 9, după poziție; plus Q.variants), deci o formulă echivalentă scrisă altfel (=B2*A2, =a2*b2,
+     =A2/2+B2/2) e primită, iar un rezultat tastat de mână sau numere în loc de adrese nu. Mesajele sunt cele vechi; codurile de
+     eroare, cu explicația din tip-foaie.js / lectii/_sim/excelx-formule.js. Calculul îl face biblioteca (excel.js › valoareCu,
+     pe o copie a foii); adaptorul doar compară (R6). */
+  const calc = (ctx, a, sch) => {
+    const m = L._module && L._module.excel;
+    if (!m || !m.valoareCu) throw new Error('excel-excelx-adapter: aplicatii/excel.js (valoareCu) nu e încărcat');
+    return ctx.root ? m.valoareCu(ctx.root, a, sch || {}) : undefined;
+  };
+  const eEroare = v => !!(v && typeof v === 'object' && 'eroare' in v);
+  const laFel = (x, y) => typeof x === 'number' && typeof y === 'number' ? Math.abs(x - y) < 1e-6 : String(x == null ? '' : x).trim().toLowerCase() === String(y == null ? '' : y).trim().toLowerCase();
+  const aproape = (x, y) => typeof x === 'number' && typeof y === 'number' && Math.abs(x - y) < 1e-6;
+  const afisVal = v => typeof v === 'number' ? numarRo(Math.round(v * 1e6) / 1e6) : typeof v === 'boolean' ? (v ? 'TRUE' : 'FALSE') : (v === '' || v == null ? 'nimic' : '„' + v + '”');
+  const fmtNr = v => typeof v !== 'number' ? String(v) : numarRo(Number.isInteger(v) ? v : Math.round(v * 1e10) / 1e10);
+  /* ce a scris elevul în celulă: formula (cum o arată bara de formule) sau textul tastat */
+  const scrisIn = x => !x ? '' : x.formula != null ? String(x.formula) : afisat(x);
+  /* datele schimbate ale simulatorului vechi: fiecare număr din `cells`, + 3, + 6 sau + 9 după locul lui în listă */
+  const dateSchimbate = Q => { const o = {}; Object.entries(Q.cells || {}).forEach(([k, v], i) => { if (typeof v === 'number') o[k] = v + (i % 3 + 1) * 3; }); return o; };
+  /* cuvintele din formulă (fără textele dintre ghilimele) care nu sunt adrese și nici funcții (pentru #NAME?) */
+  const faraText = f => String(f).replace(/"[^"]*"?/g, '""');
+  const eAdresa = t => { const m = String(t).replace(/\$/g, '').match(/^([A-Za-z]{1,3})(\d{1,7})$/); return !!m && colIdx(m[1].toUpperCase()) < 16384 && +m[2] >= 1 && +m[2] <= 1048576; };
+  /* explicația codului de eroare din formula f (mesajele vechi: tip-foaie.js › evaluate, excelx-formule.js) */
+  function deCeEroare(cod, f) {
+    const s = faraText(String(f || '').replace(/^=/, '')).replace(/\$/g, '');
+    if (cod === '#VALUE!') return 'Formula calculează cu un text ca și cum ar fi număr.';
+    if (cod === '#DIV/0!') return 'Împărțire la zero.';
+    if (cod === '#NAME?') {
+      const w = (s.match(/[A-Za-zĂÂÎȘȚăâîșțŞŢşţ_\\][A-Za-z0-9_.ĂÂÎȘȚăâîșțŞŢşţ]*/g) || []).find(x => !eAdresa(x) && !/^(TRUE|FALSE)$/i.test(x) && !new RegExp(x.replace(/[.\\]/g, '\\$&') + '\\s*\\(').test(s));
+      const cuX = '=' + s.replace(/([A-Za-z]{1,3}\d+)\s*[xX]\s*(?=[A-Za-z]{1,3}\d+)/g, '$1*').toUpperCase();
+      if (w && cuX !== '=' + s.toUpperCase()) return `Excel nu cunoaște cuvântul „${/^[xX]$/.test(w) ? 'x' : w}”: litera x nu înmulțește. Înmulțirea se scrie cu *: ${cuX}.`;
+      return `Excel nu cunoaște cuvântul „${w || '?'}” din formulă. O adresă se scrie cu litera coloanei și numărul rândului (A2), iar semnele de calcul sunt + - * /.`;
+    }
+    if (cod === '#NULL!') { const m = s.match(/([A-Za-z]{1,3}\d+)\s+([A-Za-z]{1,3}\d+)/); if (m) return `Ai uitat semnul dintre ${m[1].toUpperCase()} și ${m[2].toUpperCase()}: între ele trebuie un semn de calcul (+ - * /). Excel arată aici #NULL!.`; }
+    return '';
+  }
+  function problemeFormule(ctx, tinte, R) {
+    const out = [], Q = ctx.Q, variante = (Q.variants || []).slice().concat([dateSchimbate(Q)]);
+    for (const [a, tf] of Object.entries(tinte)) {
+      const raw = scrisIn(R[a]);
+      if (raw === '') { out.push(`${a} e goală.`); continue; }
+      if (raw.charAt(0) !== '=') { out.push(`În ${a} ai scris ${esc(raw)}, nu o formulă: formula începe cu =.`); continue; }
+      if (!/\$?[A-Za-z]{1,2}\$?\d+/.test(raw)) { out.push(`${a} are doar numere scrise de mână. Folosește adresele celulelor, ca rezultatul să se recalculeze.`); continue; }
+      const g = calc(ctx, a, {});
+      if (eEroare(g)) { const d = deCeEroare(g.eroare, raw); out.push(`${a} arată ${g.eroare || 'o eroare'}${d ? ': ' + d : '.'}`); continue; }
+      let x = calc(ctx, a, tinte);
+      if (eEroare(x)) x = null;
+      if (!laFel(g, x)) { out.push(`${a} dă ${afisVal(g)}, dar ar trebui să dea ${afisVal(x)}.`); continue; }
+      for (const v of variante) {
+        let g2 = calc(ctx, a, v), x2 = calc(ctx, a, Object.assign({}, tinte, v));
+        if (eEroare(g2)) g2 = '#';
+        if (eEroare(x2)) x2 = '?';
+        if (!laFel(g2, x2)) { out.push(`${a} dă rezultatul bun acum, dar greșește când se schimbă datele. Verifică adresele.`); break; }
+      }
+    }
+    return out;
+  }
+  /* un test numit al atelierului e bifat de formula din celula a (excelx-formule.js › eFormulaBuna) */
+  function formulaBuna(ctx, R, a, f) {
+    const raw = scrisIn(R[a]);
+    if (raw.charAt(0) !== '=' || !/[A-Za-z]{1,3}\$?\d+/.test(raw)) return false;
+    const v0 = calc(ctx, a, {}), v1 = calc(ctx, a, { [a]: f });
+    if (!aproape(v0, v1)) return false;
+    const V = dateSchimbate(ctx.Q);
+    if (!Object.keys(V).length) return true;
+    return aproape(calc(ctx, a, V), calc(ctx, a, Object.assign({}, V, { [a]: f })));
+  }
+  /* MOTIVUL de sub testul nebifat (Q.motive: true), mesajele vechi din lectii/_sim/excelx-formule.js › motiv, în aceeași ordine:
+     apostroful; fără =; două semne =; capcanele testului; o celulă de pe lanțul formulei bune încă negata; rezultat bun acum, dar
+     cu numere de mână; rezultat greșit. Codurile de eroare: nimic (le explică Verifică) */
+  function adreseDin(f) {
+    const s = faraText(String(f)).replace(/\$/g, ''), r = [], re = /([A-Za-z]{1,3})(\d+)/g; let m;
+    while ((m = re.exec(s))) { const p = s[m.index - 1] || '', d = s.slice(re.lastIndex); if (/[A-Za-z0-9_.]/.test(p) || /^[A-Za-z0-9_]/.test(d) || d.trimStart()[0] === '(') continue; if (eAdresa(m[0])) r.push(m[0].toUpperCase()); }
+    return r;
+  }
+  function numereDin(f) { const s = faraText(String(f)).replace(/\$/g, ''), r = [], re = /\d+(?:[.,]\d+)?/g; let m; while ((m = re.exec(s))) if (!/[A-Za-z0-9_.,]/.test(s[m.index - 1] || '')) r.push(m[0].replace('.', ',')); return r; }
+  const lista = x => x.length < 2 ? (x[0] || '') : x.slice(0, -1).join(', ') + ' și ' + x[x.length - 1];
+  function motivTest(ctx, s, T) {
+    const Q = ctx.Q, R = celulePe(s, s.foaie_activa), tactil = (() => { try { return matchMedia('(pointer:coarse)').matches; } catch (e) { return false; } })();
+    const asteptat = Object.assign({}, (Q.verifica && Q.verifica.formule) || {}); (Q.teste || []).forEach(t => Object.assign(asteptat, t.formule || {}));
+    const val = (a, sch) => { const v = calc(ctx, a, sch); return eEroare(v) ? undefined : v; };
+    for (const [a, fx] of Object.entries(T.formule || {})) {
+      if (formulaBuna(ctx, R, a, fx)) continue;
+      const tc = (s.tip_celule || {})[a], ap = !!(tc && typeof tc === 'object' && tc.apostrof);
+      let raw = scrisIn(R[a]); if (raw.trim() === '') continue;
+      if (ap) raw = "'" + raw;
+      const t = raw.trim(), v = val(a, {}), bun = val(a, { [a]: fx }), ale = adreseDin(t), nr = numereDin(t), cod = `<code>${esc(t)}</code>`;
+      const sfat = ce => tactil ? `Atinge ${a}, apoi bara de formule, șterge tot textul de acolo, până la ultimul semn, și scrie ${ce}.` : `Dă un singur clic pe ${a} și scrie ${ce}: ce scrii așa înlocuiește tot ce era în celulă.`;
+      if (t[0] === "'") return `În ${a} ai scris un apostrof (') la început, așa că Excel ia ce urmează drept text. ${sfat('formula din nou, fără apostrof, începând cu =')}`;
+      if (t[0] !== '=') return ale.length ? `În ${a} lipsește semnul = de la început, așa că Excel ia ${cod} drept text. ${sfat('formula din nou, începând cu =')}`
+        : `În ${a} ai scris ${cod} de mână, nu o formulă. Formula începe cu = și folosește adresele celulelor, ca rezultatul să se refacă singur.`;
+      const corp = faraText(t.slice(1)), eg = [...corp.matchAll(/[^<>=]=\s*[-A-Za-z0-9(]/g)];
+      if (eg.length) {
+        const coada = corp.slice(eg[eg.length - 1].index + 2).trim();
+        return /^-?\d+([.,]\d+)?$/.test(coada) ? `În ${a} ai scris la final și rezultatul (<code>=${esc(coada)}</code>). În Excel, formula are un singur semn =, la început, iar rezultatul îl calculează Excel. ${sfat('doar formula')}`
+          : `În ${a} sunt două formule legate prin =: ${cod}. O formulă are un singur semn =, la început. ${sfat('o singură formulă')}`;
+      }
+      for (const C of T.capcane || []) { const f = C.formule && C.formule[a]; if (f && adreseDin(f).every(r => ale.includes(r)) && aproape(v, val(a, { [a]: f })) && !aproape(v, bun)) return esc(C.spune); }
+      const prin = {}, st = adreseDin(fx).filter(d => d !== a).map(d => [d, null]);
+      while (st.length) { const [d, p] = st.shift(); if (d === a || d in prin || !(d in asteptat)) continue; prin[d] = p; adreseDin(asteptat[d]).forEach(x => st.push([x, p || d])); }
+      const neGata = Object.keys(prin).filter(d => !formulaBuna(ctx, R, d, asteptat[d]));
+      const sunt = x => x.length > 1 ? 'sunt gata' : 'e gata', directe = neGata.filter(d => prin[d] === null);
+      if (directe.length) return `Pentru ${a}, tema folosește ${lista(directe)}, care încă nu ${sunt(directe)}. Fă întâi ${lista(directe)}, apoi uită-te din nou la ${a}.`;
+      if (neGata.length) { const via = prin[neGata[0]], rad = neGata.filter(d => prin[d] === via); return `Pentru ${a}, tema folosește ${via}, care se calculează din ${lista(rad)}. ${lista(rad)} încă nu ${sunt(rad)}: fă întâi ${lista(rad)}, apoi uită-te din nou la ${a}.`; }
+      if (aproape(v, bun)) {
+        const lipsa = adreseDin(fx).filter(r => !ale.includes(r));
+        for (const n of nr) { const x = Number(n.replace(',', '.')), r = lipsa.find(r => aproape(val(r, {}), x)); if (r) return `${a} arată bine acum (${fmtNr(v)}), dar în formulă ai scris ${n} de mână, în loc de ${r}. Pune adresa ${r}: când se schimbă numărul din ${r}, rezultatul se reface singur.`; }
+        return nr.length ? `${a} arată bine acum (${fmtNr(v)}), dar formula are numere scrise de mână. Folosește adresele celulelor, ca rezultatul să se refacă singur când se schimbă tabelul.`
+          : `${a} arată bine acum (${fmtNr(v)}), dar ia numerele din alte celule decât cere tema, așa că nu se mai potrivește când se schimbă tabelul. Citește din nou ce cere tema pentru ${a}.`;
+      }
+      if (typeof v !== 'number') continue;
+      return ale.length ? `${a} arată ${fmtNr(v)}, dar nu e cât trebuie. Citește din nou ce cere tema pentru ${a}.`
+        : `În ${a} ai scris doar numere, fără adrese de celule, iar ${fmtNr(v)} nu e cât trebuie. Folosește adresele celulelor, de exemplu ${lista(adreseDin(fx))}.`;
+    }
+    return '';
+  }
+
   /* ---------- verificarea ---------- */
-  const CHEI = ['unde', 'fila', 'foaie', 'pe', 'zoom', 'valori', 'formule', 'gol', 'sel', 'activa', 'zona', 'neatinsa', 'doarTaste', 'mesajActiva', 'fara', 'tip', 'forma'];
+  const CHEI = ['unde', 'fila', 'foaie', 'pe', 'zoom', 'valori', 'formule', 'gol', 'sel', 'activa', 'zona', 'neatinsa', 'doarTaste', 'mesajActiva', 'fara', 'tip', 'forma', 'capcane'];
   function probleme(ctx, V, s) {
     const out = [];
     if (!V) return out;
@@ -338,11 +457,11 @@
         break;
       }
     }
-    for (const [a, f] of Object.entries(V.formule || {})) {
-      const x = R[a], are = x && typeof x === 'object' ? x.formula : null;
-      if (formulaNorm(are) !== formulaNorm(f)) { out.push(`În ${a} trebuie formula ${esc(f)}${are ? `, iar acum e ${esc(are)}` : afisat(x) ? `, iar acum e „${esc(afisat(x))}”, fără formulă` : ''}.`); break; }
-    }
-    Object.entries(V.tip || {}).forEach(([a, e]) => { const p = problemaTip(ctx, s, R, a, e); if (p) out.push(p); });
+    /* formulele, prin rezultat (lecția 7); ca pe vechi (excelx.js › render: tipul se judecă după foaie), tipul cerut se spune
+       doar când formulele sunt bune: „C2 arată #VALUE!” înaintea lui „A2 a rămas text” */
+    const pf = V.formule ? problemeFormule(ctx, V.formule, R) : [];
+    pf.forEach(x => out.push(x));
+    if (!pf.length) Object.entries(V.tip || {}).forEach(([a, e]) => { const p = problemaTip(ctx, s, R, a, e); if (p) out.push(p); });
     (V.gol || []).forEach(a => { if (afisat(R[a]) !== '') out.push(`${a} nu e goală încă. Alege-o și apasă Delete.`); });
     (V.fara || []).forEach(x => { if (Object.values(R).some(c => egalNume(String(afisat(c)).trim(), String(x).trim()))) out.push(`În foaie mai e „${esc(x)}”.`); });
     if (V.neatinsa) {
@@ -856,7 +975,9 @@
       const s = stare(ctx);
       if (!s) return;
       const rez = Q.teste.map(T => ({ ce: T.ce, ok: probleme(ctx, T, s).length === 0 }));
-      const h = `<div class="lbl">Testele atelierului: ${rez.filter(x => x.ok).length} din ${rez.length} gata</div><ul>${rez.map(x => `<li class="${x.ok ? 'ok' : ''}"><span aria-hidden="true">${x.ok ? '✔' : '○'}</span><span>${x.ce}<span class="xa-sr">${x.ok ? ' (gata)' : ' (încă nu)'}</span></span></li>`).join('')}</ul>`;
+      /* motivul de sub testul nebifat, doar unde lecția îl cere (motive:true, lecția 7) */
+      if (Q.motive) rez.forEach((x, i) => { if (!x.ok) { try { x.motiv = motivTest(ctx, s, Q.teste[i]); } catch (e) { x.motiv = ''; } } });
+      const h = `<div class="lbl">Testele atelierului: ${rez.filter(x => x.ok).length} din ${rez.length} gata</div><ul>${rez.map(x => `<li class="${x.ok ? 'ok' : ''}"><span aria-hidden="true">${x.ok ? '✔' : '○'}</span><span>${x.ce}<span class="xa-sr">${x.ok ? ' (gata)' : ' (încă nu)'}</span>${x.motiv ? `<span class="xa-motiv">${x.motiv}</span>` : ''}</span></li>`).join('')}</ul>`;
       if (h !== semn) { semn = h; cutie.innerHTML = h; }
     }
     if (cutie) { const ceas = setInterval(() => { if (!host.isConnected) { clearInterval(ceas); return; } bifeaza(); }, 200); }

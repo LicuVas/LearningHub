@@ -512,6 +512,8 @@
     return '=' + tok.map(t => t.t === 'ref' ? muta(t.s) : t.t === 'zona' ? t.s.split(':').map(muta).join(':') : t.s).join('');
   }
 
+  /* legarea lecției VIII/7: instanța fiecărei ferestre Excel, după rădăcina ei (pentru valoareCu de pe modul, mai jos) */
+  const RAD = new WeakMap();
   function creeaza(I, c) {
     const root = I.root, date = I.date, pang = L._module.panglica, esc = pang.esc;
     let H = L._module.stare.istoric(() => false);   // fiecare confirmare = o unitate (scenarii_real/excel-ctrl-z-celula)
@@ -1224,6 +1226,31 @@
         /* legarea lecției VIII/6: textele tăiate de vecinul din dreapta (vezi textTaiat) */
         text_taiat: textTaiat(f) };
     };
+    /* legarea lecției VIII/7 (26.11.2026): valoarea celulei `a` a foii active, calculată pe o COPIE a foii în care unele celule
+       sunt înlocuite (`schimbari`: {B2: 31, D5: '=D4/B2', A2: '5 bucăți', C3: ''}: număr, sau textul tastat pe setări românești,
+       ca la scriere; '' / null = celula golită). Foaia de pe ecran nu se schimbă. Cu ea se judecă o formulă prin REZULTAT, ca
+       simulatorul vechi (jocuri/_motor/tip-excel.js › probleme: formula elevului față de cea cerută, pe datele de acum și pe
+       date schimbate), deci o formulă echivalentă scrisă altfel (=B2*A2, =a2*b2, =A2/2+B2/2) e primită. Întoarce numărul /
+       textul / TRUE-FALSE / null (gol) sau {eroare: '#DIV/0!'}; o formulă din `schimbari` pe care Excel n-ar primi-o = {eroare: null} */
+    I.valoareCu = (a, schimbari) => {
+      const f = F(), g = Object.assign({}, f, { cel: Object.assign({}, f.cel) }), p = pa(a);
+      if (!p) return null;
+      let rau = false;
+      Object.keys(schimbari || {}).forEach(k => {
+        const s = schimbari[k];
+        if (s == null || s === '') { delete g.cel[k]; return; }
+        if (typeof s === 'number') { g.cel[k] = { v: s }; return; }
+        const t = String(s);
+        if (t.charAt(0) === '=') { const en = laForma(inchideParanteze(normalizeazaFormula(t)), 'ro', 'en'); if (en) g.cel[k] = { f: en }; else rau = true; return; }
+        const c = constanta(t); g.cel[k] = c.ap ? { v: c.v, ap: true } : { v: c.v };
+      });
+      if (rau) return { eroare: null };
+      invalid();
+      let v;
+      try { v = valoare(g, p.r, p.c); } catch (e) { v = eErr(e) ? e : ERR('#VALUE!'); } finally { invalid(); }
+      return eErr(v) ? { eroare: v.e } : v;
+    };
+    RAD.set(I.root, I);
     /* `dialog` (§5): fereastra deschisă; „Save your changes to this file?” = fereastra care ÎNTREABĂ, în forma din
        scenarii_real/excel-ctrl-w-modificat.json: {titlu: '' (bara de titlu goală), intrebare, butoane: rândul de jos, de la
        stânga la dreapta (uia_excel.json › dialog.save_your_changes_to_this_file), apasat: null cât e deschisă} */
@@ -6633,6 +6660,8 @@
   L._modul('excel', {
     creeaza,
     tipuri: TIPURI,
+    /* legarea lecției VIII/7: I.valoareCu al ferestrei cu rădăcina `radacina` (adaptorul are doar rădăcina, nu instanța) */
+    valoareCu: (radacina, a, schimbari) => { const I = RAD.get(radacina); return I ? I.valoareCu(a, schimbari) : undefined; },
     /* §4.4: tragerea (mutarea zonei) are sens pe o zonă aleasă; umplerea pornește de pe pătrățelul celulei alese */
     demonstratie: {}
   });
