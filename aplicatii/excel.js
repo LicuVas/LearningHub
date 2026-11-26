@@ -544,9 +544,14 @@
     const F = () => M.foi[M.fi];
     /* închiderile și deschiderile de registru din sesiune (stare(): inchideri, deschideri) */
     let nInchideri = 0, nDeschideri = 0;
-    function puneStart(f, celule, format, latimi) {
+    function puneStart(f, celule, format, latimi, alte) {
       /* latimi (CONȚINUT, opțional): { A: 120, C: 90 } = lățimea coloanei în px la 100 % */
       Object.entries(latimi || {}).forEach(([k, px]) => { const c0 = colIdx(k); if (c0 >= 0 && c0 < MAXC && isFinite(+px) && +px >= 0) { f.lat[c0] = +px; f.latSet[c0] = true; } });
+      /* legarea lecției VIII/6 (26.11.2026): lățimi în CARACTERE, cum le cere fereastra Column Width ({ C: 6 }; aceeași regulă ca
+         pxDinCaractere, mai jos: n · 7,234 + 5,33 px), și înălțimi în PUNCTE, ca fereastra Row Height ({ 1: 40 } → 53 px) */
+      const o = alte || {};
+      Object.entries(o.latimi_caractere || {}).forEach(([k, n]) => { const c0 = colIdx(k); if (c0 >= 0 && c0 < MAXC && isFinite(+n) && +n >= 0 && +n <= 255) { f.lat[c0] = +n === 0 ? 0 : Math.round(+n * 7.234 + 5.33); f.latSet[c0] = true; } });
+      Object.entries(o.inaltimi || {}).forEach(([r, pt]) => { const r0 = +r - 1; if (r0 >= 0 && r0 < MAXR && isFinite(+pt) && +pt > 0 && +pt <= 409) { f.inalt = Object.assign({}, f.inalt); f.inalt[r0] = Math.max(1, Math.round(+pt * 4 / 3)); } });
       Object.entries(celule || {}).forEach(([a, v]) => {
         const p = pa(a);
         if (!p || v == null || v === '') return;
@@ -558,7 +563,8 @@
       });
       Object.entries(format || {}).forEach(([a, o]) => {
         const p = pa(a);
-        if (p && o && typeof o === 'object') f.fmt[adr(p.r, p.c)] = Object.assign({}, f.fmt[adr(p.r, p.c)] || {}, o);
+        /* format_numar_ro (lecția VIII/6): codul scris pe setări românești („#.##0,00”), tradus ca în Format Cells › Custom */
+        if (p && o && typeof o === 'object') { const o2 = Object.assign({}, o); if (o2.format_numar_ro != null) { o2.format_numar = TIPURI.codDinRo(o2.format_numar_ro); delete o2.format_numar_ro; } f.fmt[adr(p.r, p.c)] = Object.assign({}, f.fmt[adr(p.r, p.c)] || {}, o2); }
         if (p && o && o.imbinat && f.merge.indexOf(o.imbinat) < 0) f.merge.push(o.imbinat);
       });
     }
@@ -567,8 +573,8 @@
     const zoomBun = z => z != null && isFinite(+z) && +z >= 10 && +z <= 400;
     /* parametrii de CONȚINUT (lecția alege foaia, nu interfața): celule, selectie, format (formatul `start` al scenariilor),
        plus foi: [{nume, celule, format}] și nume (registrul deja salvat) */
-    if (Array.isArray(c.foi) && c.foi.length) c.foi.forEach((x, i) => { const f = foaieNoua(String(x.nume || 'Sheet' + (i + 1))); puneStart(f, x.celule, x.format, x.latimi); if (/^#?[0-9a-f]{6}$/i.test(String(x.culoare || ''))) f.culoare = '#' + String(x.culoare).replace('#', '').toUpperCase(); if (zoomBun(x.zoom)) f.zoom = +x.zoom; M.foi.push(f); });
-    else { const tab = ((Z.file_foi || {}).c || []).find(x => x.t === 'TabItem'); M.foi.push(foaieNoua(tab ? tab.e : 'Sheet1')); puneStart(M.foi[0], c.celule, c.format, c.latimi); if (zoomBun(c.zoom)) M.foi[0].zoom = +c.zoom; }
+    if (Array.isArray(c.foi) && c.foi.length) c.foi.forEach((x, i) => { const f = foaieNoua(String(x.nume || 'Sheet' + (i + 1))); puneStart(f, x.celule, x.format, x.latimi, x); if (/^#?[0-9a-f]{6}$/i.test(String(x.culoare || ''))) f.culoare = '#' + String(x.culoare).replace('#', '').toUpperCase(); if (zoomBun(x.zoom)) f.zoom = +x.zoom; M.foi.push(f); });
+    else { const tab = ((Z.file_foi || {}).c || []).find(x => x.t === 'TabItem'); M.foi.push(foaieNoua(tab ? tab.e : 'Sheet1')); puneStart(M.foi[0], c.celule, c.format, c.latimi, c); if (zoomBun(c.zoom)) M.foi[0].zoom = +c.zoom; }
     if (c.selectie) {
       const parti = String(c.selectie).split(',').map(zonaDin).filter(Boolean);
       if (parti.length) F().sel = { activa: { r: parti[0].r0, c: parti[0].c0 }, zone: parti };
@@ -1141,6 +1147,33 @@
       });
       return out;
     }
+    /* legarea lecției VIII/6 (26.11.2026): celulele foii al căror TEXT nu încape și se vede tăiat — ce judeca simulatorul vechi
+       (lectii/_sim/excelx-formatare.js › problemeForma, `vizibil`). Numerele și datele nu se taie (arată ####, vezi inLatime).
+       Textul are loc în celula lui și, aliniat la stânga, în vecinii GOI din dreapta (cum îl desenează grila: lh-ap-x-curge);
+       în îmbinare, pe toată lățimea ei; cu Wrap Text nu se taie. Lățimea cerută = cea a potrivirii automate (latimePotrivita:
+       textul măsurat la 15 px + 5 px marginea, +1 la aldin), ca după dublul clic pe linie textul să fie socotit întreg. */
+    function textTaiat(f) {
+      const out = [];
+      Object.keys(f.cel).forEach(a => {
+        const p = pa(a);
+        if (!p) return;
+        const v = valoare(f, p.r, p.c);
+        if (typeof v !== 'string' || v === '') return;
+        const fm = fmtDe(f, a), m = mergeLa(f, p.r, p.c);
+        if (fm.incadrare || (m && (m.r0 !== p.r || m.c0 !== p.c))) return;
+        const nevoie = Math.ceil(latimeText(afisat(v, fm.format_numar), 15) / z() + 5 + (fm.bold ? 1 : 0));
+        let loc = 0;
+        if (m) for (let c = m.c0; c <= m.c1; c++) loc += latPx(f, c);
+        else {
+          loc = latPx(f, p.c);
+          if ((fm.aliniere || 'stanga') === 'stanga') {
+            for (let c = p.c + 1; c < MAXC && loc < nevoie; c++) { if (f.cel[adr(p.r, c)] || varsat(f, p.r, c) || mergeLa(f, p.r, c)) break; loc += latPx(f, c); }
+          }
+        }
+        if (nevoie > loc + 0.5) out.push(a);
+      });
+      return out;
+    }
     /* eticheta filei deschise a panglicii, citită de pe rândul filelor (ecranul = starea); null cât panglica nu e desenată */
     function filaPanglicaStare() {
       try { const t = RAND_FILE.querySelector('[data-lh-tip="TabItem"][aria-selected="true"]'); return t ? t.getAttribute('data-lh-eticheta') : null; } catch (e) { return null; }
@@ -1187,7 +1220,9 @@
         /* runda 3: înălțimile puse de mână ({"3": 40} px) și lățimea standard a foii active (px) */
         inaltimi_manuale: Object.fromEntries(Object.keys(f.inalt || {}).map(r => [String(+r + 1), f.inalt[r]])), latime_standard: f.latStd || 64,
         /* tipul de date al fiecărei celule a foii active (vezi tipCelule) */
-        tip_celule: tipCelule(f) };
+        tip_celule: tipCelule(f),
+        /* legarea lecției VIII/6: textele tăiate de vecinul din dreapta (vezi textTaiat) */
+        text_taiat: textTaiat(f) };
     };
     /* `dialog` (§5): fereastra deschisă; „Save your changes to this file?” = fereastra care ÎNTREABĂ, în forma din
        scenarii_real/excel-ctrl-w-modificat.json: {titlu: '' (bara de titlu goală), intrebare, butoane: rândul de jos, de la
@@ -6585,7 +6620,14 @@
       if (typeof k.v === 'boolean') return { tip: 'logic', v: k.v, afisat: k.v ? 'TRUE' : 'FALSE', dreapta: false, centru: true };
       const t = String(k.v);
       return { tip: 'text', v: t, afisat: t, dreapta: false, apostrof: !!k.ap, tri: NR_CA_TEXT.test(t) };
-    }
+    },
+    /* legarea lecției VIII/6 (26.11.2026): textul ÎNTREG al valorii v în formatul cod (fără lățimea coloanei: „150,00”, nu „###”),
+       numele → codurile din lista Number Format și codul de format scris pe setări românești („#.##0,00”, cum îl tastezi în
+       Format Cells › Custom pe un Windows românesc) → codul din fișier („#,##0.00”): punctul și virgula își schimbă rolul,
+       în afara textelor între ghilimele, a [..] și a caracterului de după \ */
+    formatat: (v, cod) => afisat(v, cod || 'General'),
+    formate: Object.fromEntries(FORMATE),
+    codDinRo: cod => String(cod == null ? 'General' : cod).replace(/"[^"]*"|\[[^\]]*\]|\\.|[.,]/g, x => x === '.' ? ',' : x === ',' ? '.' : x)
   };
 
   L._modul('excel', {

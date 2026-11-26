@@ -14,7 +14,7 @@
      cells {A1: 'Elev', B2: 9}            celulele de pornire (o foaie, „Sheet1”)
      foi [{nume, cells}], foaie           registrul cu mai multe foi; foaie = indicele foii deschise la început
      start 'D4'                           celula activă de la început; foaia are tastatura (elevul scrie fără clic)
-     zoom, latimi {A: px}                 zoom-ul de pornire, lățimile coloanelor
+     zoom, latimi {A: 6}                  zoom-ul de pornire, lățimile coloanelor (în caractere Excel; vezi Pornirea foii, mai jos)
      inainte [['B2','8.5'],['B2','DEL']]  pași făcuți în foaie înainte de exercițiu (cu aceleași gesturi ca elevul)
      o [...], ok                          variante de răspuns sub foaie (foaia e de încercat; verdictul = clicul pe variantă)
      verifica {...}, teste [{ce, ...}]    vezi mai jos
@@ -43,8 +43,16 @@
                                           mesajele spun ce a TASTAT elevul (citit din evenimentele bibliotecii: celula în editare
                                           înainte de Enter), ca simulatorul vechi (lectii/_sim/excelx.js › problema)
    gresitLipit ['B2']                     greșeala porții (`gresit`) la B2 = numărul scris PESTE o dată (forma de dată rămâne: 07.ian)
-   O cheie pe care adaptorul nu o știe NU trece (și se scrie în consolă): forma, functie, gest, umplut, sortat, format,
-   imbinat, grafic — ale lecțiilor 6-11, de adus când se leagă acelea (vezi raportul pilotului).
+     forma {…}                            FORMATAREA (lecția 6; vechiul lectii/_sim/excelx-formatare.js › problemeForma, aceleași mesaje):
+                                          faraDiez 'C2:C4' (fără ####), vizibil 'A2:A4' (textul nu e tăiat: stare().text_taiat),
+                                          inaltime {'1':{min:25}} (puncte), al {'B2:B4':'center'}, va {'A1':'middle'}, wrap {'B2':true},
+                                          imbinat 'A1:D1' (+ centrat), b / fill / color {'A1:C1':true}, fs, borduri {'A1:C4':'toate'|
+                                          'exterior'|'exteriorGros'}, format {'B2:B4':{zecimale:2}|{procent:0}|{data:'lunga'|'scurta'}},
+                                          stil {'A1':'Title'}, text, valori:true (valorile de la pornire n-au fost schimbate)
+   Pornirea foii (lecția 6): latimi {C: 6} = lățimea în CARACTERE (ca fereastra Column Width), inaltimi {1: 40} în puncte,
+     forme {'B2:B4': {nfx: '#.##0,00'}} (codul pe setări românești), imbinari ['A1:D1'] — le pune excel.js (conținutul de pornire).
+   O cheie pe care adaptorul nu o știe NU trece (și se scrie în consolă): functie, gest, umplut, sortat, grafic, format.nume,
+   latime — ale lecțiilor 7-11, de adus când se leagă acelea (vezi raportul pilotului).
    TESTELE numite (Q.teste: [{ce, …aceleași chei…, fara: ['x']}]) se bifează singure deasupra foii.
 
    AJUTOARELE: indiciul e al motorului (Q.ajutor). „Nu încă” spune CE e greșit (aceleași texte ca simulatorul vechi).
@@ -204,8 +212,107 @@
     return '';
   }
 
+  /* ---------- formatarea (Q.verifica.forma, lecția 6): mesajele simulatorului vechi (lectii/_sim/excelx-formatare.js › problemeForma) ----------
+     Totul se citește din starea bibliotecii: format_celule (aliniere, aliniere_verticala, incadrare, imbinat, bold, umplere, borduri,
+     format_numar, stil), celule (text = ce se vede în lățimea coloanei: „####”), text_taiat, inaltimi_randuri (px la 100 %). Textul
+     întreg al unui număr într-un format și codurile listei Number Format le dă excel.js (tipuri.formatat, tipuri.formate). */
+  const zonaDe = t => { const [x, y] = String(t).split(':'), p = pos(x), q = pos(y || x); return p && q ? { c1: Math.min(p.c, q.c), c2: Math.max(p.c, q.c), r1: Math.min(p.r, q.r), r2: Math.max(p.r, q.r) } : null; };
+  const adrDe = (c, r) => COL(c) + (r + 1);
+  const zonaText = z => adrDe(z.c1, z.r1) + (z.c1 === z.c2 && z.r1 === z.r2 ? '' : ':' + adrDe(z.c2, z.r2));
+  const celuleZona = t => { const z = zonaDe(t), o = []; if (z) for (let r = z.r1; r <= z.r2; r++) for (let c = z.c1; c <= z.c2; c++) o.push(adrDe(c, r)); return o; };
+  const coloaneDin = d => [...new Set(d.map(a => a.replace(/\d+/, '')))];
+  const imbinari = F0 => [...new Set(Object.values(F0 || {}).map(x => x.imbinat).filter(Boolean))].map(zonaDe).filter(Boolean);
+  const peste = (m, z) => !(m.c2 < z.c1 || m.c1 > z.c2 || m.r2 < z.r1 || m.r1 > z.r2);
+  const nrRo = x => String(Math.round(x * 100) / 100).replace('.', ',');
+  const AL = { left: 'stanga', center: 'centru', right: 'dreapta' }, VA = { top: 'sus', middle: 'mijloc', bottom: null };
+  const NA = { left: 'la stânga', center: 'la centru', right: 'la dreapta' }, NV = { top: 'sus', middle: 'la mijloc', bottom: 'jos' };
+  const BUT_AL = { left: 'Align Left', center: 'Center', right: 'Align Right' }, BUT_VA = { top: 'Top Align', middle: 'Middle Align', bottom: 'Bottom Align' };
+  const BORD = { toate: 'All Borders', exterior: 'Outside Borders', exteriorGros: 'Thick Outside Borders' };
+  const CHEI_FORMA = ['vizibil', 'inaltime', 'al', 'va', 'wrap', 'imbinat', 'centrat', 'b', 'fill', 'color', 'fs', 'borduri', 'format', 'faraDiez', 'stil', 'text', 'valori'];
+  const PX_RAND = 20;   // rândul standard: 15 puncte = 20 px (Calibri 11)
+  function problemeForma(ctx, S, s) {
+    const out = [], R = celulePe(s, s.foaie_activa), F0 = s.format_celule || {}, fmt = a => F0[a] || {}, T = tipuriBiblioteca();
+    const strain = Object.keys(S).filter(k => CHEI_FORMA.indexOf(k) < 0);
+    if (strain.length) { W.console.warn('excel-excelx-adapter: verificare de formă necunoscută', strain, S); out.push(`Foaia de aici nu știe încă să verifice: ${strain.join(', ')}. Spune-i profesorului.`); }
+    if (S.vizibil) { const t = new Set(s.text_taiat || []), d = celuleZona(S.vizibil).filter(a => t.has(a)); if (d.length) out.push(`Textul din ${d.join(', ')} e tăiat de celula din dreapta. Lățește coloana ${coloaneDin(d).join(', ')} (tragi de linia din dreapta literei sau dublu-clic pe ea).`); }
+    Object.entries(S.inaltime || {}).forEach(([r, x]) => { const h = ((s.inaltimi_randuri || {})[r] || (s.inaltimi_manuale || {})[r] || PX_RAND) * 3 / 4; if (x.min != null && h < x.min - 1e-9) out.push(`Rândul ${r} e încă prea scund (${nrRo(h)} puncte). Trage în jos de linia de sub numărul ${r}.`); });
+    Object.entries(S.al || {}).forEach(([t, v]) => { const d = celuleZona(t).filter(a => (fmt(a).aliniere || '') !== AL[v]); if (d.length) out.push(`${d.slice(0, 4).join(', ')}${d.length > 4 ? '…' : ''}: conținutul nu e aliniat ${NA[v]}. Selectează ${t}, apoi butonul din grupul Aliniere (Alignment).`); });
+    Object.entries(S.va || {}).forEach(([t, v]) => { const d = celuleZona(t).filter(a => (fmt(a).aliniere_verticala || null) !== VA[v]); if (d.length) out.push(`${d.join(', ')}: conținutul nu e aliniat ${NV[v]}.`); });
+    Object.entries(S.wrap || {}).forEach(([t, v]) => { const d = celuleZona(t).filter(a => !!fmt(a).incadrare !== !!v); if (d.length) out.push(v ? `${d.join(', ')} nu are Încadrare text (Wrap Text): textul stă tot pe un rând.` : `${d.join(', ')} are încă Încadrare text (Wrap Text).`); });
+    if (S.imbinat) {
+      const ms = imbinari(F0);
+      [].concat(S.imbinat).forEach(t => {
+        const z = zonaDe(t), m = ms.find(x => zonaText(x) === zonaText(z));
+        if (!m) { const alt = ms.find(x => peste(x, z)); out.push(alt ? `Ai îmbinat ${zonaText(alt)}, dar trebuie exact ${t}. Apasă din nou pe ea și Merge & Center (o desface), apoi selectează ${t} și Merge & Center.` : `Celulele ${t} nu sunt îmbinate. Selectează ${t}, apoi Pornire (Home) › Merge & Center (Îmbinare și centrare).`); }
+        else if (S.centrat && fmt(adrDe(z.c1, z.r1)).aliniere !== 'centru') out.push(`${t} e îmbinată, dar titlul nu e centrat. Folosește Merge & Center, nu Merge Cells.`);
+      });
+    }
+    const cul = x => String(x || '').replace('#', '').toUpperCase();
+    const prop = (k, cheie, nume) => Object.entries(S[k] || {}).forEach(([t, v]) => { const d = celuleZona(t).filter(a => { const x = fmt(a)[cheie]; return v === true ? !x : (typeof v === 'object' ? false : cul(x) !== cul(v)); }); if (d.length) out.push(`${nume} lipsește în ${d.slice(0, 4).join(', ')}${d.length > 4 ? '…' : ''}. Selectează ${t}, apoi apasă butonul.`); });
+    prop('b', 'bold', 'Aldinul (Bold)'); prop('fill', 'umplere', 'Culoarea de umplere (Fill Color)'); prop('color', 'culoare_font', 'Culoarea fontului (Font Color)');
+    Object.entries(S.fs || {}).forEach(([t, x]) => { const d = celuleZona(t).filter(a => (fmt(a).marime_font || 11) < (x.min || 0)); if (d.length) out.push(`Textul din ${d.join(', ')} e încă mic (${fmt(d[0]).marime_font || 11}). Mărește-l din Font Size.`); });
+    Object.entries(S.borduri || {}).forEach(([t, tip]) => {
+      const z = zonaDe(t), lipsa = [], gros = [];
+      for (let r = z.r1; r <= z.r2; r++) for (let c = z.c1; c <= z.c2; c++) {
+        const a = adrDe(c, r), m = fmt(a).borduri || {};
+        const cer = tip === 'toate' ? ['sus', 'jos', 'stanga', 'dreapta'] : [r === z.r1 ? 'sus' : '', r === z.r2 ? 'jos' : '', c === z.c1 ? 'stanga' : '', c === z.c2 ? 'dreapta' : ''].filter(Boolean);
+        cer.forEach(l => { if (!m[l]) lipsa.push(a); else if (tip === 'exteriorGros' && !/groas/.test(m[l])) gros.push(a); });
+      }
+      if (lipsa.length) out.push(tip === 'toate' ? `Nu toate celulele din ${t} au linii pe toate laturile (de exemplu ${[...new Set(lipsa)].slice(0, 3).join(', ')}). Selectează ${t}, apoi Borders ▾ › All Borders (Toate bordurile).` : `Conturul zonei ${t} nu e complet (${[...new Set(lipsa)].slice(0, 3).join(', ')}). Selectează ${t}, apoi Borders ▾ › ${BORD[tip]}.`);
+      else if (gros.length) out.push(`Conturul lui ${t} e subțire; se cere unul gros: Borders ▾ › Thick Outside Borders.`);
+    });
+    Object.entries(S.format || {}).forEach(([t, x]) => celuleZona(t).forEach(a => {
+      const c = R[a], v = c ? c.valoare : null;
+      if (typeof v !== 'number') { out.push(`${a} nu conține un număr.`); return; }
+      const cod = fmt(a).format_numar || 'General', vazut = String(c.text != null ? c.text : ''), diez = /^#+$/.test(vazut);
+      const txt = String(T.formatat(v, cod)).replace(/[  ]/g, '').trim();   // ce ar arăta celula dacă ar încăpea (ca vechiul o.plin)
+      if (x.zecimale != null) {
+        const k = ((txt.match(/,(\d+)/) || ['', ''])[1]).length, zc = n => n === 0 ? 'fără zecimale' : n === 1 ? 'cu o zecimală' : `cu ${n} zecimale`;
+        if (/lei|%/.test(txt)) out.push(`${a} arată „${txt}”: ai pus un format cu ${/%/.test(txt) ? 'procent' : 'lei'}. Se cere doar numărul cu ${x.zecimale} zecimale (Number sau Increase Decimal).`);
+        else if (k !== x.zecimale || (cod === 'General' && x.zecimale > 0)) {
+          const are = diez ? `are forma ${zc(k)} („${txt}”) și nu încape (se vede ####)` : `arată „${vazut}”, ${zc(k)}`;
+          out.push(`${a} ${are}; se cer ${x.zecimale} zecimale.` + (k < x.zecimale && cod !== 'General' ? ` Ai scos zecimale: apasă Ctrl+Z (↶) de atâtea ori câte zecimale ai scos (aici de ${x.zecimale - k === 1 ? 'o dată' : (x.zecimale - k) + ' ori'}), sau Increase Decimal, până revin cele ${x.zecimale}. Dacă apoi apare ####, lățește coloana.` : ''));
+        }
+      }
+      if (x.procent != null) { const k = ((txt.match(/,(\d+)%/) || ['', ''])[1]).length; if (!/%$/.test(txt)) out.push(`${a} arată „${vazut}”, nu un procent. Apasă butonul % (Percent Style).`); else if (k !== x.procent) out.push(`${a} arată „${vazut}”; se cere procentul cu ${x.procent} zecimale.`); }
+      if (x.data) { const ti = (s.tip_celule || {})[a], lunga = cod === T.formate['Long Date']; if (!ti || ti.tip !== 'data') out.push(`${a} nu arată o dată.`); else if ((x.data === 'lunga') !== lunga) out.push(`${a} arată data ${x.data === 'lunga' ? 'scurt' : 'lung'}; alege ${x.data === 'lunga' ? 'Long Date' : 'Short Date'} din lista Number Format.`); }
+      if (x.nume) out.push(`Foaia de aici nu știe încă să verifice: format.nume. Spune-i profesorului.`);
+    }));
+    if (S.faraDiez) { const d = celuleZona(S.faraDiez).filter(a => R[a] && /^#+$/.test(String(R[a].text || ''))); if (d.length) out.push(`${d.join(', ')} arată încă ####: coloana ${coloaneDin(d).join(', ')} e prea îngustă. Lățește-o: trage de linia din dreapta literei ei sau dă dublu-clic pe linie.`); }
+    Object.entries(S.stil || {}).forEach(([t, n]) => { const d = celuleZona(t).filter(a => fmt(a).stil !== n); if (d.length) out.push(`${d.join(', ')} nu are stilul „${n}”. Selectează ${t}, apoi Cell Styles › ${n}.`); });
+    Object.entries(S.text || {}).forEach(([a, t]) => { const x = String(afisat(R[a])).trim(); if (x !== t) out.push(`În ${a} trebuie să se vadă „${t}” (acum: „${x}”).`); });
+    if (S.valori) {
+      const ms = imbinari(F0);
+      Object.entries(ctx.Q.cells || {}).forEach(([a, v]) => {
+        const nv = R[a] ? R[a].valoare : '', p = pos(a);
+        const k = typeof v === 'number' ? { tip: 'numar', v } : T.afisare(String(v)), ini = typeof k.v === 'number' ? { tip: 'num', v: k.v } : { tip: 'text', v: String(k.v != null ? k.v : v) };
+        const inMerge = ms.some(m => p && p.c >= m.c1 && p.c <= m.c2 && p.r >= m.r1 && p.r <= m.r2 && !(p.c === m.c1 && p.r === m.r1));
+        if (ini.tip === 'num' && (typeof nv !== 'number' || Math.abs(nv - ini.v) > 1e-9)) out.push(`Valoarea din ${a} s-a schimbat (era ${String(ini.v).replace('.', ',')}). Formatarea nu schimbă valorile: apasă Ctrl+Z (↶) până revine.`);
+        else if (ini.tip === 'text' && !inMerge && (typeof nv !== 'string' || nv !== ini.v)) out.push(`Conținutul din ${a} s-a schimbat (era „${ini.v}”). Apasă Ctrl+Z (↶) până revine.`);
+      });
+    }
+    return out;
+  }
+  /* „Arată-mi răspunsul”, în cuvinte (vechiul solutieForma, în aceeași ordine) */
+  function solutieForma(S) {
+    const s = [], cols = t => coloaneDin(celuleZona(t)).join(', ');
+    if (S.imbinat) [].concat(S.imbinat).forEach(t => s.push(`selectezi ${t} și apeși Merge &amp; Center (Îmbinare și centrare)`));
+    if (S.faraDiez) s.push(`dai dublu-clic pe linia din dreapta literei coloanei ${cols(S.faraDiez)} (sus, între litere)`);
+    if (S.vizibil) s.push(`dai dublu-clic pe linia din dreapta literei ${cols(S.vizibil)}`);
+    Object.keys(S.inaltime || {}).forEach(r => s.push(`tragi în jos de linia de sub numărul ${r}`));
+    Object.entries(S.al || {}).forEach(([t, v]) => s.push(`selectezi ${t} și apeși ${BUT_AL[v]}`));
+    Object.entries(S.va || {}).forEach(([t, v]) => s.push(`selectezi ${t} și apeși ${BUT_VA[v]}`));
+    Object.keys(S.wrap || {}).forEach(t => s.push(`selectezi ${t} și apeși Wrap Text (Încadrare text)`));
+    Object.keys(S.b || {}).forEach(t => s.push(`selectezi ${t} și apeși B (Bold)`));
+    Object.keys(S.fill || {}).forEach(t => s.push(`pe ${t} pui o culoare de umplere (găleata, Fill Color)`));
+    Object.entries(S.borduri || {}).forEach(([t, v]) => s.push(`selectezi ${t}, apoi Borders ▾ › ${BORD[v]}`));
+    Object.entries(S.format || {}).forEach(([t, x]) => s.push(`selectezi ${t}, apoi ${x.zecimale != null ? `lista Number Format › Number (sau Increase Decimal până apar ${x.zecimale} zecimale)` : x.procent != null ? 'butonul % (Percent Style)' + (x.procent ? ` și Increase Decimal de ${x.procent} ori` : '') : x.data ? `lista Number Format › ${x.data === 'lunga' ? 'Long Date' : 'Short Date'}` : `lista Number Format › ${x.nume}`}`));
+    Object.entries(S.stil || {}).forEach(([t, n]) => s.push(`selectezi ${t}, apoi Cell Styles › ${n}`));
+    return s.join('; ');
+  }
+
   /* ---------- verificarea ---------- */
-  const CHEI = ['unde', 'fila', 'foaie', 'pe', 'zoom', 'valori', 'formule', 'gol', 'sel', 'activa', 'zona', 'neatinsa', 'doarTaste', 'mesajActiva', 'fara', 'tip'];
+  const CHEI = ['unde', 'fila', 'foaie', 'pe', 'zoom', 'valori', 'formule', 'gol', 'sel', 'activa', 'zona', 'neatinsa', 'doarTaste', 'mesajActiva', 'fara', 'tip', 'forma'];
   function probleme(ctx, V, s) {
     const out = [];
     if (!V) return out;
@@ -247,6 +354,7 @@
     if (V.zona) { const z = zonaPe(s, s.foaie_activa); if (z !== V.zona) out.push(`Zona selectată e ${z || '—'}, nu ${V.zona}. Apasă pe primul colț și trage până la celălalt.`); }
     if (V.activa) { const a = activaPe(s, fv); if (a !== V.activa) out.push(V.mesajActiva ? V.mesajActiva.replace('{a}', a || '—') : `Celula activă${pe} e acum ${a || '—'}. Trebuie să fie ${V.activa}.`); }
     if (V.doarTaste && ctx.clicInFoaie) out.push('De data asta, fără clic în foaie: te miști doar cu tastele (pe telefon, cu butoanele de sub foaie). Apasă „Arată-mi” sau reia exercițiul.');
+    if (V.forma) problemeForma(ctx, V.forma, s).forEach(x => out.push(esc(x)));
     return out;
   }
   function solutie(ctx, V) {
@@ -265,6 +373,7 @@
     if (V.zoom != null) s.push(`duci zoom-ul${V.pe && multe ? ' foii ' + esc(V.pe) : ''} la ${V.zoom} % cu + și −`);
     const tp = Object.entries(V.tip || {}).map(([a, e]) => `în ${a} scrii <code>${esc('numar' in e ? numarRo(e.numar) : 'data' in e ? e.data : (cuApostrof(e.text) ? "'" : '') + e.text)}</code>`);
     if (tp.length) s.push(tp.join(', '));
+    if (V.forma) { const sf = solutieForma(V.forma); if (sf) s.push(sf); }
     return s.length ? s.join('; ') + '.' + (tp.length ? ' Dacă o celulă a rămas cu forma de dată (scrii un număr și apare o dată), o selectezi și alegi, pe fila Pornire (Home), butonul cu radieră Golire (Clear), al treilea din grupul Editare (Editing), apoi Golire totală (Clear All); apoi scrii din nou.' : '') : '';
   }
 
@@ -317,6 +426,87 @@
     Object.entries(V.tip).forEach(([a, e]) => { if ('numar' in e && F0[a] && F0[a].format_numar) golireTotala(ctx, a); });
     scrieCelule(ctx, Object.entries(V.tip).map(([a, e]) => [a, 'numar' in e ? numarRo(e.numar) : 'data' in e ? String(e.data) : (cuApostrof(e.text) ? "'" : '') + e.text]));
   }
+  /* ---------- formatarea (lecția 6), cu gesturile elevului: selecție, butoanele din Home, listele lor, linia dintre litere ---------- */
+  const HOME = (g, n) => 'panglica:Home/' + g + '/' + n;
+  function selecteaza(ctx, t) { const [a, b] = String(t).split(':'); laCelula(ctx, a); if (b && b !== a) apasaTinta(ctx, 'celula:' + b, { shift: true }); }
+  const fmtAcum = ctx => { const s = stare(ctx); return (s && s.format_celule) || {}; };
+  /* comutatoarele (B, Center, Wrap Text …) se uită la celula ACTIVĂ: dacă ea are deja forma, primul clic o scoate de pe toată zona */
+  function comutator(ctx, t, tinta0, are) {
+    selecteaza(ctx, t);
+    const F0 = fmtAcum(ctx), a0 = String(t).split(':')[0];
+    if (celuleZona(t).every(a => are(F0[a] || {}))) return;
+    if (are(F0[a0] || {})) apasaTinta(ctx, tinta0);
+    apasaTinta(ctx, tinta0);
+  }
+  function dinLista(ctx, lista0, rand) { apasaTinta(ctx, lista0); apasaTinta(ctx, 'meniu:' + rand); }
+  /* dublul clic pe linia din dreapta literei: două apăsări în același punct (biblioteca le citește ca dublu clic) */
+  function dubluPe(ctx, t) { ctx.ux = null; apasaTinta(ctx, t); ctx.ux = null; apasaTinta(ctx, t); ctx.ux = null; }
+  /* tragerea de linie (sub numărul rândului / din dreapta literei): apăsat, mișcat, eliberat */
+  function tragePe(ctx, t, dx, dy) {
+    const el = tinta(ctx, t);
+    if (!el) return;
+    try { el.scrollIntoView({ block: 'nearest', inline: 'nearest' }); } catch (e) { /* */ }
+    const b = el.getBoundingClientRect(), x = b.left + b.width / 2, y = b.top + b.height / 2;
+    const ev = (fel, cx, cy, bt) => new PointerEvent(fel, { bubbles: true, cancelable: true, composed: true, pointerId: 1, pointerType: 'mouse', isPrimary: true, button: 0, buttons: bt, clientX: cx, clientY: cy });
+    el.dispatchEvent(ev('pointerdown', x, y, 1));
+    for (let k = 1; k <= 4; k++) (el.isConnected ? el : ctx.root).dispatchEvent(ev('pointermove', x + dx * k / 4, y + dy * k / 4, 1));
+    (el.isConnected ? el : ctx.root).dispatchEvent(ev('pointerup', x + dx, y + dy, 0));
+    ctx.ux = null;
+  }
+  function imbinaZona(ctx, t, centrat) {
+    const z = zonaDe(t), tl = adrDe(z.c1, z.r1);
+    let F0 = fmtAcum(ctx);
+    const ms = imbinari(F0);
+    if (ms.some(m => zonaText(m) === zonaText(z))) { if (centrat !== false && (F0[tl] || {}).aliniere !== 'centru') { laCelula(ctx, tl); apasaTinta(ctx, HOME('Alignment', 'Center')); } return; }
+    ms.filter(m => peste(m, z)).forEach(m => { laCelula(ctx, adrDe(m.c1, m.r1)); apasaTinta(ctx, HOME('Alignment', 'Merge & Center')); });   // o desface
+    selecteaza(ctx, t);
+    if (centrat === false) dinLista(ctx, 'meniu_derulant:Home/Alignment/Merge & Center', 'Merge Cells');
+    else apasaTinta(ctx, HOME('Alignment', 'Merge & Center'));
+    const s = stare(ctx);
+    if (s && (s.dialog || s.fereastra_mesaj)) apasaTinta(ctx, 'fereastra:OK');   // avertismentul: zona are mai multe valori
+  }
+  function executaForma(ctx, S) {
+    apasaTinta(ctx, 'fila:Home');
+    if (S.imbinat) [].concat(S.imbinat).forEach(t => imbinaZona(ctx, t, S.centrat === false ? false : true));
+    Object.entries(S.al || {}).forEach(([t, v]) => comutator(ctx, t, HOME('Alignment', BUT_AL[v]), f => f.aliniere === AL[v]));
+    Object.entries(S.va || {}).forEach(([t, v]) => comutator(ctx, t, HOME('Alignment', BUT_VA[v]), f => (f.aliniere_verticala || null) === VA[v]));
+    Object.entries(S.wrap || {}).forEach(([t, v]) => { if (v) comutator(ctx, t, HOME('Alignment', 'Wrap Text'), f => !!f.incadrare); else { selecteaza(ctx, t); if ((fmtAcum(ctx)[String(t).split(':')[0]] || {}).incadrare) apasaTinta(ctx, HOME('Alignment', 'Wrap Text')); } });
+    Object.keys(S.b || {}).forEach(t => comutator(ctx, t, HOME('Font', 'Bold'), f => !!f.bold));
+    Object.keys(S.fill || {}).forEach(t => { selecteaza(ctx, t); const F0 = fmtAcum(ctx); if (!celuleZona(t).every(a => (F0[a] || {}).umplere)) apasaTinta(ctx, HOME('Font', 'Fill Color')); });
+    Object.entries(S.borduri || {}).forEach(([t, v]) => { selecteaza(ctx, t); dinLista(ctx, 'meniu_derulant:Home/Font/Borders', BORD[v]); });
+    Object.entries(S.format || {}).forEach(([t, x]) => {
+      const s0 = stare(ctx);
+      if (s0 && !problemeForma(ctx, { format: { [t]: x } }, s0).length) return;   // forma e deja cea cerută (ex. „#.##0,00” de la pornire)
+      selecteaza(ctx, t);
+      const lista0 = 'meniu_derulant:Home/Number/Number Format';
+      if (x.zecimale != null) { dinLista(ctx, lista0, 'Number'); for (let k = 2; k < x.zecimale; k++) apasaTinta(ctx, HOME('Number', 'Increase Decimal')); for (let k = x.zecimale; k < 2; k++) apasaTinta(ctx, HOME('Number', 'Decrease Decimal')); }
+      else if (x.procent != null) { apasaTinta(ctx, HOME('Number', 'Percent Style')); for (let k = 0; k < x.procent; k++) apasaTinta(ctx, HOME('Number', 'Increase Decimal')); }
+      else if (x.data) dinLista(ctx, lista0, x.data === 'lunga' ? 'Long Date' : 'Short Date');
+      else if (x.nume) dinLista(ctx, lista0, x.nume);
+    });
+    Object.entries(S.stil || {}).forEach(([t, n]) => { selecteaza(ctx, t); dinLista(ctx, 'meniu_derulant:Home/Styles/Cell Styles', n); });
+    Object.entries(S.inaltime || {}).forEach(([r, x]) => {
+      for (let i = 0; i < 3 && x.min != null; i++) {
+        const s = stare(ctx), px = ((s && s.inaltimi_randuri) || {})[r] || PX_RAND, vrut = Math.ceil(x.min * 4 / 3) + 8;
+        if (px * 3 / 4 >= x.min) break;
+        tragePe(ctx, 'antet_rand_margine:' + r, 0, (vrut - px) * ((s && s.zoom) || 100) / 100);
+      }
+    });
+    /* lățimile la urmă: potrivirea ține cont de formatele de mai sus (zecimale, aldin, îmbinarea titlului) */
+    const cols = new Set();
+    [S.faraDiez, S.vizibil].filter(Boolean).forEach(t => coloaneDin(celuleZona(t)).forEach(c => cols.add(c)));
+    cols.forEach(c => dubluPe(ctx, 'antet_coloana_margine:' + c));
+  }
+  /* greșeala tipică a formatării (pentru poarta de test; vechiul aplicaGresit): îmbinarea mai scurtă, alt chenar, alt format,
+     aldin în loc de lățime, cealaltă aliniere; la restul, nimic făcut */
+  function gresesteForma(ctx, S) {
+    apasaTinta(ctx, 'fila:Home');
+    if (S.imbinat) { const z = zonaDe([].concat(S.imbinat)[0]); imbinaZona(ctx, zonaText({ c1: z.c1, c2: Math.max(z.c1 + 1, z.c2 - 1), r1: z.r1, r2: z.r2 }), true); return; }
+    if (S.borduri) { const [t] = Object.keys(S.borduri); selecteaza(ctx, t); dinLista(ctx, 'meniu_derulant:Home/Font/Borders', S.borduri[t] === 'toate' ? 'Outside Borders' : 'Bottom Border'); return; }
+    if (S.format) { const [t] = Object.keys(S.format); selecteaza(ctx, t); dinLista(ctx, 'meniu_derulant:Home/Number/Number Format', S.format[t].zecimale != null ? 'Currency' : 'General'); return; }
+    if (S.faraDiez || S.vizibil) { selecteaza(ctx, S.faraDiez || S.vizibil); apasaTinta(ctx, HOME('Font', 'Bold')); return; }
+    if (S.al) { const [t] = Object.keys(S.al); selecteaza(ctx, t); apasaTinta(ctx, HOME('Alignment', S.al[t] === 'right' ? 'Align Left' : 'Align Right')); }
+  }
   function laFoaie(ctx, nume) { const s = stare(ctx); if (s && nume != null && !egalNume(s.foaie_activa, nume)) apasaTinta(ctx, 'fila_foii:' + numeFoaie(s, nume)); }
   /* scrie valorile rând cu rând, ca în lecție: Tab între coloanele vecine, Enter la capătul rândului */
   function scrieCelule(ctx, perechi) {
@@ -366,6 +556,7 @@
       const deScris = Object.entries(V.valori || {}).map(([a, v]) => [a, numarRo(v)]).concat(Object.entries(V.formule || {}).map(([a, f]) => [a, String(f)]));
       if (deScris.length) scrieCelule(ctx, deScris);
       if (V.tip) scrieTipuri(ctx, V);
+      if (V.forma) executaForma(ctx, V.forma);
       if (V.zoom != null) laZoom(ctx, V.zoom);
       const cel = V.activa || V.sel;
       s = stare(ctx);
@@ -407,6 +598,7 @@
         });
         if (simple.length) scrieCelule(ctx, simple);
       }
+      if (V.forma) gresesteForma(ctx, V.forma);
       if (V.zoom != null) laZoom(ctx, V.zoom === 100 ? 90 : 100);
       const cel = V.activa || V.sel || (V.zona ? String(V.zona).split(':')[0] : null);
       if (cel) laCelula(ctx, cel === 'A1' ? 'B2' : 'A1');
@@ -415,17 +607,35 @@
   }
 
   /* ---------- conținutul de pornire, în forma bibliotecii ---------- */
+  /* forme {'B2:B4': {nfx: '#.##0,00', b: true, fill: '#FFFF00', al: 'center'}} și imbinari ['A1:D1'] (lecția 6) → `format` al bibliotecii;
+     codul de format e scris pe setări românești, ca în lecție: excel.js îl traduce (format_numar_ro → tipuri.codDinRo) */
+  function formaPornire(Q) {
+    if (!Q.forme && !Q.imbinari) return null;
+    const out = {}, pe = (a, o) => { out[a] = Object.assign(out[a] || {}, o); };
+    Object.entries(Q.forme || {}).forEach(([t, pr]) => celuleZona(t).forEach(a => Object.entries(pr || {}).forEach(([k, v]) => {
+      if (k === 'nfx') pe(a, { format_numar_ro: v });
+      else if (k === 'b') pe(a, { bold: !!v }); else if (k === 'i') pe(a, { italic: !!v }); else if (k === 'u') pe(a, { underline: !!v });
+      else if (k === 'fill') pe(a, { umplere: String(v).replace('#', '').toUpperCase() });
+      else if (k === 'al' && AL[v]) pe(a, { aliniere: AL[v] });
+      else W.console.warn('excel-excelx-adapter: forma de pornire necunoscută', k, v);
+    })));
+    (Q.imbinari || []).forEach(t => { const z = zonaDe(t); if (z) pe(adrDe(z.c1, z.r1), { imbinat: zonaText(z) }); });
+    return out;
+  }
   function continutDe(Q) {
     const c = {};
     if (Q.foi && Q.foi.length) {
       const k0 = Math.min(Q.foaie || 0, Q.foi.length - 1);
-      c.foi = Q.foi.map((f, i) => ({ nume: f.nume, celule: f.cells || {}, latimi: f.latimi, zoom: i === k0 ? Q.zoom : undefined }));
+      c.foi = Q.foi.map((f, i) => ({ nume: f.nume, celule: f.cells || {}, latimi_caractere: f.latimi, zoom: i === k0 ? Q.zoom : undefined }));
       c.fi = k0;
     } else {
       c.celule = Q.cells || {};
-      if (Q.numeFoaie) c.foi = [{ nume: Q.numeFoaie, celule: c.celule, latimi: Q.latimi, zoom: Q.zoom }];
       if (Q.zoom) c.zoom = Q.zoom;
-      if (Q.latimi && typeof Q.latimi === 'object' && !Array.isArray(Q.latimi)) c.latimi = Q.latimi;
+      if (Q.latimi && typeof Q.latimi === 'object' && !Array.isArray(Q.latimi)) c.latimi_caractere = Q.latimi;
+      if (Q.inaltimi && typeof Q.inaltimi === 'object') c.inaltimi = Q.inaltimi;
+      const fm = formaPornire(Q);
+      if (fm) c.format = fm;
+      if (Q.numeFoaie) c.foi = [{ nume: Q.numeFoaie, celule: c.celule, latimi_caractere: c.latimi_caractere, inaltimi: c.inaltimi, format: c.format, zoom: Q.zoom }];
     }
     if (Q.start) c.selectie = String(Q.start);
     /* registrul lecției nu e „modificat” la pornire: Ctrl+W / închiderea nu întreabă de salvare pentru datele puse de lecție */
@@ -590,6 +800,12 @@
     const V = Q.verifica || {};
     body.innerHTML = `${Q.teste ? '<div class="xa-teste" aria-live="polite"></div>' : ''}<div class="xa-host"></div><p class="xa-nota" role="status"></p>${Q.o ? '<div class="opts xa-opts" id="xopts"></div>' : ''}`;
     const host = body.querySelector('.xa-host'), cutie = body.querySelector('.xa-teste'), nota = body.querySelector('.xa-nota');
+    /* formatarea (lecția 6): ajutorul de sub foaie pe care îl dădea simulatorul vechi (excelx-formatare.js › TEL și nota panglicii),
+       spus pentru Excelul din bibliotecă: pe telefon, cercurile ⇔ / ⇕; pe calculator, panglica derulată lateral, doar dacă nu încape */
+    const cuForma = !!(V.forma || (Q.teste || []).some(T => T && T.forma));
+    const ajutorForma = cuForma ? document.createElement('p') : null;
+    if (ajutorForma) { ajutorForma.className = 'xa-nota xa-ajutor'; host.after(ajutorForma); }
+    const peDeget = () => { try { return matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0; } catch (e) { return false; } };
     const ctx = { Q, body, host, inst: null, root: null, loc: null, clicInFoaie: false, robot: false, ux: null, uy: null };
     CTX.set(body, ctx);
 
@@ -689,6 +905,11 @@
           /* foaia are tastatura de la început (elevul scrie fără clic); motorul mai mută focusul după ce așază exercițiul */
           const laStart = () => { const a = document.activeElement; if (!host.isConnected || (a && ctx.root.contains(a))) return; if (a && a.closest && a.closest('input,textarea,select')) return; try { inst.focus(); } catch (e) { /* */ } };
           laStart(); setTimeout(laStart, 0); setTimeout(laStart, 200);
+        }
+        if (ajutorForma) {
+          const sus = ctx.root.querySelector('.lh-ap-sus');
+          if (peDeget()) ajutorForma.innerHTML = '<b>Formatarea pe telefon:</b> lățimea unei coloane: atingi litera ei, apoi tragi de cercul verde ⇔ de pe marginea ei; două atingeri pe cerc o potrivesc singură. Înălțimea unui rând: atingi numărul lui, apoi tragi de cercul ⇕. Panglica și foaia le derulezi în lateral cu degetul. Săgeata ▾ a unui buton deschide lista lui.';
+          else if (sus && sus.scrollWidth > sus.clientWidth + 1) ajutorForma.innerHTML = 'Panglica nu încape toată: grupurile Număr (Number), Stiluri (Styles), Celule (Cells) și Editare (Editing) sunt mai la dreapta. Trage spre dreapta de bara subțire de sub panglică sau rotește rotița mouse-ului ținând apăsat Shift. În Excel-ul de pe calculator o vezi întreagă.';
         }
         bifeaza();
       })
