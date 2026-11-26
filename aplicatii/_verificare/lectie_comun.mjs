@@ -187,7 +187,7 @@ async function joaca(browser, base, cfg, ex) {
     await fn(u);
     const f = await fb(p);
     if (ARATA) console.log(`   [${ex.id} corect] ${f.text}`);
-    if (ex.teste) { const n = await p.evaluate(() => document.querySelectorAll('#body .xp-teste li.ok, #body .xa-teste li.ok').length); if (n !== ex.teste) return `testele atelierului bifate: ${n} din ${ex.teste}; ${f.text}`; }
+    if (ex.teste) { const n = await p.evaluate(() => document.querySelectorAll('#body .xp-teste li.ok, #body .xa-teste li.ok, #body .xs-teste li.ok').length); if (n !== ex.teste) return `testele atelierului bifate: ${n} din ${ex.teste}; ${f.text}`; }
     if (erori.length) return 'eroare în pagină: ' + erori.join(' | ');
     return f.ok && /Corect/.test(f.text) ? true : 'lecția nu arată „Corect”: ' + (f.text || '(nimic)') + ' | ecran: ' + JSON.stringify(await ecran(p));
   };
