@@ -51,8 +51,13 @@
                                           stil {'A1':'Title'}, text, valori:true (valorile de la pornire n-au fost schimbate)
    Pornirea foii (lecția 6): latimi {C: 6} = lățimea în CARACTERE (ca fereastra Column Width), inaltimi {1: 40} în puncte,
      forme {'B2:B4': {nfx: '#.##0,00'}} (codul pe setări românești), imbinari ['A1:D1'] — le pune excel.js (conținutul de pornire).
-   O cheie pe care adaptorul nu o știe NU trece (și se scrie în consolă): functie, gest, umplut, sortat, grafic, format.nume,
-   latime — ale lecțiilor 7-11, de adus când se leagă acelea (vezi raportul pilotului).
+     functie {B7: 'SUM'}                  (lecția 8) celula folosește funcția cerută; spus doar când restul e bun, ca pe vechi
+                                          (lectii/_sim/excelx-functii.js › render): „În B7 rezultatul e bun, dar aici se cere funcția SUM…”
+     umplut {E2: ['E3','E6']}             (lecția 8) celulele umplute din sursă: ținta = formula sursei mutată (judecată prin rezultat)
+     gest ['autosum'|'umple'], umple true (lecția 8; umple = în teste) gestul cerut, citit din evenimentele bibliotecii: Σ / lista ▾ /
+                                          Alt+= (suma_automata), mânerul de umplere tras (umplere_tragere); mesajele din tip-excel.js
+   O cheie pe care adaptorul nu o știe NU trece (și se scrie în consolă): sortat, grafic, format.nume, latime, gesturile
+   clic-adresa / f4 / zona-mouse / autocompletare / ctrl-d … — ale lecțiilor 9-11, de adus când se leagă acelea.
    TESTELE numite (Q.teste: [{ce, …aceleași chei…, fara: ['x']}]) se bifează singure deasupra foii.
 
    AJUTOARELE: indiciul e al motorului (Q.ajutor). „Nu încă” spune CE e greșit (aceleași texte ca simulatorul vechi).
@@ -349,7 +354,41 @@
     if (cod === '#NULL!') { const m = s.match(/([A-Za-z]{1,3}\d+)\s+([A-Za-z]{1,3}\d+)/); if (m) return `Ai uitat semnul dintre ${m[1].toUpperCase()} și ${m[2].toUpperCase()}: între ele trebuie un semn de calcul (+ - * /). Excel arată aici #NULL!.`; }
     return '';
   }
-  function problemeFormule(ctx, tinte, R) {
+  /* lecția 8: #NAME? dintr-un nume de FUNCȚIE necunoscut (=SUMA(B2:B6)): mesajul vechi din tip-foaie.js › call („Excel nu cunoaște
+     funcția SUMA. Numele funcțiilor sunt în engleză: SUM.”), cu numele românești ale vechiului RO_NAMES. Dacă Excel cunoaște sau nu
+     un nume o spune biblioteca (valoarea lui =NUME(1) pe copia foii), nu o listă din adaptor (R6) */
+  const NUME_RO = { SUMA: 'SUM', MEDIE: 'AVERAGE', MEDIA: 'AVERAGE', DACA: 'IF', 'DACĂ': 'IF', MAXIM: 'MAX', MINIM: 'MIN', ROTUNJIRE: 'ROUND', NUMARA: 'COUNT', 'NUMĂRĂ': 'COUNT' };
+  function functieNecunoscuta(ctx, a, raw) {
+    const re = /([A-Za-zĂÂÎȘȚăâîșțŞŢşţ_][A-Za-z0-9_.ĂÂÎȘȚăâîșțŞŢşţ]*)\s*\(/g, s = faraText(String(raw).replace(/^=/, '')); let m;
+    while ((m = re.exec(s))) {
+      if (/[A-Za-z0-9_.]/.test(s[m.index - 1] || '')) continue;
+      const n = m[1].toUpperCase(), ro = NUME_RO[n];
+      if (ro) return `Excel nu cunoaște funcția ${n}. Numele funcțiilor sunt în engleză: ${ro}.`;
+      const v = calc(ctx, a, { [a]: '=' + n + '(1)' });
+      if (eEroare(v) && v.eroare === '#NAME?') return `Excel nu cunoaște funcția ${n}.`;
+    }
+    return '';
+  }
+  /* lecția 8: funcția cerută (verifica.functie {B7:'SUM'}; excelx-functii.js › areFunctia), gesturile cerute (verifica.gest) */
+  const areFunctia = (raw, fn) => typeof raw === 'string' && raw.charAt(0) === '=' && new RegExp('(^|[^A-Z0-9_.])' + fn + '\\s*\\(', 'i').test(faraText(raw));
+  const MESAJ_GEST = {
+    autosum: 'Folosește butonul Σ, Însumare automată (AutoSum): fila Formule (Formulas), la început, sau fila Pornire (Home), în dreapta.',
+    umple: 'Copiază formula TRĂGÂND de pătrățelul verde din colțul celulei (fill handle), ca în Excel, nu scriind-o din nou.'
+  };
+  /* Σ: rândurile listei ▾ (ținta meniu:<rând> a bibliotecii) și numele lor în textul răspunsului */
+  const LISTA_SIGMA = { SUM: 'Sum', AVERAGE: 'Average', COUNT: 'Count Numbers', MAX: 'Max', MIN: 'Min' };
+  const LISTA_SIGMA_RO = { AVERAGE: 'Medie (Average)', COUNT: 'Contorizare numere (Count Numbers)', MAX: 'Max', MIN: 'Min' };
+  /* celula a se face cu Σ (gest autosum și funcția cerută a celulei e în lista lui Σ) → numele funcției, altfel '' */
+  const cuSigma = (V, a) => { const fn = (V.gest || []).indexOf('autosum') >= 0 && V.functie && V.functie[a] ? String(V.functie[a]).toUpperCase() : ''; return LISTA_SIGMA[fn] ? fn : ''; };
+  /* ce stă între parantezele funcției (=SUM(B2:B6) → B2:B6) */
+  const argFunctie = f => { const m = String(f).match(/^=\s*[A-Za-z]+\s*\((.*)\)\s*$/); return m ? m[1] : ''; };
+  /* umplut {E2: ['E3','E4']}: ce trebuie să ajungă în celulele umplute = formula sursei mutată cu rândul / coloana (JocFoaie.shift) */
+  function tinteUmplut(V) {
+    const t = {};
+    Object.entries(V.umplut || {}).forEach(([s, dest]) => { const a = pos(s); [].concat(dest).forEach(d => { const b = pos(d); if (a && b && V.formule && V.formule[s]) t[d] = mutaFormula(String(V.formule[s]), b.r - a.r, b.c - a.c); }); });
+    return t;
+  }
+  function problemeFormule(ctx, tinte, R, cuUmplut) {
     const out = [], Q = ctx.Q, variante = (Q.variants || []).slice().concat([dateSchimbate(Q)]);
     for (const [a, tf] of Object.entries(tinte)) {
       const raw = scrisIn(R[a]);
@@ -357,7 +396,7 @@
       if (raw.charAt(0) !== '=') { out.push(`În ${a} ai scris ${esc(raw)}, nu o formulă: formula începe cu =.`); continue; }
       if (!/\$?[A-Za-z]{1,2}\$?\d+/.test(raw)) { out.push(`${a} are doar numere scrise de mână. Folosește adresele celulelor, ca rezultatul să se recalculeze.`); continue; }
       const g = calc(ctx, a, {});
-      if (eEroare(g)) { const d = deCeEroare(g.eroare, raw); out.push(`${a} arată ${g.eroare || 'o eroare'}${d ? ': ' + d : '.'}`); continue; }
+      if (eEroare(g)) { const d = (g.eroare === '#NAME?' && functieNecunoscuta(ctx, a, raw)) || deCeEroare(g.eroare, raw); out.push(`${a} arată ${g.eroare || 'o eroare'}${d ? ': ' + d : '.'}`); continue; }
       let x = calc(ctx, a, tinte);
       if (eEroare(x)) x = null;
       if (!laFel(g, x)) { out.push(`${a} dă ${afisVal(g)}, dar ar trebui să dea ${afisVal(x)}.`); continue; }
@@ -365,7 +404,7 @@
         let g2 = calc(ctx, a, v), x2 = calc(ctx, a, Object.assign({}, tinte, v));
         if (eEroare(g2)) g2 = '#';
         if (eEroare(x2)) x2 = '?';
-        if (!laFel(g2, x2)) { out.push(`${a} dă rezultatul bun acum, dar greșește când se schimbă datele. Verifică adresele.`); break; }
+        if (!laFel(g2, x2)) { out.push(`${a} dă rezultatul bun acum, dar greșește când se schimbă datele. Verifică adresele${cuUmplut ? ' și semnul $' : ''}.`); break; }
       }
     }
     return out;
@@ -431,7 +470,7 @@
   }
 
   /* ---------- verificarea ---------- */
-  const CHEI = ['unde', 'fila', 'foaie', 'pe', 'zoom', 'valori', 'formule', 'gol', 'sel', 'activa', 'zona', 'neatinsa', 'doarTaste', 'mesajActiva', 'fara', 'tip', 'forma', 'capcane'];
+  const CHEI = ['unde', 'fila', 'foaie', 'pe', 'zoom', 'valori', 'formule', 'gol', 'sel', 'activa', 'zona', 'neatinsa', 'doarTaste', 'mesajActiva', 'fara', 'tip', 'forma', 'capcane', 'functie', 'gest', 'umplut', 'umple'];
   function probleme(ctx, V, s) {
     const out = [];
     if (!V) return out;
@@ -459,7 +498,8 @@
     }
     /* formulele, prin rezultat (lecția 7); ca pe vechi (excelx.js › render: tipul se judecă după foaie), tipul cerut se spune
        doar când formulele sunt bune: „C2 arată #VALUE!” înaintea lui „A2 a rămas text” */
-    const pf = V.formule ? problemeFormule(ctx, V.formule, R) : [];
+    const tf = V.umplut ? Object.assign({}, V.formule || {}, tinteUmplut(V)) : V.formule;
+    const pf = tf ? problemeFormule(ctx, tf, R, !!V.umplut) : [];
     pf.forEach(x => out.push(x));
     if (!pf.length) Object.entries(V.tip || {}).forEach(([a, e]) => { const p = problemaTip(ctx, s, R, a, e); if (p) out.push(p); });
     (V.gol || []).forEach(a => { if (afisat(R[a]) !== '') out.push(`${a} nu e goală încă. Alege-o și apasă Delete.`); });
@@ -474,6 +514,21 @@
     if (V.activa) { const a = activaPe(s, fv); if (a !== V.activa) out.push(V.mesajActiva ? V.mesajActiva.replace('{a}', a || '—') : `Celula activă${pe} e acum ${a || '—'}. Trebuie să fie ${V.activa}.`); }
     if (V.doarTaste && ctx.clicInFoaie) out.push('De data asta, fără clic în foaie: te miști doar cu tastele (pe telefon, cu butoanele de sub foaie). Apasă „Arată-mi” sau reia exercițiul.');
     if (V.forma) problemeForma(ctx, V.forma, s).forEach(x => out.push(esc(x)));
+    /* gesturile cerute (lecția 8; tip-excel.js › probleme, la sfârșit): Σ (autosum) și mânerul de umplere (umple; în teste umple:true).
+       Le citește render din evenimentele bibliotecii (ctx.gest). Un gest pe care adaptorul nu-l știe citi NU trece. */
+    const gesturi = [].concat(V.gest || [], V.umple ? ['umple'] : []);
+    gesturi.forEach(x => {
+      if (!MESAJ_GEST[x]) { W.console.warn('excel-excelx-adapter: gest necunoscut', x); out.push(`Foaia de aici nu știe încă să verifice gestul: ${esc(x)}. Spune-i profesorului.`); return; }
+      if (!(ctx.gest && ctx.gest.has(x))) out.push(MESAJ_GEST[x]);
+    });
+    /* funcția cerută, doar când restul e bun (ca pe vechi: excelx-functii.js › render, la „Corect” al foii) */
+    if (!out.length && V.functie) {
+      for (const [a, fn] of Object.entries(V.functie)) {
+        if (areFunctia(scrisIn(R[a]), fn)) continue;
+        out.push(`În ${a} rezultatul e bun, dar aici se cere funcția ${fn}: scrie =${fn}(…) cu zona potrivită${(V.gest || []).indexOf('autosum') >= 0 ? ' (sau folosește butonul Σ)' : ''}.`);
+        break;
+      }
+    }
     return out;
   }
   function solutie(ctx, V) {
@@ -486,7 +541,11 @@
     if (V.zona) s.push(`selectezi zona <b>${esc(V.zona)}</b>`);
     const vs = Object.entries(V.valori || {});
     if (vs.length) s.push(`scrii ${vs.map(([a, v]) => `${esc(numarRo(v))} în ${a}`).join(', ')}`);
-    Object.entries(V.formule || {}).forEach(([a, f]) => s.push(`în ${a} scrii <code>${esc(f)}</code>`));
+    Object.entries(V.formule || {}).forEach(([a, f]) => {
+      const fn = cuSigma(V, a);
+      s.push(`în ${a} scrii <code>${esc(f)}</code>` + (fn ? ` cu butonul Σ: clic pe ${a}, apoi ${fn === 'SUM' ? 'pe Σ (Însumare automată / AutoSum)' : `pe săgeata ▾ de lângă Σ › ${LISTA_SIGMA_RO[fn]}`}; ${argFunctie(f) ? `scrii ${esc(argFunctie(f))} peste zona propusă și ` : ''}apeși Enter` : ''));
+    });
+    Object.entries(V.umplut || {}).forEach(([a, d]) => s.push(`tragi de colțul lui ${a} până la ${[].concat(d).slice(-1)[0]}`));
     (V.gol || []).forEach(a => s.push(`alegi ${a} și apeși Delete`));
     if (V.activa) s.push(`la final celula activă e ${V.activa}`);
     if (V.zoom != null) s.push(`duci zoom-ul${V.pe && multe ? ' foii ' + esc(V.pe) : ''} la ${V.zoom} % cu + și −`);
@@ -570,6 +629,20 @@
     el.dispatchEvent(ev('pointerdown', x, y, 1));
     for (let k = 1; k <= 4; k++) (el.isConnected ? el : ctx.root).dispatchEvent(ev('pointermove', x + dx * k / 4, y + dy * k / 4, 1));
     (el.isConnected ? el : ctx.root).dispatchEvent(ev('pointerup', x + dx, y + dy, 0));
+    ctx.ux = null;
+  }
+  /* tragerea unui element (mânerul de umplere) până pe alt element (o celulă): apăsat pe primul, mișcat în pași, eliberat pe al doilea */
+  function tragePanaLa(ctx, t1, t2) {
+    const b2el = tinta(ctx, t2);
+    try { if (b2el) b2el.scrollIntoView({ block: 'nearest', inline: 'nearest' }); } catch (e) { /* */ }
+    const el = tinta(ctx, t1);
+    if (!el || !b2el) return;
+    const b = el.getBoundingClientRect(), d = b2el.getBoundingClientRect();
+    const x = b.left + b.width / 2, y = b.top + b.height / 2, x2 = d.left + d.width / 2, y2 = d.top + d.height / 2;
+    const ev = (fel, cx, cy, bt) => new PointerEvent(fel, { bubbles: true, cancelable: true, composed: true, pointerId: 1, pointerType: 'mouse', isPrimary: true, button: 0, buttons: bt, clientX: cx, clientY: cy });
+    el.dispatchEvent(ev('pointerdown', x, y, 1));
+    for (let k = 1; k <= 6; k++) (el.isConnected ? el : ctx.root).dispatchEvent(ev('pointermove', x + (x2 - x) * k / 6, y + (y2 - y) * k / 6, 1));
+    (el.isConnected ? el : ctx.root).dispatchEvent(ev('pointerup', x2, y2, 0));
     ctx.ux = null;
   }
   function imbinaZona(ctx, t, centrat) {
@@ -672,8 +745,29 @@
       const lucru = V.pe != null ? V.pe : V.foaie;
       if (lucru != null) laFoaie(ctx, lucru);
       (V.gol || []).forEach(a => { laCelula(ctx, a); tasta(ctx, 'Delete'); });
-      const deScris = Object.entries(V.valori || {}).map(([a, v]) => [a, numarRo(v)]).concat(Object.entries(V.formule || {}).map(([a, f]) => [a, String(f)]));
+      const deScris = Object.entries(V.valori || {}).map(([a, v]) => [a, numarRo(v)]).concat(Object.entries(V.formule || {}).filter(([a]) => !cuSigma(V, a)).map(([a, f]) => [a, String(f)]));
       if (deScris.length) scrieCelule(ctx, deScris);
+      /* lecția 8: celulele cerute cu Σ se fac cu Σ (panglica: Σ = Sumă; săgeata ▾ › rândul funcției), zona bună scrisă peste cea
+         propusă (biblioteca o ține aleasă, deci scrisul o înlocuiește), Enter */
+      Object.entries(V.formule || {}).filter(([a]) => cuSigma(V, a)).forEach(([a, f]) => {
+        const fn = cuSigma(V, a), s1 = stare(ctx);
+        if (s1 && filaDeschisa(s1) !== 'home') apasaTinta(ctx, 'fila:Home');
+        laCelula(ctx, a);
+        if (fn === 'SUM') apasaTinta(ctx, 'panglica:Home/Editing/AutoSum');
+        else { apasaTinta(ctx, 'meniu_derulant:Home/Editing/AutoSum'); apasaTinta(ctx, 'meniu:' + LISTA_SIGMA[fn]); }
+        const z = argFunctie(f);
+        if (z) tasteaza(ctx, z);
+        tasta(ctx, 'Enter');
+      });
+      /* mânerul de umplere: selecția = celulele-sursă, mânerul tras până la ultima celulă-țintă (apăsat, mișcat, eliberat) */
+      if (V.umplut) {
+        const src = Object.keys(V.umplut).map(pos).filter(Boolean), dst = [].concat(...Object.values(V.umplut)).map(pos).filter(Boolean);
+        if (src.length && dst.length) {
+          const c1 = Math.min(...src.map(p => p.c)), r1 = Math.min(...src.map(p => p.r)), c2 = Math.max(...src.map(p => p.c)), r2 = Math.max(...src.map(p => p.r));
+          selecteaza(ctx, adrDe(c1, r1) + ':' + adrDe(c2, r2));
+          tragePanaLa(ctx, 'maner_umplere', 'celula:' + adrDe(Math.max(c2, ...dst.map(p => p.c)), Math.max(r2, ...dst.map(p => p.r))));
+        }
+      }
       if (V.tip) scrieTipuri(ctx, V);
       if (V.forma) executaForma(ctx, V.forma);
       if (V.zoom != null) laZoom(ctx, V.zoom);
@@ -947,6 +1041,21 @@
         if (d.actiune === 'lipire') ctx.mp = true;
       };
       W.addEventListener('lh-aplicatie', asculta);
+    }
+
+    /* gesturile cerute (lecția 8: verifica.gest, teste umple:true), din evenimentele bibliotecii — ca `gest` al simulatorului vechi
+       (tip-excel.js): Σ / lista ▾ / Alt+= = autosum (acțiunea suma_automata), mânerul tras și eliberat = umple (gestul
+       umplere_tragere cu acțiunea umplere; apăsarea simplă pe mâner nu umple nimic). Și „Arată-mi răspunsul” le face cu aceleași gesturi */
+    if ((V && (V.gest || V.umplut)) || (Q.teste || []).some(T => T && (T.gest || T.umple))) {
+      ctx.gest = new Set();
+      const gest = ev => {
+        if (!host.isConnected) { W.removeEventListener('lh-aplicatie', gest); return; }
+        const d = ev.detail || {};
+        if (d.aplicatie !== 'excel') return;
+        if (d.actiune === 'suma_automata') ctx.gest.add('autosum');
+        if (d.actiune === 'umplere' && d.gest === 'umplere_tragere') ctx.gest.add('umple');
+      };
+      W.addEventListener('lh-aplicatie', gest);
     }
 
     /* tipul de date (lecția 5): ce a TASTAT elevul în fiecare celulă, pentru mesaje („În B2 ai scris „9.5”…”). Din evenimentele
