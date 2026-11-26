@@ -83,7 +83,8 @@
   function incarcaApp(nume) {
     const s = SURSE_APP[nume];
     if (!s) return Promise.reject(new Error('„' + nume + '” nu e încă în bibliotecă (vine într-un val următor)'));
-    return Promise.all([script(s[0]), json(s[1])]).then(r => r[1]);
+    /* aplicația încărcată deja de pagină cu <script src> (lecția 5: excel.js, pentru mini-foile din text) nu se încarcă a doua oară */
+    return Promise.all([MODULE[nume] ? true : script(s[0]), json(s[1])]).then(r => r[1]);
   }
   function alegeProfil(nume, cerut) {
     const voie = PROFILURI[nume] || [];
@@ -125,8 +126,11 @@
         leagaGesturi(I);
         INST[nume] = I;
         if (opt.focus) try { (I.focus || (() => root.focus({ preventScroll: true })))(); } catch (e) { /* */ }
+        /* inchide = DOAR instanța aceasta (26.11.2026, legarea m1-l05): o gazdă care renunță la o instanță deja înlocuită (motorul
+           redesenează exercițiul înainte ca primul Excel să se fi deschis) nu are voie să închidă Excelul NOU, care e acum INST[nume];
+           cea înlocuită a fost oprită deja de L.deschide (L.inchide pe ea) */
         I.api = { aplicatie: nume, radacina: root, stare: () => clona(I.stare()), element: t => L.element(nume, t),
-          focus: () => (I.focus ? I.focus() : root.focus({ preventScroll: true })), inchide: () => L.inchide(nume) };
+          focus: () => (I.focus ? I.focus() : root.focus({ preventScroll: true })), inchide: () => { if (INST[nume] === I) L.inchide(nume); } };
         if (opt.asistent) {
           const P = (W.LH && W.LH.aplicatii) || W.LHAplicatii || L;
           I.asist = P.asistent(nume, opt.asistent);

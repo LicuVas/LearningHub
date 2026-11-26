@@ -13,7 +13,12 @@ Maparea (idMso -> nume_fluent) se scrie de mână, după ce FACE comanda; `path`
 Rulare (după ce ai adăugat un rând cu `nume_fluent`):
     python C:/00/Projects/LearningHub_fidel/aplicatii/_unelte/icoane_bib.py excel --pachet C:/00/AI_0/.scratch/fluent_icons/pachet/package
     python C:/00/Projects/LearningHub_fidel/aplicatii/_unelte/icoane_bib.py excel --verifica   # ultima linie = rânduri fără path
-Generatoarele (`genereaza_<aplicatie>.py`) cheamă `citeste()` și `imparte()`; nu citesc pachetul npm.
+Generatoarele (`genereaza_<aplicatie>.py`) cheamă `citeste()` / `citeste_lant()` și `imparte()`; nu citesc pachetul npm.
+
+Comenzile comune NU se rescriu: `citeste_lant(["powerpoint", "word", "excel"])` pune fișierele unul peste altul (primul are
+întâietate). Ce e comun celor trei aplicații (Shape Fill, Text Effects, Alt Text…) stă în `icoane_excel.json`; ce e comun Word +
+PowerPoint (tabel, imagine, casetă) stă în `icoane_word.json`; în `icoane_powerpoint.json` e doar ce are numai PowerPoint.
+`icoane_vechi()` dă și pictogramele surselor vechi ale celorlalte aplicații (Undo, Save…), ca ultimă rezervă.
 """
 import argparse
 import json
@@ -43,12 +48,40 @@ def citeste(aplicatie):
     return ic, nume, d.get("unelte") or {}, d.get("fara") or {}
 
 
+def citeste_lant(aplicatii):
+    """Ca `citeste`, pe mai multe fișiere: primul din listă are întâietate, următoarele umplu ce lipsește."""
+    ic, nume, unelte, fara = {}, {}, {}, {}
+    for a in reversed(aplicatii):
+        i, n, u, f = citeste(a)
+        ic.update(i)
+        nume.update(n)
+        if u:
+            unelte = u
+        if a == aplicatii[0]:
+            fara.update(f)
+    return ic, nume, unelte, fara
+
+
+def icoane_vechi(wt, aplicatii):
+    """Pictogramele surselor vechi (`jocuri/_motor/panglica-<aplicatie>.js › icoane`, doar citite); primul din listă are întâietate."""
+    out = {}
+    for a in reversed(aplicatii):
+        p = Path(wt) / "jocuri" / "_motor" / f"panglica-{a}.js"
+        if not p.exists():
+            continue
+        t = p.read_text(encoding="utf-8")
+        out.update((json.loads(t[t.find("{"):t.rfind("}") + 1]).get("icoane") or {}))
+    return out
+
+
 def _motiv_nod(n):
     """De ce nodul acesta nu are pictogramă în aplicația reală (None = ar trebui să aibă)."""
     t, e = n.get("t"), n.get("e") or ""
     r = n.get("r") or [0, 0, 99, 99]
     if t not in CU_PICTOGRAMA:
         return f"{t}: fără pictogramă în aplicația reală"
+    if t == "MenuItem" and not e:
+        return "caseta unei galerii din panglică: se desenează elementele ei, nu are pictogramă proprie"
     if t == "MenuItem" and e == "More Options":
         return "săgeata ▾ a unui buton divizat (glif propriu)"
     if t == "Button" and r[2] <= 18 and r[3] <= 18:

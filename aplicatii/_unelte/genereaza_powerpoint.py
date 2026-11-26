@@ -10,7 +10,10 @@ referință rămâne lipsă și se notează în `lipsa`.
 își desenează miniaturile și diapozitivul). PowerPoint NU-și expune diapozitivul și miniaturile în UI Automation
 (README_referinte.md): desenul lor îl face powerpoint.js, simplu, din scenarii, fără pretenție de fidelitate de pixel.
 Grupul „Claude” din Home (add-in instalat de om) e deja scos din referință (`excluse_personal`); nu intră aici.
-Pictogramele: Fluent UI System Icons (MIT, Microsoft), din `jocuri/_motor/panglica-powerpoint.js` (doar citit), după idMso.
+Pictogramele: Fluent UI System Icons (MIT, Microsoft), din `jocuri/_motor/panglica-powerpoint.js` (doar citit), după idMso, iar
+PE LÂNGĂ ele cele din `aplicatii/_unelte/icoane_powerpoint.json` și comunele din `icoane_word.json` / `icoane_excel.json` (vezi
+`icoane_bib.py`): sursa veche are întâietate, biblioteca umple ce lipsește. `fara_icoana` = idMso-urile care AR TREBUI să aibă
+pictogramă și nu au; `fara_icoana_real` = cele care nici în PowerPoint nu au (casete, bife, săgeata ▾, lansatoare), cu motivul.
 
 Rulare:
     python C:/00/Projects/LearningHub_fidel/aplicatii/_unelte/genereaza_powerpoint.py            # scrie date/powerpoint.json
@@ -27,6 +30,7 @@ from pathlib import Path
 AICI = Path(__file__).resolve().parent
 sys.path.insert(0, str(AICI))
 import genereaza_word as GW  # noqa: E402  (aceleași reguli de transformare; modulul nu scrie nimic la import)
+import icoane_bib as IB  # noqa: E402  (pictogramele bibliotecii, pe lângă sursa veche)
 
 BIB = AICI.parent
 REF = GW.D / "referinte" / "uia_powerpoint.json"
@@ -105,11 +109,14 @@ def genereaza():
             d["id_mso"] = m.group(1)
     zona = geometria_zonei(S["zona_document"], lipsa)
     ic, licenta = icoane_fluent()
+    ic_bib, ic_nume, unelte, fara_manual = IB.citeste_lant(["powerpoint", "word", "excel"])
+    # sursa veche a PowerPointului are întâietate; apoi biblioteca (powerpoint, word, excel); la urmă sursele vechi ale celorlalte
+    ic = {**IB.icoane_vechi(GW.WT, ["word", "excel"]), **ic_bib, **ic}
     folosite = set()
     for v in sup.values():
         GW.toate_id(v, folosite)
     icoane = {k: v for k, v in sorted(ic.items()) if k in folosite}
-    fara_icoana = sorted(i for i in folosite if i not in ic)
+    fara_icoana, fara_icoana_real = IB.imparte(sup, ic, fara_manual)
     return {
         "_despre": "GENERAT de aplicatii/_unelte/genereaza_powerpoint.py din referința UI Automation a lui PowerPoint real — "
                    "nu edita de mână; schimbarea vine din referință (o rundă `acoperire`) sau din generator.",
@@ -117,7 +124,8 @@ def genereaza():
         "sursa": {"referinta": "_campaign/aplicatii_fidele_2026_11/referinte/uia_powerpoint.json",
                   "sha256": hashlib.sha256(brut).hexdigest(), "versiune_powerpoint": ref.get("versiune"),
                   "generat_referinta": ref.get("generat"), "fereastra": ref.get("fereastra"),
-                  "icoane": "jocuri/_motor/panglica-powerpoint.js › icoane (" + licenta + ")"},
+                  "icoane": "jocuri/_motor/panglica-powerpoint.js › icoane (" + licenta + ") + aplicatii/_unelte/"
+                            "icoane_powerpoint.json, icoane_word.json, icoane_excel.json (" + IB.VERSIUNE + ", MIT)"},
         "chei": {"t": "tip (ControlType UIA)", "e": "eticheta (numele accesibil real)", "id": "idMso", "r": "rect_css absolut",
                  "a": "0 = gri (activ:false)", "b": "bifat (ToggleState)", "v": "valoare", "k": "scurtătura", "h": "sfatul",
                  "ta": "KeyTip", "ascuns": "1 = în afara ecranului în referință", "c": "copiii"},
@@ -129,8 +137,11 @@ def genereaza():
         "zona": zona,
         "suprafete": sup,
         "icoane": icoane,
+        "icoane_nume": ic_nume,
+        "unelte": {k: v for k, v in unelte.items() if not k.startswith("_")},
         "lipsa": lipsa,
         "fara_icoana": fara_icoana,
+        "fara_icoana_real": fara_icoana_real,
         # Font ▾ › All Fonts: în suprafața lista.Font sunt doar cele 17 rânduri vizibile la deschidere; toate numele, în ordine,
         # sunt în acoperire_r12.fapte › c_font › all_fonts (fonturile PC-ului capturat) — runda 13, A4
         "fonturi_toate": (((ref.get("acoperire_r12") or {}).get("fapte") or {}).get("c_font") or {}).get("all_fonts") or [],

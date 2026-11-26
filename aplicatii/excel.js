@@ -355,6 +355,8 @@
     return null;
   }
   const textNumeric = s => { const t = String(s).trim(); return /^[+-]?(\d+(,\d*)?|,\d+)$/.test(t) ? parseFloat(t.replace(',', '.')) : null; };
+  /* un text care arată ca un număr (păstrat ca text: '007, 1.250) — triunghiul verde „Number Stored as Text” */
+  const NR_CA_TEXT = /^\s*[+-]?(\d+(,\d+)?|\d{1,3}(\.\d{3})+(,\d+)?)\s*$/;
 
   /* ============================================================ formulele */
   const ERR = e => ({ e });
@@ -510,6 +512,8 @@
     return '=' + tok.map(t => t.t === 'ref' ? muta(t.s) : t.t === 'zona' ? t.s.split(':').map(muta).join(':') : t.s).join('');
   }
 
+  /* legarea lecției VIII/7: instanța fiecărei ferestre Excel, după rădăcina ei (pentru valoareCu de pe modul, mai jos) */
+  const RAD = new WeakMap();
   function creeaza(I, c) {
     const root = I.root, date = I.date, pang = L._module.panglica, esc = pang.esc;
     let H = L._module.stare.istoric(() => false);   // fiecare confirmare = o unitate (scenarii_real/excel-ctrl-z-celula)
@@ -542,9 +546,14 @@
     const F = () => M.foi[M.fi];
     /* închiderile și deschiderile de registru din sesiune (stare(): inchideri, deschideri) */
     let nInchideri = 0, nDeschideri = 0;
-    function puneStart(f, celule, format, latimi) {
+    function puneStart(f, celule, format, latimi, alte) {
       /* latimi (CONȚINUT, opțional): { A: 120, C: 90 } = lățimea coloanei în px la 100 % */
       Object.entries(latimi || {}).forEach(([k, px]) => { const c0 = colIdx(k); if (c0 >= 0 && c0 < MAXC && isFinite(+px) && +px >= 0) { f.lat[c0] = +px; f.latSet[c0] = true; } });
+      /* legarea lecției VIII/6 (26.11.2026): lățimi în CARACTERE, cum le cere fereastra Column Width ({ C: 6 }; aceeași regulă ca
+         pxDinCaractere, mai jos: n · 7,234 + 5,33 px), și înălțimi în PUNCTE, ca fereastra Row Height ({ 1: 40 } → 53 px) */
+      const o = alte || {};
+      Object.entries(o.latimi_caractere || {}).forEach(([k, n]) => { const c0 = colIdx(k); if (c0 >= 0 && c0 < MAXC && isFinite(+n) && +n >= 0 && +n <= 255) { f.lat[c0] = +n === 0 ? 0 : Math.round(+n * 7.234 + 5.33); f.latSet[c0] = true; } });
+      Object.entries(o.inaltimi || {}).forEach(([r, pt]) => { const r0 = +r - 1; if (r0 >= 0 && r0 < MAXR && isFinite(+pt) && +pt > 0 && +pt <= 409) { f.inalt = Object.assign({}, f.inalt); f.inalt[r0] = Math.max(1, Math.round(+pt * 4 / 3)); } });
       Object.entries(celule || {}).forEach(([a, v]) => {
         const p = pa(a);
         if (!p || v == null || v === '') return;
@@ -556,14 +565,18 @@
       });
       Object.entries(format || {}).forEach(([a, o]) => {
         const p = pa(a);
-        if (p && o && typeof o === 'object') f.fmt[adr(p.r, p.c)] = Object.assign({}, f.fmt[adr(p.r, p.c)] || {}, o);
+        /* format_numar_ro (lecția VIII/6): codul scris pe setări românești („#.##0,00”), tradus ca în Format Cells › Custom */
+        if (p && o && typeof o === 'object') { const o2 = Object.assign({}, o); if (o2.format_numar_ro != null) { o2.format_numar = TIPURI.codDinRo(o2.format_numar_ro); delete o2.format_numar_ro; } f.fmt[adr(p.r, p.c)] = Object.assign({}, f.fmt[adr(p.r, p.c)] || {}, o2); }
         if (p && o && o.imbinat && f.merge.indexOf(o.imbinat) < 0) f.merge.push(o.imbinat);
       });
     }
+    /* legarea lecțiilor excelx (25.11.2026; vechiul excelx-interfata.js: Q.zoom = zoom-ul de pornire, zoom-ul e al fiecărei foi):
+       CONȚINUT opțional `zoom` (registrul cu o foaie) și `foi[i].zoom`, 10-400; lipsă = 100 */
+    const zoomBun = z => z != null && isFinite(+z) && +z >= 10 && +z <= 400;
     /* parametrii de CONȚINUT (lecția alege foaia, nu interfața): celule, selectie, format (formatul `start` al scenariilor),
        plus foi: [{nume, celule, format}] și nume (registrul deja salvat) */
-    if (Array.isArray(c.foi) && c.foi.length) c.foi.forEach((x, i) => { const f = foaieNoua(String(x.nume || 'Sheet' + (i + 1))); puneStart(f, x.celule, x.format, x.latimi); if (/^#?[0-9a-f]{6}$/i.test(String(x.culoare || ''))) f.culoare = '#' + String(x.culoare).replace('#', '').toUpperCase(); M.foi.push(f); });
-    else { const tab = ((Z.file_foi || {}).c || []).find(x => x.t === 'TabItem'); M.foi.push(foaieNoua(tab ? tab.e : 'Sheet1')); puneStart(M.foi[0], c.celule, c.format, c.latimi); }
+    if (Array.isArray(c.foi) && c.foi.length) c.foi.forEach((x, i) => { const f = foaieNoua(String(x.nume || 'Sheet' + (i + 1))); puneStart(f, x.celule, x.format, x.latimi, x); if (/^#?[0-9a-f]{6}$/i.test(String(x.culoare || ''))) f.culoare = '#' + String(x.culoare).replace('#', '').toUpperCase(); if (zoomBun(x.zoom)) f.zoom = +x.zoom; M.foi.push(f); });
+    else { const tab = ((Z.file_foi || {}).c || []).find(x => x.t === 'TabItem'); M.foi.push(foaieNoua(tab ? tab.e : 'Sheet1')); puneStart(M.foi[0], c.celule, c.format, c.latimi, c); if (zoomBun(c.zoom)) M.foi[0].zoom = +c.zoom; }
     if (c.selectie) {
       const parti = String(c.selectie).split(',').map(zonaDin).filter(Boolean);
       if (parti.length) F().sel = { activa: { r: parti[0].r0, c: parti[0].c0 }, zone: parti };
@@ -1118,6 +1131,55 @@
       if (activa && M.edit && M.edit.text === '') delete cel[M.edit.a];
       return cel;
     }
+    /* legarea lecției VIII/5 (26.11.2026): ce TIP de date a înțeles Excel în fiecare celulă primită a foii — ce judeca simulatorul
+       vechi (lectii/_sim/excelx.js › afisare): „numar”, „data” (numărul cu formă de dată: 7.5 → 07.mai; 7,5 scris peste → 07.ian),
+       „ora”, „text”, „logic”, „eroare”; la text, `apostrof` (scris cu ' în față) și `numar_ca_text` (triunghiul verde) */
+    function tipCelule(f) {
+      const out = {};
+      Object.keys(f.cel).forEach(a => {
+        const p = pa(a), x = f.cel[a], v = valoare(f, p.r, p.c);
+        let tip = 'text';
+        if (eErr(v)) tip = 'eroare';
+        else if (typeof v === 'boolean') tip = 'logic';
+        else if (typeof v === 'number') { const fel = felFmt(fmtDe(f, a).format_numar); tip = fel === 'data' || fel === 'data_ora' ? 'data' : fel === 'ora' ? 'ora' : 'numar'; }
+        const o = { tip };
+        if (x.ap) o.apostrof = true;
+        if (tip === 'text' && triunghi(f, a) === 'text') o.numar_ca_text = true;
+        out[a] = o;
+      });
+      return out;
+    }
+    /* legarea lecției VIII/6 (26.11.2026): celulele foii al căror TEXT nu încape și se vede tăiat — ce judeca simulatorul vechi
+       (lectii/_sim/excelx-formatare.js › problemeForma, `vizibil`). Numerele și datele nu se taie (arată ####, vezi inLatime).
+       Textul are loc în celula lui și, aliniat la stânga, în vecinii GOI din dreapta (cum îl desenează grila: lh-ap-x-curge);
+       în îmbinare, pe toată lățimea ei; cu Wrap Text nu se taie. Lățimea cerută = cea a potrivirii automate (latimePotrivita:
+       textul măsurat la 15 px + 5 px marginea, +1 la aldin), ca după dublul clic pe linie textul să fie socotit întreg. */
+    function textTaiat(f) {
+      const out = [];
+      Object.keys(f.cel).forEach(a => {
+        const p = pa(a);
+        if (!p) return;
+        const v = valoare(f, p.r, p.c);
+        if (typeof v !== 'string' || v === '') return;
+        const fm = fmtDe(f, a), m = mergeLa(f, p.r, p.c);
+        if (fm.incadrare || (m && (m.r0 !== p.r || m.c0 !== p.c))) return;
+        const nevoie = Math.ceil(latimeText(afisat(v, fm.format_numar), 15) / z() + 5 + (fm.bold ? 1 : 0));
+        let loc = 0;
+        if (m) for (let c = m.c0; c <= m.c1; c++) loc += latPx(f, c);
+        else {
+          loc = latPx(f, p.c);
+          if ((fm.aliniere || 'stanga') === 'stanga') {
+            for (let c = p.c + 1; c < MAXC && loc < nevoie; c++) { if (f.cel[adr(p.r, c)] || varsat(f, p.r, c) || mergeLa(f, p.r, c)) break; loc += latPx(f, c); }
+          }
+        }
+        if (nevoie > loc + 0.5) out.push(a);
+      });
+      return out;
+    }
+    /* eticheta filei deschise a panglicii, citită de pe rândul filelor (ecranul = starea); null cât panglica nu e desenată */
+    function filaPanglicaStare() {
+      try { const t = RAND_FILE.querySelector('[data-lh-tip="TabItem"][aria-selected="true"]'); return t ? t.getAttribute('data-lh-eticheta') : null; } catch (e) { return null; }
+    }
     I.stare = () => {
       const f = F(), cel = celuleDe(f, true), fmt = {};
       Object.keys(f.fmt).forEach(a => {
@@ -1145,6 +1207,10 @@
       Object.keys(INALT).forEach(r => { inaltimi[String(+r + 1)] = INALT[r]; });
       return { celule: cel, format_celule: fmt, latimi_coloane: latimi, inaltimi_randuri: inaltimi, selectie: selectieStare(), nume_fisier: M.nume, fereastra_mesaj: M.mesaj,
         ramane_in_editare: !!M.edit, foi: M.foi.map(x => x.nume), foaie_activa: F().nume, foi_ascunse: M.foi.filter(x => x.ascunsa).map(x => x.nume), zoom: M.zoom, culori_file: culoriFile(), dialog: dialogStare(),
+        /* legarea lecțiilor excelx (25.11.2026): ce verificau simulatoarele vechi și nu era în stare — fila panglicii deschisă (eticheta de
+           pe ecran: „Home”, „Data”…), zoom-ul fiecărei foi (zoom = doar al foii active) și selecția fiecărei foi ({activa, zona}, ca `selectie`) */
+        fila_panglica: filaPanglicaStare(), zoom_foi: Object.fromEntries(M.foi.map(x => [x.nume, x.zoom || 100])),
+        selectii_foi: Object.fromEntries(M.foi.map(x => [x.nume, { activa: adr(x.sel.activa.r, x.sel.activa.c), zona: x.sel.zone.map(zonaText).join(',') }])),
         modificat: !!M.mod, foi_celule: Object.fromEntries(M.foi.map(x => [x.nume, celuleDe(x, x === f)])), inchideri: nInchideri, deschideri: nDeschideri,
         pagina_backstage: backstage ? backstage.pagina : null, titlu_fereastra: titlu(),
         grafice: stareGrafice(), grafic_activ: !!M.gr, grafic_element_ales: M.gr ? (M.gr.parte === 'titlu' ? 'Chart Title' : M.gr.parte === 'legenda' ? 'Legend' : M.gr.parte === 'serie' ? 'Series' : 'Chart Area') : null,
@@ -1154,8 +1220,37 @@
         /* lot 1 (F128): numele definite din Name Box, {nume: 'Foaie!B2:C3'} */
         nume_definite: Object.fromEntries([].concat(...M.foi.map(x => Object.values(x.nume_def || {}).map(d => [d.nume, x.nume + '!' + d.zona])))),
         /* runda 3: înălțimile puse de mână ({"3": 40} px) și lățimea standard a foii active (px) */
-        inaltimi_manuale: Object.fromEntries(Object.keys(f.inalt || {}).map(r => [String(+r + 1), f.inalt[r]])), latime_standard: f.latStd || 64 };
+        inaltimi_manuale: Object.fromEntries(Object.keys(f.inalt || {}).map(r => [String(+r + 1), f.inalt[r]])), latime_standard: f.latStd || 64,
+        /* tipul de date al fiecărei celule a foii active (vezi tipCelule) */
+        tip_celule: tipCelule(f),
+        /* legarea lecției VIII/6: textele tăiate de vecinul din dreapta (vezi textTaiat) */
+        text_taiat: textTaiat(f) };
     };
+    /* legarea lecției VIII/7 (26.11.2026): valoarea celulei `a` a foii active, calculată pe o COPIE a foii în care unele celule
+       sunt înlocuite (`schimbari`: {B2: 31, D5: '=D4/B2', A2: '5 bucăți', C3: ''}: număr, sau textul tastat pe setări românești,
+       ca la scriere; '' / null = celula golită). Foaia de pe ecran nu se schimbă. Cu ea se judecă o formulă prin REZULTAT, ca
+       simulatorul vechi (jocuri/_motor/tip-excel.js › probleme: formula elevului față de cea cerută, pe datele de acum și pe
+       date schimbate), deci o formulă echivalentă scrisă altfel (=B2*A2, =a2*b2, =A2/2+B2/2) e primită. Întoarce numărul /
+       textul / TRUE-FALSE / null (gol) sau {eroare: '#DIV/0!'}; o formulă din `schimbari` pe care Excel n-ar primi-o = {eroare: null} */
+    I.valoareCu = (a, schimbari) => {
+      const f = F(), g = Object.assign({}, f, { cel: Object.assign({}, f.cel) }), p = pa(a);
+      if (!p) return null;
+      let rau = false;
+      Object.keys(schimbari || {}).forEach(k => {
+        const s = schimbari[k];
+        if (s == null || s === '') { delete g.cel[k]; return; }
+        if (typeof s === 'number') { g.cel[k] = { v: s }; return; }
+        const t = String(s);
+        if (t.charAt(0) === '=') { const en = laForma(inchideParanteze(normalizeazaFormula(t)), 'ro', 'en'); if (en) g.cel[k] = { f: en }; else rau = true; return; }
+        const c = constanta(t); g.cel[k] = c.ap ? { v: c.v, ap: true } : { v: c.v };
+      });
+      if (rau) return { eroare: null };
+      invalid();
+      let v;
+      try { v = valoare(g, p.r, p.c); } catch (e) { v = eErr(e) ? e : ERR('#VALUE!'); } finally { invalid(); }
+      return eErr(v) ? { eroare: v.e } : v;
+    };
+    RAD.set(I.root, I);
     /* `dialog` (§5): fereastra deschisă; „Save your changes to this file?” = fereastra care ÎNTREABĂ, în forma din
        scenarii_real/excel-ctrl-w-modificat.json: {titlu: '' (bara de titlu goală), intrebare, butoane: rândul de jos, de la
        stânga la dreapta (uia_excel.json › dialog.save_your_changes_to_this_file), apasat: null cât e deschisă} */
@@ -1504,6 +1599,33 @@
     pozitie(stareEl, SUP.bara_stare.r, [0, SUP.bara_stare.r[1]]);
     josIn.appendChild(stareEl);
     jos.appendChild(josIn);
+    /* legarea lecțiilor excelx (25.11.2026): fereastra îngustă (coloana lecției, ~670 px). Bara de stare e desenată la lățimea
+       referinței (1366 px), deci zoom-ul și butoanele de vedere rămâneau în afara ferestrei, la capătul unei benzi de 22 px de
+       derulat lateral; simulatoarele vechi (excelx-interfata.js) aveau zoom-ul mereu pe ecran, iar lecția VIII/2 îl cere
+       („Zoom-ul e jos, în capătul din dreapta al barei de stare”). Ca în Excel, partea din DREAPTA a barei (rezumatul selecției,
+       Display Settings, vederile, zoom-ul) stă lipită de marginea din dreapta a ferestrei: se mută spre stânga cu cât lipsește
+       din lățime, cel mult până lângă partea din stânga; ce n-ar mai avea loc înaintea butoanelor de vedere se ascunde (Excel
+       scoate și el din bară ce nu încape). La lățimea referinței sau mai mult, nimic nu se mișcă. Sub ~570 px (telefon) vederile
+       ajung lângă textul din stânga, iar restul rămâne de derulat lateral, ca panglica. */
+    const LAT_STARE = SUP.bara_stare.r[2] + 2 * SUP.bara_stare.r[0] || 1366;
+    let latJos = LAT_STARE;
+    function ancoreazaStare() {
+      try {
+        const copii = [...stareEl.children], st = c => parseFloat(c.style.left) || 0, PRAG = LAT_STARE * 0.45;
+        const dreapta = copii.filter(c => st(c) >= PRAG), stanga = copii.filter(c => st(c) < PRAG);
+        if (!dreapta.length || !jos.clientWidth) return;
+        const k = (josIn.getBoundingClientRect().width / latJos) || 1;   // zoom-ul CSS al barei pe ecranele mici
+        const viz = jos.clientWidth / k;
+        const cap = Math.max(0, ...stanga.map(c => st(c) + (parseFloat(c.style.width) || 0))) + 8;
+        const vederi = dreapta.find(c => /^bara_stare/.test(c.getAttribute('data-lh-tinta') || '') && c.getAttribute('data-lh-id') === 'Normal') || dreapta[dreapta.length > 1 ? 1 : 0];
+        const d = Math.round(Math.max(0, Math.min(LAT_STARE - viz, st(vederi) - cap)));
+        dreapta.forEach(c => { c.style.transform = d ? 'translateX(' + (-d) + 'px)' : ''; c.style.visibility = d && st(c) - d < cap - 0.5 ? 'hidden' : ''; });
+        latJos = LAT_STARE - d;
+        josIn.style.width = d ? latJos + 'px' : '';
+        stareEl.style.width = (SUP.bara_stare.r[2] - d) + 'px';
+      } catch (e) { /* */ }
+    }
+    if (typeof ResizeObserver === 'function') { try { new ResizeObserver(() => ancoreazaStare()).observe(jos); } catch (e) { /* */ } }
     /* A2 (runda 10): rezumatul selecției în bara de stare. Referința uia_excel.json › bara_stare#selectie_numere (B2:C4 = 9, 7 /
        8, 10 / 6, 5): „Average 7,5” [859,2; 74,4], „Count 6” [933,6; 55,2], „Sum 45” [988,8; 53,6], lipite, Sum se termină la
        1042,4, sus 746,4, înalte 20,8; Display Settings nu apare. Lățimea unui buton = textul + marginea lui din referință;
@@ -1939,7 +2061,7 @@
       const x = f.cel[a];
       if (!x || x.ign) return null;
       if (x.f) { const p = pa(a), v = valoare(f, p.r, p.c); return eErr(v) && AVERT[v.e] ? v.e : null; }
-      return typeof x.v === 'string' && /^\s*[+-]?(\d+(,\d+)?|\d{1,3}(\.\d{3})+(,\d+)?)\s*$/.test(x.v) ? 'text' : null;
+      return typeof x.v === 'string' && NR_CA_TEXT.test(x.v) ? 'text' : null;
     }
     propEl.style.display = 'none';
     /* runda 21: o zonă care începe deasupra / la stânga ferestrei se desenează de la marginea ferestrei (nu de la −20 de milioane de px) */
@@ -2061,6 +2183,7 @@
       if (elMod) { elMod.firstChild.textContent = mod; elMod.setAttribute('data-lh-eticheta', 'Cell Mode ' + mod); }
       if (elZoomText) { const t = elZoomText.querySelector('.lh-ap-text') || elZoomText; t.textContent = M.zoom + ' %'; elZoomText.setAttribute('data-lh-eticheta', 'Zoom ' + M.zoom + ' %'); }
       rezumatSelectie();
+      ancoreazaStare();
       baraAvertisment();
       if (elTitlu) { const t = elTitlu.querySelector('.lh-ap-x-titlu'); if (t) t.textContent = titlu(); elTitlu.setAttribute('data-lh-eticheta', titlu()); }
       const gri = (sel, on) => root.querySelectorAll(sel).forEach(x => { x.classList.toggle('lh-ap-gri', !on); if (on) x.removeAttribute('aria-disabled'); else x.setAttribute('aria-disabled', 'true'); });
@@ -6506,8 +6629,42 @@
     void scenariu;
   }
 
+  /* legarea lecției VIII/5 (26.11.2026): parserul setărilor românești FĂRĂ foaie — ce arată o celulă în care s-a tastat `text`
+     (constanta: 7.5 → data 07.mai; 7,5 → 7,5; '007 → textul 007 cu triunghi verde), opțional cu forma rămasă în celulă (`forma`,
+     ex. 'dd.mmm': 7,5 scris peste 07.mai → 07.ian). Lecțiile își desenează cu el mini-foile „Uite cum” din textul paginii (vechiul
+     window.ExcelTipuri.afisare din lectii/_sim/excelx.js, pus de adaptor pe numele vechi): de aceea lecția 5 încarcă excel.js
+     direct, cu <script src>, înaintea textului ei (aplicatii.js nu-l mai încarcă a doua oară) */
+  const TIPURI = {
+    afisare(text, forma) {
+      const s = text == null ? '' : String(text);
+      if (s === '') return { tip: 'gol', afisat: '', dreapta: false };
+      if (s.charAt(0) === '=') return { tip: 'formula', afisat: '', dreapta: false };
+      const k = constanta(s);
+      if (typeof k.v === 'number') {
+        const fn = forma || k.fn || 'General', fel = felFmt(fn);
+        return { tip: fel === 'data' || fel === 'data_ora' ? 'data' : fel === 'ora' ? 'ora' : 'numar', v: k.v, fmt: fn, afisat: afisat(k.v, fn), dreapta: true };
+      }
+      if (typeof k.v === 'boolean') return { tip: 'logic', v: k.v, afisat: k.v ? 'TRUE' : 'FALSE', dreapta: false, centru: true };
+      const t = String(k.v);
+      return { tip: 'text', v: t, afisat: t, dreapta: false, apostrof: !!k.ap, tri: NR_CA_TEXT.test(t) };
+    },
+    /* legarea lecției VIII/6 (26.11.2026): textul ÎNTREG al valorii v în formatul cod (fără lățimea coloanei: „150,00”, nu „###”),
+       numele → codurile din lista Number Format și codul de format scris pe setări românești („#.##0,00”, cum îl tastezi în
+       Format Cells › Custom pe un Windows românesc) → codul din fișier („#,##0.00”): punctul și virgula își schimbă rolul,
+       în afara textelor între ghilimele, a [..] și a caracterului de după \ */
+    formatat: (v, cod) => afisat(v, cod || 'General'),
+    formate: Object.fromEntries(FORMATE),
+    codDinRo: cod => String(cod == null ? 'General' : cod).replace(/"[^"]*"|\[[^\]]*\]|\\.|[.,]/g, x => x === '.' ? ',' : x === ',' ? '.' : x)
+  };
+
   L._modul('excel', {
     creeaza,
+    tipuri: TIPURI,
+    /* legarea lecției VIII/7: I.valoareCu al ferestrei cu rădăcina `radacina` (adaptorul are doar rădăcina, nu instanța) */
+    valoareCu: (radacina, a, schimbari) => { const I = RAD.get(radacina); return I ? I.valoareCu(a, schimbari) : undefined; },
+    /* legarea lecției VIII/9: formula din stare (forma din COM, engleză: , și .) scrisă cum o tastează elevul pe setări românești
+       (; și ,), ca s-o poată da înapoi la valoareCu; null = nu se poate citi */
+    formulaRo: f => { const t = String(f == null ? '' : f); return t.charAt(0) === '=' ? laForma(t, 'en', 'ro') : null; },
     /* §4.4: tragerea (mutarea zonei) are sens pe o zonă aleasă; umplerea pornește de pe pătrățelul celulei alese */
     demonstratie: {}
   });

@@ -4,7 +4,10 @@
 Sursa unică a etichetelor, tipurilor, idMso-urilor, ordinii și pozițiilor: dump-ul UI Automation al lui Word real
 (`_campaign/aplicatii_fidele_2026_11/referinte/uia_word.json`, 1366x768, 100% DPI — doar citit, niciodată scris).
 Nicio etichetă nu e scrisă de mână aici: ce lipsește din referință rămâne lipsă și se notează în `lipsa`.
-Pictogramele: Fluent UI System Icons (MIT, Microsoft), luate din `jocuri/_motor/panglica-word.js` (doar citit), după idMso.
+Pictogramele: Fluent UI System Icons (MIT, Microsoft), luate din `jocuri/_motor/panglica-word.js` (doar citit), după idMso, iar
+PE LÂNGĂ ele cele din `aplicatii/_unelte/icoane_word.json` și comunele din `icoane_excel.json` (vezi `icoane_bib.py`): sursa
+veche are întâietate, biblioteca umple ce lipsește. `fara_icoana` = idMso-urile care AR TREBUI să aibă pictogramă și nu au;
+`fara_icoana_real` = cele care nici în Word nu au (casete, bife, săgeata ▾, lansatoare, casetele galeriilor), cu motivul.
 
 Rulare:
     python C:/00/Projects/LearningHub_fidel/aplicatii/_unelte/genereaza_word.py            # scrie aplicatii/date/word.json
@@ -21,6 +24,9 @@ import time
 from pathlib import Path
 
 AICI = Path(__file__).resolve().parent
+sys.path.insert(0, str(AICI))
+import icoane_bib as IB  # noqa: E402  (pictogramele bibliotecii, pe lângă sursa veche)
+
 BIB = AICI.parent                                   # aplicatii/
 WT = BIB.parent                                     # worktree-ul
 D = WT / "_campaign" / "aplicatii_fidele_2026_11"
@@ -134,11 +140,14 @@ def genereaza():
             lansatoare[m.group(1)] = baza
             d["id_mso"] = m.group(1)
     ic, licenta = icoane_fluent()
+    ic_bib, ic_nume, unelte, fara_manual = IB.citeste_lant(["word", "excel"])
+    # sursa veche a Wordului are întâietate; apoi biblioteca (word, apoi comunele din excel); la urmă sursele vechi ale celorlalte
+    ic = {**IB.icoane_vechi(WT, ["excel", "powerpoint"]), **ic_bib, **ic}
     folosite = set()
     for v in sup.values():
         toate_id(v, folosite)
     icoane = {k: v for k, v in sorted(ic.items()) if k in folosite}
-    fara_icoana = sorted(i for i in folosite if i not in ic)
+    fara_icoana, fara_icoana_real = IB.imparte(sup, ic, fara_manual)
     out = {
         "_despre": "GENERAT de aplicatii/_unelte/genereaza_word.py din referința UI Automation a lui Word real — nu edita de "
                    "mână; schimbarea vine din referință (o rundă `acoperire`) sau din generator.",
@@ -146,7 +155,8 @@ def genereaza():
         "sursa": {"referinta": "_campaign/aplicatii_fidele_2026_11/referinte/uia_word.json",
                   "sha256": hashlib.sha256(brut).hexdigest(), "versiune_word": ref.get("versiune"),
                   "generat_referinta": ref.get("generat"), "fereastra": ref.get("fereastra"),
-                  "icoane": "jocuri/_motor/panglica-word.js › icoane (" + licenta + ")"},
+                  "icoane": "jocuri/_motor/panglica-word.js › icoane (" + licenta + ") + aplicatii/_unelte/icoane_word.json, "
+                            "icoane_excel.json (" + IB.VERSIUNE + ", MIT)"},
         "chei": {"t": "tip (ControlType UIA)", "e": "eticheta (numele accesibil real)", "id": "idMso", "r": "rect_css absolut",
                  "a": "0 = gri (activ:false)", "b": "bifat (ToggleState)", "v": "valoare", "k": "scurtătura", "h": "sfatul",
                  "ta": "KeyTip", "ascuns": "1 = în afara ecranului în referință", "c": "copiii"},
@@ -157,8 +167,11 @@ def genereaza():
         "lansatoare": lansatoare,
         "suprafete": sup,
         "icoane": icoane,
+        "icoane_nume": ic_nume,
+        "unelte": {k: v for k, v in unelte.items() if not k.startswith("_")},
         "lipsa": lipsa,
         "fara_icoana": fara_icoana,
+        "fara_icoana_real": fara_icoana_real,
     }
     return out
 
