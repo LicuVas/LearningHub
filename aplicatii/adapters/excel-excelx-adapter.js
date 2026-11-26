@@ -329,7 +329,10 @@
     return ctx.root ? m.valoareCu(ctx.root, a, sch || {}) : undefined;
   };
   const eEroare = v => !!(v && typeof v === 'object' && 'eroare' in v);
-  const laFel = (x, y) => typeof x === 'number' && typeof y === 'number' ? Math.abs(x - y) < 1e-6 : String(x == null ? '' : x).trim().toLowerCase() === String(y == null ? '' : y).trim().toLowerCase();
+  /* textul rezultat se compară fără diacritice și fără diferență de litere (lecția 9; lectii/_sim/excelx-decizie.js › la: tastatura
+     din laborator poate fi fără diacritice, iar Excel afișează ce a scris elevul — aici e NOTAREA, nu foaia) */
+  const faraDiac = s => String(s == null ? '' : s).trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[şș]/g, 's').replace(/[ţț]/g, 't').replace(/\s+/g, ' ');
+  const laFel = (x, y) => typeof x === 'number' && typeof y === 'number' ? Math.abs(x - y) < 1e-6 : faraDiac(x) === faraDiac(y);
   const aproape = (x, y) => typeof x === 'number' && typeof y === 'number' && Math.abs(x - y) < 1e-6;
   const afisVal = v => typeof v === 'number' ? numarRo(Math.round(v * 1e6) / 1e6) : typeof v === 'boolean' ? (v ? 'TRUE' : 'FALSE') : (v === '' || v == null ? 'nimic' : '„' + v + '”');
   const fmtNr = v => typeof v !== 'number' ? String(v) : numarRo(Number.isInteger(v) ? v : Math.round(v * 1e10) / 1e10);
@@ -340,12 +343,23 @@
   /* cuvintele din formulă (fără textele dintre ghilimele) care nu sunt adrese și nici funcții (pentru #NAME?) */
   const faraText = f => String(f).replace(/"[^"]*"?/g, '""');
   const eAdresa = t => { const m = String(t).replace(/\$/g, '').match(/^([A-Za-z]{1,3})(\d{1,7})$/); return !!m && colIdx(m[1].toUpperCase()) < 16384 && +m[2] >= 1 && +m[2] <= 1048576; };
-  /* explicația codului de eroare din formula f (mesajele vechi: tip-foaie.js › evaluate, excelx-formule.js) */
+  const GHILIMEA_DREAPTA = 'Ghilimeaua dreaptă ": pe tastatura englezească, Shift + tasta din stânga lui Enter; pe cea românească (tasta aceea scrie ț), Shift + AltGr + aceeași tastă sau, pe unele calculatoare, Shift + 2.';
+  /* explicația codului de eroare din formula f (mesajele vechi: tip-foaie.js › evaluate, excelx-formule.js, excelx-decizie.js) */
   function deCeEroare(cod, f) {
     const s = faraText(String(f || '').replace(/^=/, '')).replace(/\$/g, '');
     if (cod === '#VALUE!') return 'Formula calculează cu un text ca și cum ar fi număr.';
     if (cod === '#DIV/0!') return 'Împărțire la zero.';
     if (cod === '#NAME?') {
+      /* lecția 9 (lectii/_sim/excelx-decizie.js › evaluate, pașii 3, 2, 8): semnele de la matematică, ghilimelele întoarse, textul
+         fără ghilimele într-un IF — aceleași mesaje */
+      const mat = s.match(/[≥≤≠]/);
+      if (mat) return `Excel nu cunoaște semnul ${mat[0]} de la matematică, deci arată #NAME?. În Excel îl scrii din două semne: ${{ '≥': '>=', '≤': '<=', '≠': '<>' }[mat[0]]}.`;
+      if (/[“”]/.test(s)) return 'Ghilimelele întoarse “ ” nu sunt ghilimele de formulă, deci Excel arată #NAME?. Textul se scrie între ghilimele drepte: "promovat". ' + GHILIMEA_DREAPTA + ' Pe telefon, caută ghilimeaua dreaptă " printre simboluri.';
+      if (/(^|[^A-Za-z0-9_.])IF\s*\(/i.test(s)) {
+        let t = null;
+        s.replace(/[A-Za-zĂÂÎȘȚăâîșțŞŢşţ_\\][A-Za-z0-9_.ĂÂÎȘȚăâîșțŞŢşţ]*/g, (x, off) => { if (t) return x; const dupa = s.slice(off + x.length).trimStart(); if (/[0-9]/.test(s[off - 1] || '') || /^(TRUE|FALSE)$/i.test(x) || dupa[0] === '(' || eAdresa(x)) return x; t = x; return x; });
+        if (t) return `Excel nu cunoaște cuvântul „${t}”, deci arată #NAME?. Un text din formulă se scrie între ghilimele drepte: "${t}". ` + GHILIMEA_DREAPTA;
+      }
       const w = (s.match(/[A-Za-zĂÂÎȘȚăâîșțŞŢşţ_\\][A-Za-z0-9_.ĂÂÎȘȚăâîșțŞŢşţ]*/g) || []).find(x => !eAdresa(x) && !/^(TRUE|FALSE)$/i.test(x) && !new RegExp(x.replace(/[.\\]/g, '\\$&') + '\\s*\\(').test(s));
       const cuX = '=' + s.replace(/([A-Za-z]{1,3}\d+)\s*[xX]\s*(?=[A-Za-z]{1,3}\d+)/g, '$1*').toUpperCase();
       if (w && cuX !== '=' + s.toUpperCase()) return `Excel nu cunoaște cuvântul „${/^[xX]$/.test(w) ? 'x' : w}”: litera x nu înmulțește. Înmulțirea se scrie cu *: ${cuX}.`;
@@ -388,8 +402,36 @@
     Object.entries(V.umplut || {}).forEach(([s, dest]) => { const a = pos(s); [].concat(dest).forEach(d => { const b = pos(d); if (a && b && V.formule && V.formule[s]) t[d] = mutaFormula(String(V.formule[s]), b.r - a.r, b.c - a.c); }); });
     return t;
   }
-  function problemeFormule(ctx, tinte, R, cuUmplut) {
-    const out = [], Q = ctx.Q, variante = (Q.variants || []).slice().concat([dateSchimbate(Q)]);
+  /* formula f a celulei a dă același rezultat ca ținta, acum și pe fiecare set de date schimbate (sch = celulele celelalte, peste foaie) */
+  function treceToate(ctx, a, f, tinte, variante) {
+    const una = v => { let g = calc(ctx, a, Object.assign({}, v, { [a]: f })), x = calc(ctx, a, Object.assign({}, tinte, v)); if (eEroare(g)) g = '#'; if (eEroare(x)) x = '?'; return laFel(g, x); };
+    return una({}) && variante.every(una);
+  }
+  /* lecția 9 (lectii/_sim/excelx-decizie.js › semnLaLimita, M3 al judecătorului): formula greșește DOAR la limită dacă, schimbând un
+     singur semn de comparare (< ↔ <=, > ↔ >=, în afara ghilimelelor), trece toate verificările → mesajul duce la semn, fără să-l spună */
+  function semnLaLimita(ctx, a, raw0, tinte, variante) {
+    /* formula din stare e în forma din COM (, și .); valoareCu primește forma tastată pe setări românești (; și ,) */
+    const m = L._module && L._module.excel, raw = m && m.formulaRo ? m.formulaRo(raw0) : null;
+    if (!raw) return false;
+    let q = false;
+    for (let k = 1; k < raw.length; k++) {
+      const ch = raw[k];
+      if (ch === '"') { q = !q; continue; }
+      if (q || (ch !== '<' && ch !== '>')) continue;
+      if (ch === '<' && raw[k + 1] === '>') { k++; continue; }
+      const cuEgal = raw[k + 1] === '=', nou = cuEgal ? raw.slice(0, k + 1) + raw.slice(k + 2) : raw.slice(0, k + 1) + '=' + raw.slice(k + 1);
+      if (treceToate(ctx, a, nou, tinte, variante)) return true;
+      if (cuEgal) k++;
+    }
+    return false;
+  }
+  function mesajLimita(ctx, a, tinte) {
+    let acum = false; try { const g = calc(ctx, a, {}), x = calc(ctx, a, tinte); acum = !eEroare(g) && !eEroare(x) && laFel(g, x); } catch (e) { /* */ }
+    return (acum ? `${a} dă rezultatul bun acum, dar greșește la limită, când valoarea e exact numărul din regulă. Scrie în foaie chiar numărul din regulă și uită-te ce arată ${a}.`
+      : `${a} greșește la limită: acum valoarea e exact numărul din regulă, iar ${a} arată ce nu trebuie.`) + ' Apoi uită-te la semnul de comparare: la limită, regula trebuie să ia și valoarea egală sau nu?';
+  }
+  function problemeFormule(ctx, tinte, R, cuUmplut, varianteProprii) {
+    const out = [], Q = ctx.Q, variante = (varianteProprii || Q.variants || []).slice().concat([dateSchimbate(Q)]);
     for (const [a, tf] of Object.entries(tinte)) {
       const raw = scrisIn(R[a]);
       if (raw === '') { out.push(`${a} e goală.`); continue; }
@@ -399,13 +441,21 @@
       if (eEroare(g)) { const d = (g.eroare === '#NAME?' && functieNecunoscuta(ctx, a, raw)) || deCeEroare(g.eroare, raw); out.push(`${a} arată ${g.eroare || 'o eroare'}${d ? ': ' + d : '.'}`); continue; }
       let x = calc(ctx, a, tinte);
       if (eEroare(x)) x = null;
-      if (!laFel(g, x)) { out.push(`${a} dă ${afisVal(g)}, dar ar trebui să dea ${afisVal(x)}.`); continue; }
-      for (const v of variante) {
+      const bunAcum = laFel(g, x);
+      let bunPeDate = bunAcum, eroarePeDate = null;
+      if (bunAcum) for (const v of variante) {
         let g2 = calc(ctx, a, v), x2 = calc(ctx, a, Object.assign({}, tinte, v));
-        if (eEroare(g2)) g2 = '#';
+        if (eEroare(g2)) { if (!eEroare(x2) && g2.eroare) eroarePeDate = g2.eroare; g2 = '#'; }
         if (eEroare(x2)) x2 = '?';
-        if (!laFel(g2, x2)) { out.push(`${a} dă rezultatul bun acum, dar greșește când se schimbă datele. Verifică adresele${cuUmplut ? ' și semnul $' : ''}.`); break; }
+        if (!laFel(g2, x2)) { bunPeDate = false; break; }
+        eroarePeDate = null;
       }
+      if (bunPeDate) continue;
+      /* lecția 9: IF calculează doar ramura aleasă (ca Excel), deci un text fără ghilimele în cealaltă ramură dă #NAME? abia pe datele
+         schimbate (=IF(B2="da";"merge";nu merge) cu B2 = nu); pe vechi foaia arăta #NAME? de la început — aici se spune când apare */
+      if (eroarePeDate) { const d = deCeEroare(eroarePeDate, raw); out.push(`${a} dă rezultatul bun acum, dar când se schimbă datele arată ${eroarePeDate}${d ? ': ' + d : '.'}`); continue; }
+      if (/[<>]/.test(faraText(raw)) && semnLaLimita(ctx, a, raw, tinte, (varianteProprii || Q.variants || []).slice().concat([dateSchimbate(Q)]))) { out.push(mesajLimita(ctx, a, tinte)); continue; }
+      out.push(bunAcum ? `${a} dă rezultatul bun acum, dar greșește când se schimbă datele. Verifică adresele${cuUmplut ? ' și semnul $' : ''}.` : `${a} dă ${afisVal(g)}, dar ar trebui să dea ${afisVal(x)}.`);
     }
     return out;
   }
@@ -470,7 +520,7 @@
   }
 
   /* ---------- verificarea ---------- */
-  const CHEI = ['unde', 'fila', 'foaie', 'pe', 'zoom', 'valori', 'formule', 'gol', 'sel', 'activa', 'zona', 'neatinsa', 'doarTaste', 'mesajActiva', 'fara', 'tip', 'forma', 'capcane', 'functie', 'gest', 'umplut', 'umple'];
+  const CHEI = ['unde', 'fila', 'foaie', 'pe', 'zoom', 'valori', 'formule', 'gol', 'sel', 'activa', 'zona', 'neatinsa', 'doarTaste', 'mesajActiva', 'fara', 'tip', 'forma', 'capcane', 'functie', 'gest', 'umplut', 'umple', 'functii', 'variante'];
   function probleme(ctx, V, s) {
     const out = [];
     if (!V) return out;
@@ -499,7 +549,7 @@
     /* formulele, prin rezultat (lecția 7); ca pe vechi (excelx.js › render: tipul se judecă după foaie), tipul cerut se spune
        doar când formulele sunt bune: „C2 arată #VALUE!” înaintea lui „A2 a rămas text” */
     const tf = V.umplut ? Object.assign({}, V.formule || {}, tinteUmplut(V)) : V.formule;
-    const pf = tf ? problemeFormule(ctx, tf, R, !!V.umplut) : [];
+    const pf = tf ? problemeFormule(ctx, tf, R, !!V.umplut, V.variante) : [];
     pf.forEach(x => out.push(x));
     if (!pf.length) Object.entries(V.tip || {}).forEach(([a, e]) => { const p = problemaTip(ctx, s, R, a, e); if (p) out.push(p); });
     (V.gol || []).forEach(a => { if (afisat(R[a]) !== '') out.push(`${a} nu e goală încă. Alege-o și apasă Delete.`); });
@@ -528,6 +578,11 @@
         out.push(`În ${a} rezultatul e bun, dar aici se cere funcția ${fn}: scrie =${fn}(…) cu zona potrivită${(V.gest || []).indexOf('autosum') >= 0 ? ' (sau folosește butonul Σ)' : ''}.`);
         break;
       }
+    }
+    /* lecția 9: Q.functii / teste[].functii {D5:'SUM'} (lectii/_sim/excelx-decizie.js › resolve, cu mesajul lui), tot când restul e bun */
+    if (!out.length && V.functii) {
+      const lipsa = Object.entries(V.functii).find(([a, fn]) => !areFunctia(scrisIn(R[a]), fn));
+      if (lipsa) out.push(`${lipsa[0]} dă rezultatul bun, dar aici se cere funcția ${lipsa[1]}: =${lipsa[1]}(…), cu zona între paranteze.`);
     }
     return out;
   }
@@ -1010,7 +1065,8 @@
   /* ---------- render / rezolva / gresit ---------- */
   function render(Q, body, api) {
     css();
-    const V = Q.verifica || {};
+    /* lecția 9: Q.functii (în afara lui verifica, ca pe vechi: excelx-decizie.js › resolve) se verifică împreună cu verifica */
+    const V = Q.functii && Q.verifica ? Object.assign({}, Q.verifica, { functii: Q.functii }) : (Q.verifica || {});
     body.innerHTML = `${Q.teste ? '<div class="xa-teste" aria-live="polite"></div>' : ''}<div class="xa-host"></div><p class="xa-nota" role="status"></p>${Q.o ? '<div class="opts xa-opts" id="xopts"></div>' : ''}`;
     const host = body.querySelector('.xa-host'), cutie = body.querySelector('.xa-teste'), nota = body.querySelector('.xa-nota');
     /* formatarea (lecția 6): ajutorul de sub foaie pe care îl dădea simulatorul vechi (excelx-formatare.js › TEL și nota panglicii),

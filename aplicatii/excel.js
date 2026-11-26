@@ -6662,6 +6662,9 @@
     tipuri: TIPURI,
     /* legarea lecției VIII/7: I.valoareCu al ferestrei cu rădăcina `radacina` (adaptorul are doar rădăcina, nu instanța) */
     valoareCu: (radacina, a, schimbari) => { const I = RAD.get(radacina); return I ? I.valoareCu(a, schimbari) : undefined; },
+    /* legarea lecției VIII/9: formula din stare (forma din COM, engleză: , și .) scrisă cum o tastează elevul pe setări românești
+       (; și ,), ca s-o poată da înapoi la valoareCu; null = nu se poate citi */
+    formulaRo: f => { const t = String(f == null ? '' : f); return t.charAt(0) === '=' ? laForma(t, 'en', 'ro') : null; },
     /* §4.4: tragerea (mutarea zonei) are sens pe o zonă aleasă; umplerea pornește de pe pătrățelul celulei alese */
     demonstratie: {}
   });
