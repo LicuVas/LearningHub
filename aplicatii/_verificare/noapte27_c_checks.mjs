@@ -5,7 +5,7 @@
 //   (1) textul nu conține fraza falsă veche; (2) ce afirmă textul despre fereastră e adevărat în DOM (testele trec, foile /
 //   folderul / caseta sunt cele corecte); (3) butonul de mers mai departe e vizibil.
 //   node aplicatii/_verificare/noapte27_c_checks.mjs          -> adaptoarele din dosar
-//   node aplicatii/_verificare/noapte27_c_checks.mjs --vechi  -> adaptoarele din HEAD (git show), ca să se vadă că proba pică
+//   node aplicatii/_verificare/noapte27_c_checks.mjs --vechi  -> adaptoarele de dinaintea reparației (git show 520da0e7:…), ca să se vadă că proba pică
 // Linii PASS/FAIL; ULTIMA linie = numărul de FAIL; exit 0. Capturi: _campaign/aplicatii_fidele_2026_11/runde/noapte_27_11/img_C/*.png
 // Acoperă și Î4, Î5 (același text fals apărea acolo) și pasul cu testul `redeschis`, unde rămâne varianta (b): textul cu pașii.
 import http from 'node:http';
@@ -21,7 +21,8 @@ const PW_DIR = process.env.HARNESS_PW_DIR || 'C:/00/AI_0/.scratch/harness-node';
 const require = createRequire(path.join(PW_DIR, 'package.json'));
 const { chromium } = require('playwright');
 const VECHI = process.argv.includes('--vechi');
-const REF = (process.argv.find(a => a.startsWith('--ref=')) || '--ref=HEAD').slice(6);
+/* --vechi = adaptoarele de dinaintea reparației (520da0e7, părintele comiterii ei); --ref=<comitere> pentru altă variantă */
+const REF = (process.argv.find(a => a.startsWith('--ref=')) || '--ref=520da0e7').slice(6);
 const IMG = path.join(ROOT, '_campaign', 'aplicatii_fidele_2026_11', 'runde', 'noapte_27_11', 'img_C');   // capturile, în afara sitului
 fs.mkdirSync(IMG, { recursive: true });
 
