@@ -1983,6 +1983,23 @@
       aseazaCursoare();
     }
     corp.addEventListener('scroll', () => { sincronDerulare(); margineFereastra(); }, { passive: true });
+    /* noaptea 27.11 (telefon): banda literelor / a numerelor (overflow:hidden) se poate derula SINGURĂ, fără celule — browserul aduce
+       în vedere o literă atinsă care e pe jumătate în afara benzii (măsurat la 360 px: atingerea lui F mută banda cu 441 px, a lui C
+       cu 13 px) și rândul de litere rămânea decalat față de coloane, și după derularea foii. Benzile le mută doar transform-ul din
+       sincronDerulare: derularea lor proprie trece pe foaie (litera rămâne unde a adus-o browserul, celulele vin sub ea), iar banda
+       revine la 0. Proba: _verificare/excel_noapte_d_checks.mjs › d2 */
+    function benziLaZero() {
+      const dx = antC.scrollLeft, dy = antR.scrollTop;
+      if (antC.scrollTop) antC.scrollTop = 0;
+      if (antR.scrollLeft) antR.scrollLeft = 0;
+      if (!dx && !dy) return;
+      antC.scrollLeft = 0; antR.scrollTop = 0;
+      if (dx) corp.scrollLeft += dx;
+      if (dy) corp.scrollTop += dy;
+      sincronDerulare();
+    }
+    antC.addEventListener('scroll', benziLaZero, { passive: true });
+    antR.addEventListener('scroll', benziLaZero, { passive: true });
     /* runda 25 (R21-2, MINOR 1-3 ale criticului 21): fereastra de la marginea foii se mută cu DERULAREA. Când vederea ajunge
        aproape de marginea ferestrei desenate (rotița, cursorul barei, „Line up / down”, degetul), fereastra se redesenează cu
        vederea la mijloc, iar scrollTop trece pe noua origine (deseneazaGrila), deci rândurile de pe ecran nu se mișcă. Grila
