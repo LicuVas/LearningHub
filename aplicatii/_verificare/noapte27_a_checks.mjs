@@ -9,10 +9,10 @@
 //   B (1366x768, mouse): un clic de mouse pe numele unui grup din panglica, apoi tastare cu tastatura fizica: focusul ajunge in
 //     caseta documentului si literele ajung in document (Word: textul documentului; PowerPoint: titlul diapozitivului 1, in care
 //     s-a dat clic inainte; Excel: celula A1). Asa era inainte de reparatia A; trebuie sa ramana.
-//   C (bara de derulare a panglicii): la 1366x768 (laboratorul) si la 360x780 (telefon), in toate trei aplicatiile:
+//   C (bara de derulare a panglicii): la 1366x768 (laboratorul), 1024x768 si 360x780 (telefon), in toate trei aplicatiile:
 //     (1) bara de derulare orizontala a benzii de sus `.lh-ap-sus` nu ocupa loc (offsetHeight - clientHeight - chenare = 0 px);
 //         browserul porneste FARA --hide-scrollbars, ca barele sa se deseneze ca pe un calculator;
-//     (2) panglica ramane derulabila: la 1366 cu rotita mouse-ului (fara Shift) tinut pe panglica, la 360 cu degetul (scrollLeft > 0).
+//     (2) panglica ramane derulabila: la 1366 si 1024 cu rotita mouse-ului (fara Shift) tinut pe panglica, la 360 cu degetul (scrollLeft > 0).
 // Iesire: PASS / FAIL pe fiecare verificare, cu cifrele; ULTIMA linie = numarul de FAIL (exit 0 mereu).
 import http from 'node:http';
 import fs from 'node:fs';
@@ -152,14 +152,14 @@ try {
 
   /* ---------- C: bara de derulare a panglicii */
   if (DOAR.includes('C')) for (const app of ['word', 'excel', 'powerpoint']) {
-    for (const [eticheta, opt] of [['1366px', LAB], ['360px', TELEFON]]) {
+    for (const [eticheta, opt] of [['1366px', LAB], ['1024px', { viewport: { width: 1024, height: 768 } }], ['360px', TELEFON]]) {
       const { ctx, p, erori } = await deschide(browser, base, app, opt);
       try {
         const b = await banda(p, app);
         scrie(b.bara === 0, `C ${app} ${eticheta}: nicio bara de derulare vizibila sub panglica`, `bara ${b.bara.toFixed(1)} px, panglica depaseste fereastra cu ${b.depasire.toFixed(0)} px`);
         await p.evaluate(a => { document.querySelector(`[data-lh-aplicatie="${a}"] .lh-ap-sus`).scrollLeft = 0; }, app);
         let cum;
-        if (opt === LAB) {
+        if (!opt.hasTouch) {
           cum = 'rotita (fara Shift)';
           await p.mouse.move(b.x + b.w / 2, b.y + b.h * 0.62); await pauza(100);
           await p.mouse.wheel(0, 240); await pauza(400);
