@@ -1340,7 +1340,7 @@
         if (ajutorForma) {
           const sus = ctx.root.querySelector('.lh-ap-sus');
           if (peDeget()) ajutorForma.innerHTML = '<b>Formatarea pe telefon:</b> lățimea unei coloane: atingi litera ei, apoi tragi de cercul verde ⇔ de pe marginea ei; două atingeri pe cerc o potrivesc singură. Înălțimea unui rând: atingi numărul lui, apoi tragi de cercul ⇕. Panglica și foaia le derulezi în lateral cu degetul. Săgeata ▾ a unui buton deschide lista lui.';
-          else if (sus && sus.scrollWidth > sus.clientWidth + 1) ajutorForma.innerHTML = 'Panglica nu încape toată: grupurile Număr (Number), Stiluri (Styles), Celule (Cells) și Editare (Editing) sunt mai la dreapta. Trage spre dreapta de bara subțire de sub panglică sau rotește rotița mouse-ului ținând apăsat Shift. În Excel-ul de pe calculator o vezi întreagă.';
+          else if (sus && sus.scrollWidth > sus.clientWidth + 1) ajutorForma.innerHTML = 'Panglica nu încape toată: grupurile Număr (Number), Stiluri (Styles), Celule (Cells) și Editare (Editing) sunt mai la dreapta. Ține mouse-ul pe panglică și rotește rotița (pe telefon, trage panglica cu degetul spre stânga). În Excel-ul de pe calculator o vezi întreagă.';
         }
         bifeaza();
       })
