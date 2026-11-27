@@ -4338,6 +4338,14 @@
       const l = Math.max(0, Math.min(x - R.left + 1, R.width - w - 2)), t = Math.max(0, Math.min(y - R.top + 1, R.height - h - 2));
       m.style.left = l + 'px'; m.style.top = t + 'px';
       m.classList.add('lh-ap-x-meniu');
+      /* noaptea 27.11: Paste Options › primul buton (în referință „Keep Text Only”, fără idMso) avea pătrățelul gol — panglica.js
+         caută pictograma după nume doar pe panglică. Pictograma lui = planșeta, aceeași cu Paste din panglică (lecția m1-l04: „prima
+         pictogramă, planșeta”); clicul lipește ca înainte (I.la.clic › lipeste) */
+      const icoPaste = date.icoane && date.icoane.Paste;
+      if (icoPaste) m.querySelectorAll('[data-lh-eticheta="Paste Options"] [data-lh-tip="ListItem"] > .lh-ap-gol').forEach(g => {
+        g.insertAdjacentHTML('afterend', pang.svg(icoPaste.map(d => '<path d="' + esc(d) + '"/>').join(''), 16));
+        g.remove();
+      });
       /* runda 4c (F170): Unhide... e gri cât nu e nicio foaie ascunsă (vechiul registru-foi.js:401) */
       if (cheie === 'meniu_contextual.fila_foii') { const u = m.querySelector('[data-lh-tinta="meniu:Unhide..."]'); if (u) { const g = !M.foi.some(x => x.ascunsa); u.toggleAttribute('aria-disabled', g); if (g) u.setAttribute('aria-disabled', 'true'); u.classList.toggle('lh-ap-gri', g); } }
       root.appendChild(m);
