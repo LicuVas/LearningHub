@@ -1501,7 +1501,10 @@
     function aseazaBanda() {
       const W = paneReg.clientWidth || 1366;
       /* la 1366 px: filele 805, despărțitorul 32, bara până la 20 px de margine; mai îngust: aceeași proporție, filele cel puțin 260 px */
-      const tw = Math.max(Math.min(805, Math.round((W - 53) * 805 / 1313)), Math.min(260, W - 93));
+      /* noaptea 27.11 (telefon, chenarul lecției: W ≈ 236 px): filele primeau 159 px și numele primei file („Sheet1”, 112-198 px)
+         ieșea tăiat; sub ~295 px filele iau cel puțin 200 px (prima filă întreagă), iar bara orizontală de lângă ele se strânge
+         (foaia se derulează cu degetul). Peste ~295 px nimic nu se schimbă. */
+      const tw = Math.max(Math.min(805, Math.round((W - 53) * 805 / 1313)), Math.min(260, W - 93), Math.min(200, W - 33));
       tabFoi.style.width = tw + 'px';
       desp.style.left = (tw + 1) + 'px';
       barH.pane.style.left = (tw + 33) + 'px';
@@ -1626,6 +1629,20 @@
       } catch (e) { /* */ }
     }
     if (typeof ResizeObserver === 'function') { try { new ResizeObserver(() => ancoreazaStare()).observe(jos); } catch (e) { /* */ } }
+    /* noaptea 27.11 (telefon, chenarul lecției ~250 px): numele „Book1 - Excel” stă în bara de titlu după bara de acces rapid și
+       ieșea tăiat la marginea ferestrei. Ca în Excel, numele se ascunde cât nu încape întreg în ce se vede din banda de sus (banda se
+       derulează lateral: derulată până la el, reapare). La 1366 px încape, deci se vede ca înainte. Proba: excel_noapte_d_checks › d3 */
+    function potrivesteTitlul() {
+      try {
+        const t = elTitlu && elTitlu.querySelector('.lh-ap-x-titlu');
+        if (!t) return;
+        t.style.visibility = '';
+        const b = t.getBoundingClientRect(), R = sus.getBoundingClientRect();
+        if (b.width && R.width && (b.right > R.right + 0.5 || b.left < R.left - 0.5)) t.style.visibility = 'hidden';
+      } catch (e) { /* */ }
+    }
+    sus.addEventListener('scroll', potrivesteTitlul, { passive: true });
+    if (typeof ResizeObserver === 'function') { try { new ResizeObserver(() => potrivesteTitlul()).observe(sus); } catch (e) { /* */ } }
     /* A2 (runda 10): rezumatul selecției în bara de stare. Referința uia_excel.json › bara_stare#selectie_numere (B2:C4 = 9, 7 /
        8, 10 / 6, 5): „Average 7,5” [859,2; 74,4], „Count 6” [933,6; 55,2], „Sum 45” [988,8; 53,6], lipite, Sum se termină la
        1042,4, sus 746,4, înalte 20,8; Display Settings nu apare. Lățimea unui buton = textul + marginea lui din referință;
@@ -2202,7 +2219,7 @@
       rezumatSelectie();
       ancoreazaStare();
       baraAvertisment();
-      if (elTitlu) { const t = elTitlu.querySelector('.lh-ap-x-titlu'); if (t) t.textContent = titlu(); elTitlu.setAttribute('data-lh-eticheta', titlu()); }
+      if (elTitlu) { const t = elTitlu.querySelector('.lh-ap-x-titlu'); if (t) t.textContent = titlu(); elTitlu.setAttribute('data-lh-eticheta', titlu()); potrivesteTitlul(); }
       const gri = (sel, on) => root.querySelectorAll(sel).forEach(x => { x.classList.toggle('lh-ap-gri', !on); if (on) x.removeAttribute('aria-disabled'); else x.setAttribute('aria-disabled', 'true'); });
       gri('[data-lh-suprafata="acces_rapid"] [data-lh-id-mso="Undo"], [data-lh-suprafata="acces_rapid"] [data-lh-id-mso="Undo"] *', H.poateAnula());
       gri('[data-lh-suprafata="acces_rapid"] [data-lh-id-mso="Redo"], [data-lh-suprafata="acces_rapid"] [data-lh-id-mso="Redo"] *', H.poateReface());
