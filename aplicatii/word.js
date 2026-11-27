@@ -3537,8 +3537,13 @@
       if (strat && strat.contextual && !strat.contains(tg)) inchideMeniuContextual();
       if (!eInDocument(tg) || dialog || backstage || !M.deschis) {
         ultimJos = null;
-        /* un clic pe panglică / bara de stare lasă tastatura în document, ca în Word */
-        if (!dialog && !backstage && !tg.closest('input,textarea,select') && document.activeElement !== intrare) I.focus();
+        /* un clic pe panglică / bara de stare lasă tastatura în document, ca în Word.
+           telefon (27.11, ca în excel.js 520da0e7): degetul pus pe panglică / bara de stare NU cheamă tastatura — focusul dat aici
+           o deschidea în mijlocul tragerii, fereastra se micșora și derularea laterală a panglicii se oprea. Focusul se mută doar
+           dacă tastatura e deja deschisă pe alt câmp al aplicației (Font, Font Size). Mouse-ul rămâne ca înainte. */
+        const fa0 = document.activeElement;
+        const faraTastatura = e.pointerType === 'touch' && !(fa0 && fa0 !== intrare && root.contains(fa0) && fa0.closest('input,textarea,select'));
+        if (!faraTastatura && !dialog && !backstage && !tg.closest('input,textarea,select') && document.activeElement !== intrare) I.focus();
         return null;
       }
       const acum = Date.now();
