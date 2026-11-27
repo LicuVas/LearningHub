@@ -11,8 +11,11 @@
    - {vazut:cale}  elevul a făcut clic pe bara de adresă (bara_adresa.clicata) cât era în cale; urmărit aici, din sondare
    - {cale:true}   caseta de răspuns din pagină (Q.raspuns) are calea corectă (verificaCale, copiat din simulatorul vechi)
    Pornirea din alt folder (Q.start) se face prin gesturile bibliotecii (clic + Enter), înainte ca elevul să înceapă.
-   Limite față de simulatorul vechi (spuse și în cod): „Arată-mi răspunsul” nu mută Explorer-ul în starea finală; spune pașii
-   (Q.solutieText) și apoi testele trec doar când elevul face gesturile. */
+   „Arată-mi răspunsul” (noaptea 27-28.11.2026, ca simulatorul vechi, care aplica Q.solutie): joacă Q.solutie în Explorer prin
+   aceleași gesturi ale bibliotecii ca pornirea (clic + Enter pe rânduri, clic în bara de adresă) și pune calea în casetă.
+   Textul spune „am făcut pașii” DOAR dacă după asta testele exercițiului chiar trec; altfel spune pașii exercițiului de față,
+   ca elevul să-i facă el, fără să afirme ceva despre fereastră. Q.solutieText (scris pentru simulatorul vechi) nu se mai
+   afișează: el descrie fereastra de la capăt, iar testele de sub Explorer arată deja asta. */
 (function () {
   'use strict';
   const L = window.LH && window.LH.aplicatii;
@@ -93,11 +96,12 @@
 
   /* pornirea într-un alt folder: clic pe fiecare pas (unitate, folder) + Enter, prin gesturile bibliotecii */
   /* fiecare pas: așteaptă rândul, îl selectează, apasă Enter și așteaptă ca biblioteca să ajungă în folderul cerut (cu o reîncercare) */
-  async function navigheaza(root, cale, stareFn) {
+  /* prefix = folderul în care ești deja (ex. 'Documente/'), iar cale e drumul de acolo în jos */
+  async function navigheaza(root, cale, stareFn, prefix) {
     if (!cale || cale === 'PC') return;
     const parti = cale.replace(/\/$/, '').split('/');
     for (let i = 0; i < parti.length; i++) {
-      const tinta = parti.slice(0, i + 1).join('/') + '/';
+      const tinta = (prefix || '') + parti.slice(0, i + 1).join('/') + '/';
       for (let incercare = 0; incercare < 3 && stareFn().cale_curenta !== tinta; incercare++) {
         let rand = null;
         for (let t = 0; t < 20 && !rand; t++) { rand = root.querySelector(`.lh-ap-e-rand[data-lh-id="${CSS.escape(parti[i])}"]`); if (!rand) await pauza(50); }
@@ -121,6 +125,48 @@
     if (c.cale) return !!(Q.raspuns && verificaCale(st.rasp, Q.raspuns.ok).ok);
     if (c.vazut) return st.vazut.has(norm(c.vazut));
     return false;
+  }
+
+  /* „Arată-mi răspunsul”: mergi în folderul cerut (din panoul din stânga, dacă e acolo un nod pe drum, altfel din Acest PC) */
+  async function mergiIn(root, cale, stareFn) {
+    const tinta = norm(cale);
+    if (stareFn().cale_curenta === tinta) return;
+    /* cel mai lung început al drumului care are nod în panoul din stânga (ex. Documente/) */
+    const noduri = [...root.querySelectorAll('[data-lh-tinta="arbore"][data-e-cale]')].filter(n => tinta.indexOf(n.getAttribute('data-e-cale')) === 0 && /\/$/.test(n.getAttribute('data-e-cale')));
+    noduri.sort((a, b) => b.getAttribute('data-e-cale').length - a.getAttribute('data-e-cale').length);
+    let prefix = '';
+    if (noduri.length) {
+      prefix = noduri[0].getAttribute('data-e-cale');
+      noduri[0].click();
+      for (let t = 0; t < 20 && stareFn().cale_curenta !== prefix; t++) await pauza(50);
+      await pauza(150);
+      if (stareFn().cale_curenta !== prefix) prefix = '';
+    }
+    if (!prefix) {
+      const pc = root.querySelector('.lh-ap-e-cr0');   /* primul buton al barei de adresă: Acest PC */
+      if (pc) { pc.click(); for (let t = 0; t < 20 && stareFn().cale_curenta !== norm('PC'); t++) await pauza(50); await pauza(150); }
+    }
+    await navigheaza(root, tinta.slice(prefix.length), stareFn, prefix);
+  }
+  /* pașii exercițiului de față, în cuvinte (din Q.solutie) */
+  function pasiText(Q, root) {
+    /* drumul cu numele de pe ecran: unitatea cu eticheta ei din panoul din stânga (E: → STICK (E:)) */
+    const arata = c => {
+      const p = norm(c).replace(/\/$/, '').split('/');
+      const n0 = root && root.querySelector(`[data-lh-tinta="arbore"][data-e-cale="${CSS.escape(p[0] + '/')}"]`);
+      const et = n0 && n0.textContent.replace(/\s+/g, ' ').trim();
+      if (et && et.indexOf(p[0]) >= 0) p[0] = et;
+      return esc(p.join(' › '));
+    };
+    const numeVazut = n => (Q.extensii || !ext(n) ? n : n.slice(0, n.lastIndexOf('.')));
+    const unul = ([op, x]) => {
+      if (op === 'cd') return 'dublu-clic, pe rând, pe <b>' + arata(x) + '</b>';
+      if (op === 'sel') return 'un clic pe <b>' + esc(numeVazut(x)) + '</b>' + (Q.extensii || !ext(x) ? '' : ' (cel cu tipul ' + esc(ext(x).toUpperCase()) + ')');
+      if (op === 'vezi') return 'un clic pe partea goală a barei de adresă';
+      if (op === 'scrie') return 'în casetă, calea <code>' + esc(x) + '</code>';
+      return '';
+    };
+    return (Q.solutie || []).map(unul).filter(Boolean).map((t, i) => (i + 1) + ') ' + t).join('; ');
   }
 
   const SimExplorerCitire = {
@@ -178,8 +224,54 @@
         let msg = 'Testul care nu trece încă: ' + Q.checks[k].ce + '.';
         if (Q.checks[k].cale && Q.raspuns) { const v = verificaCale(st.rasp, Q.raspuns.ok); if (!v.ok) msg += ' ' + v.msg; }
         api.resolve(false, msg);
-        api.revealButton(() => { api.giveUp(Q.solutieText || 'uită-te în Explorer și la testele de sub el: acum trec toate.'); });
+        api.revealButton(() => { arataRaspunsul(); });
       });
+
+      /* „Arată-mi răspunsul”: joacă Q.solutie cu gesturile bibliotecii și citește testele; textul spune „am făcut” doar dacă trec */
+      async function joacaSolutia() {
+        const inst = st.inst;
+        if (!inst || !(Q.solutie || []).length) return { facut: false, incercat: false };
+        const root = host.querySelector('[data-lh-aplicatie="explorer"]') || host;
+        const stareFn = () => inst.stare();
+        try {
+          for (const [op, x] of Q.solutie) {
+            if (op === 'cd') await mergiIn(root, x, stareFn);
+            else if (op === 'sel') {
+              const rand = root.querySelector(`.lh-ap-e-rand[data-lh-id="${CSS.escape(x)}"]`);
+              if (rand) rand.click();
+              await pauza(100);
+            } else if (op === 'vezi') {
+              const adr = root.querySelector('.lh-ap-e-adr-edit');   /* partea goală a barei de adresă */
+              if (adr) adr.click();
+              await pauza(100);
+              const s = stareFn();
+              if (s && s.bara_adresa && s.bara_adresa.clicata) st.vazut.add(s.cale_curenta);
+            } else if (op === 'scrie') {
+              if (inp) { inp.value = x; st.rasp = x; inp.readOnly = true; }
+            } else return { facut: false, incercat: true };
+          }
+        } catch (e) { return { facut: false, incercat: true }; }
+        st.s = stareFn();
+        refresh();
+        const rez = (Q.checks || []).map(c => testa(Q, st, c));
+        return { facut: rez.length > 0 && rez.every(Boolean), incercat: true, n: rez.length };
+      }
+      let arataPornit = false;
+      async function arataRaspunsul() {
+        if (arataPornit || api.done()) return;
+        arataPornit = true;
+        const nav = api.nav && api.nav();
+        if (nav) nav.querySelectorAll('button').forEach(b => { b.disabled = true; });
+        const rez = await joacaSolutia();
+        const pasi = pasiText(Q, host.querySelector('[data-lh-aplicatie="explorer"]'));
+        if (rez.facut) {
+          api.giveUp(`am făcut eu pașii în Explorer-ul de mai sus: ${pasi}. Uită-te în fereastră: testele de sub ea trec acum (${rez.n} din ${rez.n}).`);
+          return;
+        }
+        if (inp && rez.incercat) inp.readOnly = false;
+        const cum = Q.ajutor ? ` Cum: ${Q.ajutor}` : '';
+        api.giveUp(`${rez.incercat ? 'n-am reușit să fac pașii în fereastră. Fă-i tu' : 'fă tu pașii'} în Explorer-ul de mai sus${pasi ? ': ' + pasi + '.' : '.'}${cum} Testele de sub fereastră se bifează pe rând, cât lucrezi. Când trec toate:`);
+      }
     }
   };
 

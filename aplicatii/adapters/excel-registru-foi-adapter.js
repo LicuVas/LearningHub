@@ -25,7 +25,13 @@
    - inchis            nu e niciun registru deschis
    Start (Q.start): gol, registru {nume|fisier, foi, a, m}, fisiere {Dosar: [{n, foi, coleg}]}, locPropus.
    Opțiuni (Q.o, Q.ok): întrebare cu răspunsuri; răspunsul corect se alege cu clic.
-   Limite (spuse și aici): „Arată-mi răspunsul” și „greșeala” nu execută pașii pe biblioteca nouă (nu sunt gesturi ale elevului). */
+   „Arată-mi răspunsul” (noaptea 27-28.11.2026, ca registru-foi.js care rula Q.rezolvare în fereastră): pașii din Q.rezolvare se
+   joacă pe un MODEL (registrul + fișierele din magazie), apoi Excel-ul se redeschide în același loc în starea de la capăt, prin
+   parametrii de conținut ai bibliotecii (deschide(…, {continut}), api_biblioteca §1), iar fișierele salvate se scriu în magazie.
+   Textul spune „am făcut pașii” DOAR dacă după asta testele exercițiului chiar trec. Altfel (un pas pe care modelul nu-l știe,
+   CSV/PDF, testul `redeschis`, care cere închidere + deschidere în sesiune) fereastra rămâne a elevului, iar textul îi spune
+   pașii exercițiului de față, ca să-i facă el; nu afirmă nimic despre fereastră.
+   Limite: „greșeala” (gresit) și rezolva (testul automat al motorului) doar redesenează, nu joacă pașii. */
 (function () {
   'use strict';
   const W = window;
@@ -50,7 +56,7 @@
     return {
       foi: foi.map(x => ({
         nume: x.n, cel: Object.fromEntries(Object.entries(x.d || {}).map(([a, v]) => [a, { v }])), fmt: {}, merge: [], lat: {}, latSet: {},
-        bord: {}, culoare: null, sel: { activa: { r: 0, c: 0 }, zone: [{ r0: 0, c0: 0, r1: 0, c1: 0 }] }
+        bord: {}, culoare: x.c || null, sel: { activa: { r: 0, c: 0 }, zone: [{ r0: 0, c0: 0, r1: 0, c1: 0 }] }
       })),
       fi: 0
     };
@@ -215,6 +221,110 @@
     return c;
   }
 
+  /* ——— „Arată-mi răspunsul”: modelul pe care se joacă Q.rezolvare (aceleași reguli ca registru-foi.js › ruleaza) ——— */
+  const copieJ = o => JSON.parse(JSON.stringify(o));
+  const CULORI = { '#FFFF00': 'Yellow', '#00B050': 'Green', '#FF0000': 'Red', '#FFC000': 'Orange', '#0070C0': 'Blue', '#00B0F0': 'Light Blue', '#7030A0': 'Purple', '#92D050': 'Light Green', '#C00000': 'Dark Red', '#002060': 'Dark Blue' };
+  /* modelul la pornirea exercițiului: wb = registrul deschis ({foi:[{n, d, c}], a, m, nume, dosar}) sau null; fis = magazia */
+  function modelDe(Q) {
+    const st = (Q && Q.start) || {};
+    const fis = {};
+    seminteDe(Q).forEach(x => { (fis[x.d] = fis[x.d] || {})[x.n] = { foi: copieJ(x.foi) }; });
+    const r = st.registru;
+    let wb = null;
+    if (r) {
+      wb = { foi: copieJ(r.foi || []), a: r.a || 0, m: !!r.m, nume: null, dosar: null };
+      if (r.fisier) { const [d, n] = r.fisier.split('/'); wb.nume = n; wb.dosar = d; }
+    }
+    return { wb, fis, scrise: {} };
+  }
+  const numeFis = (v, e) => { let n = String(v || '').trim().replace(/[\\/:*?"<>|]/g, ''); if (n && !new RegExp('\\.' + e + '$', 'i').test(n)) n += '.' + e; return n; };
+  /* joacă pașii pe model; false = un pas pe care modelul nu-l poate juca (atunci fereastra nu se atinge) */
+  function joaca(M, ops) {
+    const idx = n => M.wb.foi.findIndex(f => fara(f.n) === fara(n));
+    const numeNou = () => { const R = M.wb; let k = R.cnt || R.foi.length + 1; while (R.foi.some(f => fara(f.n) === fara('Sheet' + k))) k++; R.cnt = k + 1; return 'Sheet' + k; };
+    const salveazaLa = (d, n) => {
+      (M.fis[d] = M.fis[d] || {})[n] = { foi: copieJ(M.wb.foi) };
+      M.scrise[cheie(d, n)] = true;
+      M.wb.nume = n; M.wb.dosar = d; M.wb.m = false;
+    };
+    const salveazaNou = o => {
+      const e = o.tip || 'xlsx', d = o.folder || 'Documente', n = numeFis(o.nume, e);
+      if (e !== 'xlsx' || !n) return false;                       /* CSV / PDF: nu le joacă modelul */
+      if (M.fis[d] && Object.keys(M.fis[d]).some(x => fara(x) === fara(n)) && !o.inlocuieste) return false;
+      salveazaLa(d, n); return true;
+    };
+    for (const [op, ...a] of (ops || [])) {
+      if (op === 'nou') { if (M.wb) return false; M.wb = { foi: [{ n: 'Sheet1', d: {} }], a: 0, m: false, nume: null, dosar: null, cnt: 2 }; continue; }
+      if (op === 'deschide') {
+        if (M.wb) return false;
+        const [d, n] = String(a[0]).split('/');
+        const f = M.fis[d] && M.fis[d][n];
+        if (!f) return false;
+        M.wb = { foi: copieJ(f.foi), a: 0, m: false, nume: n, dosar: d };
+        continue;
+      }
+      const R = M.wb;
+      if (!R) return false;
+      if (op === 'plus') { R.foi.splice(R.a + 1, 0, { n: numeNou(), d: {} }); R.a++; R.m = true; }
+      else if (op === 'inserareInainte') { R.foi.splice(R.a, 0, { n: numeNou(), d: {} }); R.m = true; }
+      else if (op === 'activeaza') { const i = idx(a[0]); if (i < 0) return false; R.a = i; }
+      else if (op === 'redenumeste') { const i = idx(a[0]); if (i < 0) return false; R.foi[i].n = String(a[1]); R.m = true; }
+      else if (op === 'culoare') { const i = idx(a[0]); if (i < 0) return false; R.foi[i].c = a[1] ? String(a[1]).toUpperCase() : null; R.m = true; }
+      else if (op === 'sterge') {
+        const i = idx(a[0]); if (i < 0) return false;
+        if (R.foi.length > 1) { R.foi.splice(i, 1); if (R.a >= R.foi.length) R.a = R.foi.length - 1; else if (R.a > i) R.a--; R.m = true; }
+      } else if (op === 'muta' || op === 'copiaza') {
+        const i = idx(a[0]); let j = a[1] == null ? R.foi.length : idx(a[1]);
+        if (i < 0 || j < 0) return false;
+        if (op === 'copiaza') {
+          const f = copieJ(R.foi[i]), b = f.n.replace(/ \(\d+\)$/, '');
+          let k = 2, x; do { x = b + ' (' + (k++) + ')'; } while (R.foi.some(g => fara(g.n) === fara(x)));
+          f.n = x.slice(0, 31); R.foi.splice(j, 0, f); R.a = j; R.m = true;
+        } else if (j !== i && j !== i + 1) { const [f] = R.foi.splice(i, 1); if (j > i) j--; R.foi.splice(j, 0, f); R.a = j; R.m = true; }
+      } else if (op === 'scrie') {
+        const i = idx(a[0]); if (i < 0) return false;
+        if (String(a[2]) === '') delete R.foi[i].d[a[1]]; else R.foi[i].d[a[1]] = String(a[2]);
+        R.m = true;
+      } else if (op === 'salveaza') {
+        if (R.nume && R.dosar && extDe(R.nume) === 'xlsx') salveazaLa(R.dosar, R.nume);
+        else if (!salveazaNou(a[0] || {})) return false;
+      } else if (op === 'salveazaCa') { if (!salveazaNou(a[0] || {})) return false; }
+      else if (op === 'inchide') {
+        if (R.m && a[0] === 'da') { if (!(R.nume && R.dosar)) return false; salveazaLa(R.dosar, R.nume); }
+        M.wb = null;
+      } else return false;
+    }
+    return true;
+  }
+  /* registrul din model ca parametri de conținut ai bibliotecii (foile, culorile filelor, foaia activă, fișierul) */
+  function continutModel(wb) {
+    const c = { foi: wb.foi.map(f => { const x = { nume: f.n, celule: f.d || {} }; if (f.c) x.culoare = f.c; return x; }), fi: wb.a || 0, modificat: !!wb.m };
+    if (wb.nume && wb.dosar) { c.nume = wb.nume; c.dosar = wb.dosar; }
+    return c;
+  }
+  /* pașii exercițiului de față, în cuvinte (din Q.rezolvare) */
+  function pasiText(ops) {
+    const b = x => '<b>' + esc(x) + '</b>';
+    const unul = ([op, ...a]) => {
+      if (op === 'nou') return 'registru nou (<kbd>Ctrl</kbd>+<kbd>N</kbd>)';
+      if (op === 'plus') return 'o foaie nouă, cu butonul <b>+</b>';
+      if (op === 'inserareInainte') return 'o foaie nouă înaintea celei active (clic dreapta pe filă › <b>Insert</b>)';
+      if (op === 'activeaza') return 'clic pe fila ' + b(a[0]);
+      if (op === 'redenumeste') return 'fila ' + b(a[0]) + ' redenumită ' + b(a[1]) + ' (dublu-clic pe filă)';
+      if (op === 'culoare') return 'fila ' + b(a[0]) + ' colorată cu ' + b(CULORI[String(a[1]).toUpperCase()] || a[1]) + ' (clic dreapta pe filă › <b>Tab Color</b>)';
+      if (op === 'sterge') return 'fila ' + b(a[0]) + ' ștearsă (clic dreapta pe filă › <b>Delete</b>)';
+      if (op === 'muta') return 'fila ' + b(a[0]) + (a[1] == null ? ' mutată la sfârșit' : ' mutată înaintea filei ' + b(a[1])) + ' (o tragi cu mouse-ul)';
+      if (op === 'copiaza') return 'o copie a foii ' + b(a[0]) + (a[1] == null ? ', pusă la sfârșit' : ', pusă înaintea foii ' + b(a[1])) + ' (clic dreapta › <b>Move or Copy</b> › <b>Create a copy</b>)';
+      if (op === 'scrie') return 'în foaia ' + b(a[0]) + ', în celula ' + b(a[1]) + ': ' + b(a[2]);
+      if (op === 'salveaza') { const o = a[0] || {}; return o.nume ? '<b>Save</b> (<kbd>Ctrl</kbd>+<kbd>S</kbd>) în ' + b(o.folder || 'Documente') + ', cu numele ' + b(o.nume) : '<b>Save</b> (<kbd>Ctrl</kbd>+<kbd>S</kbd>)'; }
+      if (op === 'salveazaCa') { const o = a[0] || {}; return '<b>Save As</b> (<kbd>F12</kbd>) în ' + b(o.folder || 'Documente') + ', cu numele ' + b(o.nume) + (o.tip && o.tip !== 'xlsx' ? ', tipul ' + b(String(o.tip).toUpperCase()) : ''); }
+      if (op === 'inchide') return a[0] === 'da' ? '<kbd>Ctrl</kbd>+<kbd>W</kbd>, apoi <b>Save</b> (păstrezi schimbarea)' : '<kbd>Ctrl</kbd>+<kbd>W</kbd>, apoi <b>Don\'t Save</b>';
+      if (op === 'deschide') { const [d, n] = String(a[0]).split('/'); return '<kbd>Ctrl</kbd>+<kbd>O</kbd>, apoi ' + b(n) + ' din ' + b(d); }
+      return '';
+    };
+    return (ops || []).map(unul).filter(Boolean).map((t, i) => (i + 1) + ') ' + t).join('; ');
+  }
+
   function randeaza(Q, body, api) {
     css();
     body.innerHTML = `<p class="rel-cum">Lucrezi în Excel-ul adevărat (biblioteca de aplicații). Fă pașii cu mouse-ul și tastatura, apoi apasă <b>Verifică</b>.</p>
@@ -265,20 +375,60 @@
       });
     }
 
+    /* deschide Excel-ul bibliotecii în locul exercițiului (al doilea deschide în același loc înlocuiește instanța veche);
+       gol = fără registru (ca Excel deschis gol): Ctrl+W pe Book1 nemodificat; nu e o acțiune a elevului */
+    function deschideExcel(continut, gol) {
+      return L.deschide('excel', { loc: host, continut, focus: false }).then(inst => {
+        st.inst = inst;
+        st.root = host.querySelector('[data-lh-aplicatie="excel"]');
+        if (st.root && gol) st.root.dispatchEvent(new KeyboardEvent('keydown', { key: 'w', ctrlKey: true, bubbles: true, cancelable: true }));
+        return inst;
+      });
+    }
+
     /* magazia (fisiere.js) se încarcă în fundal: învelișul trebuie pus înainte de prima magazie a instanței */
     SEMINTE = seminteDe(Q);
     L.gata.then(() => L._script('fisiere.js'))
-      .then(() => { invelisFisiere(); return L.deschide('excel', { loc: host, continut: continutDe(Q), focus: false }); })
+      .then(() => { invelisFisiere(); return deschideExcel(continutDe(Q), !(Q.start && Q.start.registru)); })
       .then(inst => {
-        st.inst = inst;
-        st.root = host.querySelector('[data-lh-aplicatie="excel"]');
-        /* pornirea fără registru (ca Excel deschis gol): Ctrl+W pe Book1 nemodificat; nu e o acțiune a elevului */
-        if (st.root && !(Q.start && Q.start.registru)) st.root.dispatchEvent(new KeyboardEvent('keydown', { key: 'w', ctrlKey: true, bubbles: true, cancelable: true }));
         pornit = true;
         st.s = inst.stare();
         refresh();
       })
       .catch(e => { if (tes) tes.textContent = 'Excel nu s-a încărcat: ' + (e && e.message ? e.message : e); });
+
+    /* „Arată-mi răspunsul”: joacă Q.rezolvare pe model, redeschide Excel-ul în starea de la capăt, scrie fișierele salvate în
+       magazie și citește testele. {facut, incercat, n}: facut = toate testele trec acum (abia atunci textul spune că pașii s-au făcut) */
+    async function joacaRaspunsul() {
+      const M = modelDe(Q);
+      const merge = pornit && (Q.rezolvare || []).length && joaca(M, Q.rezolvare) && !(Q.teste || []).some(t => t.redeschis !== undefined);
+      if (!merge) return { facut: false, incercat: false };
+      try {
+        const inst = await deschideExcel(M.wb ? continutModel(M.wb) : {}, !M.wb);
+        inst.stare();   /* magazia instanței noi, semănată cu fișierele de la pornire (învelișul) */
+        Object.keys(M.scrise).forEach(k => { const i = k.indexOf('/'), d = k.slice(0, i), n = k.slice(i + 1); MAGAZIE.salveaza(d, n, 'xlsx', registru(M.fis[d][n].foi)); });
+        st.s = inst.stare();
+        refresh();
+        const r = verifica(Q, st.s);
+        return { facut: r.length > 0 && r.every(x => x.ok), incercat: true, n: r.length };
+      } catch (e) { return { facut: false, incercat: true }; }
+    }
+    let arataPornit = false;
+    async function arataRaspunsul() {
+      if (arataPornit || api.done()) return;
+      arataPornit = true;
+      const nav = api.nav && api.nav();
+      if (nav) nav.querySelectorAll('button').forEach(b => { b.disabled = true; });
+      const rez = await joacaRaspunsul();
+      const pasi = pasiText(Q.rezolvare);
+      if (rez.facut) {
+        api.giveUp(`am făcut eu pașii în Excel-ul de mai sus: ${pasi}. Uită-te în fereastră: testele de sub ea trec acum (${rez.n} din ${rez.n}).`);
+        return;
+      }
+      const ce = pasi || (Q.raspuns ? String(Q.raspuns) : '');
+      const cum = Q.ajutor ? ` Cum: ${Q.ajutor}` : '';
+      api.giveUp(`${rez.incercat ? 'n-am reușit să fac pașii în fereastră. Fă-i tu' : 'fă tu pașii'} în Excel-ul de mai sus${ce ? ': ' + ce + '.' : '.'}${cum} Testele de sub fereastră se bifează pe rând, cât lucrezi. Când trec toate:`);
+    }
 
     if (!Q.o) {
       api.checkButton(() => {
@@ -288,7 +438,7 @@
         if (!rau) api.resolve(true);
         else {
           api.resolve(false, `Încă nu: <b>${esc(rau.ce)}</b>.`);
-          api.revealButton(() => api.giveUp(Q.raspuns || 'Fă pașii în Excel: registru nou, salvare în Documente cu numele tău, apoi Save.'));
+          api.revealButton(() => { arataRaspunsul(); });
         }
       });
     }
