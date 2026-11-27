@@ -663,5 +663,28 @@
     return el;
   }
 
+  /* rotița pe panglică (27.11): bara de derulare de sub panglică nu se mai vede (aplicatii.css — în Office nu există), deci
+     rotița mouse-ului ținută pe panglică o derulează lateral cât timp banda nu încape (laboratorul, 1366 px; ecranele mai
+     înguste: grupurile din dreapta). Degetul, Shift+rotița și glisarea laterală pe touchpad rămân ale browserului. La capătul
+     benzii (sau dacă rotița e pe o listă care se derulează singură) rotița rămâne a paginii / a listei. */
+  if (!L._rotitaPanglica) {
+    L._rotitaPanglica = true;
+    document.addEventListener('wheel', e => {
+      if (e.defaultPrevented || e.ctrlKey || e.shiftKey || Math.abs(e.deltaX) >= Math.abs(e.deltaY)) return;
+      const t = e.target, s = t && t.closest ? t.closest('.lh-ap-sus') : null;
+      if (!s) return;
+      const max = s.scrollWidth - s.clientWidth;
+      if (max <= 0) return;
+      for (let n = t; n && n !== s; n = n.parentElement) {
+        if (n.scrollHeight > n.clientHeight + 1 && /(auto|scroll)/.test(getComputedStyle(n).overflowY)) return;
+      }
+      const pas = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? s.clientWidth : 1);
+      const nou = Math.max(0, Math.min(max, s.scrollLeft + pas));
+      if (Math.abs(nou - s.scrollLeft) < 0.5) return;
+      s.scrollLeft = nou;
+      e.preventDefault();
+    }, { passive: false });
+  }
+
   L._modul('panglica', { deseneaza, icoana, icoanaNume, unealta, glif, svg, felSuprafata, tintaImplicita, afisare, esc });
 })();
