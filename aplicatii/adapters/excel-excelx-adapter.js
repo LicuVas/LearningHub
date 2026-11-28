@@ -56,7 +56,10 @@
      umplut {E2: ['E3','E6']}             (lecția 8) celulele umplute din sursă: ținta = formula sursei mutată (judecată prin rezultat)
      gest ['autosum'|'umple'], umple true (lecția 8; umple = în teste) gestul cerut, citit din evenimentele bibliotecii: Σ / lista ▾ /
                                           Alt+= (suma_automata), mânerul de umplere tras (umplere_tragere); mesajele din tip-excel.js
-   O cheie pe care adaptorul nu o știe NU trece (și se scrie în consolă): sortat, grafic, format.nume, latime, gesturile
+     sortat {zona, dupa:[{col, ord}], antet} (lecția 10) rândurile zonei întregi (față de foaia de la deschidere) și în ordinea
+                                          cerută; în teste: antet / intregi (bifate abia după o sortare) / ordonat [{col, ord}];
+                                          mesajele din tip-excel.js și excelx-sortare.js › mesajSortare (desperecheat / titlul printre date)
+   O cheie pe care adaptorul nu o știe NU trece (și se scrie în consolă): grafic, format.nume, latime, gesturile
    clic-adresa / f4 / zona-mouse / autocompletare / ctrl-d … — ale lecțiilor 9-11, de adus când se leagă acelea.
    TESTELE numite (Q.teste: [{ce, …aceleași chei…, fara: ['x']}]) se bifează singure deasupra foii.
 
@@ -519,8 +522,64 @@
     return '';
   }
 
+  /* ---------- sortarea (lecția 10): verifica.sortat {zona, dupa:[{col, ord}], antet?} și testele {antet | intregi | ordonat} ----------
+     Ca pe vechi (jocuri/_motor/tip-excel.js › probleme, „SORTAREA”; lectii/_sim/excelx-sortare.js › mesajSortare, testOk):
+     rândurile zonei comparate cu cele de la DESCHIDEREA foii (ctx.start, citit din starea bibliotecii, cu valorile ei: datele
+     calendaristice sunt numere), întâi ca mulțime de rânduri întregi, apoi în ordinea cerută. Ordinea textelor NU trece prin
+     laFel (care ignoră diacriticele): localeCompare pe românește, fără diferență de litere mari, deci Ș vine după S. */
+  const cmpSort = (x, y) => typeof x === 'number' && typeof y === 'number' ? x - y : String(x == null ? '' : x).localeCompare(String(y == null ? '' : y), 'ro', { sensitivity: 'base' });
+  const cheieVal = v => v == null || v === '' ? '' : typeof v === 'number' ? v.toFixed(6) : String(v).toLowerCase();
+  const randSort = (C, z, r) => { const o = []; for (let c = z.c1; c <= z.c2; c++) o.push(brut(C[adrDe(c, r)])); return o; };
+  const cheieRand = (C, z, r) => randSort(C, z, r).map(cheieVal).join('|');
+  /* rândurile r0..r2 ale zonei sunt aceleași cu cele de la început (în orice ordine) */
+  function randuriIntregi(ctx, R, z, r0) {
+    const a = [], b = [];
+    for (let r = r0; r <= z.r2; r++) { a.push(cheieRand(R, z, r)); b.push(cheieRand(ctx.start, z, r)); }
+    return a.sort().join('\n') === b.sort().join('\n');
+  }
+  /* rândurile r0..r2 sunt în ordinea cheilor [{col, ord}] (primul criteriu contează cel mai mult) */
+  function inOrdine(R, z, r0, chei) {
+    for (let r = r0 + 1; r <= z.r2; r++) {
+      for (const k of chei) {
+        const c = pos(k.col + '1').c;
+        let d = cmpSort(brut(R[adrDe(c, r - 1)]), brut(R[adrDe(c, r)]));
+        if (k.ord === 'desc') d = -d;
+        if (d < 0) break;
+        if (d > 0) return false;
+      }
+    }
+    return true;
+  }
+  const textOrdine = dupa => dupa.map(x => 'coloana ' + x.col + ' ' + (x.ord === 'desc' ? 'descrescător' : 'crescător')).join(', apoi ');
+  function problemaSortare(ctx, VS, R) {
+    const z = zonaDe(VS.zona);
+    if (!z || !ctx.start) return 'Excel încă se încarcă. Așteaptă un moment și apasă din nou.';
+    const r0 = VS.antet === false ? z.r1 : z.r1 + 1;
+    if (!randuriIntregi(ctx, R, z, r0)) {
+      /* excelx-sortare.js › mesajSortare: toate rândurile zonei, cu titlul, sunt întregi, dar titlul nu mai e sus = antetul nerecunoscut */
+      if (VS.antet !== false && randuriIntregi(ctx, R, z, z.r1) && cheieRand(R, z, z.r1) !== cheieRand(ctx.start, z, z.r1)) {
+        const t = []; for (let c = z.c1; c <= z.c2; c++) { const x = afisat(ctx.start[adrDe(c, z.r1)]); if (x !== '') t.push(x); }
+        return `Titlul de pe rândul ${z.r1 + 1} („${esc(t.join(', '))}”) a ajuns printre date: Excel nu l-a recunoscut ca rând de antet. Rândurile în sine sunt întregi. Apasă Ctrl+Z (pe telefon, ↶), apoi fila Date (Data) › butonul mare Sortare (Sort) și bifează My data has headers (Datele mele au anteturi).`;
+      }
+      return 'Rândurile s-au desperecheat: unele valori au ajuns pe rândul altuia. Apasă Ctrl+Z (pe telefon, ↶). Dacă ai ales Continue with the current selection, repetă sortarea din coloana selectată: când apare Sort Warning, alege Expand the selection. Altfel, fă clic pe o singură celulă din tabel și sortează din nou. Dacă selectezi doar unele coloane, Excel le mută numai pe ele.';
+    }
+    if (!inOrdine(R, z, r0, VS.dupa)) return `Tabelul nu e încă în ordinea cerută (${textOrdine(VS.dupa)}). Folosește Date (Data) → Sortare.`;
+    return '';
+  }
+  /* testele numite ale atelierului (excelx-sortare.js › testOk): antet și intregi se bifează abia după o sortare (ctx.sortari, din
+     evenimentele bibliotecii); ordonat = ordinea cerută și rândurile întregi */
+  function problemaTestSortare(ctx, T, R) {
+    const VS = (ctx.Q.verifica || {}).sortat || {}, z = zonaDe(T.zona || VS.zona);
+    if (!z || !ctx.start) return 'nu';
+    const r0 = VS.antet !== false ? z.r1 + 1 : z.r1;
+    if (T.antet) return ctx.sortari && cheieRand(R, z, z.r1) === cheieRand(ctx.start, z, z.r1) ? '' : 'antet';
+    if (T.intregi) return ctx.sortari && randuriIntregi(ctx, R, z, r0) ? '' : 'intregi';
+    if (T.ordonat) return inOrdine(R, z, r0, T.ordonat) && randuriIntregi(ctx, R, z, r0) ? '' : 'ordonat';
+    return '';
+  }
+
   /* ---------- verificarea ---------- */
-  const CHEI = ['unde', 'fila', 'foaie', 'pe', 'zoom', 'valori', 'formule', 'gol', 'sel', 'activa', 'zona', 'neatinsa', 'doarTaste', 'mesajActiva', 'fara', 'tip', 'forma', 'capcane', 'functie', 'gest', 'umplut', 'umple', 'functii', 'variante'];
+  const CHEI = ['unde', 'fila', 'foaie', 'pe', 'zoom', 'valori', 'formule', 'gol', 'sel', 'activa', 'zona', 'neatinsa', 'doarTaste', 'mesajActiva', 'fara', 'tip', 'forma', 'capcane', 'functie', 'gest', 'umplut', 'umple', 'functii', 'variante', 'sortat', 'antet', 'intregi', 'ordonat'];
   function probleme(ctx, V, s) {
     const out = [];
     if (!V) return out;
@@ -564,6 +623,9 @@
     if (V.activa) { const a = activaPe(s, fv); if (a !== V.activa) out.push(V.mesajActiva ? V.mesajActiva.replace('{a}', a || '—') : `Celula activă${pe} e acum ${a || '—'}. Trebuie să fie ${V.activa}.`); }
     if (V.doarTaste && ctx.clicInFoaie) out.push('De data asta, fără clic în foaie: te miști doar cu tastele (pe telefon, cu butoanele de sub foaie). Apasă „Arată-mi” sau reia exercițiul.');
     if (V.forma) problemeForma(ctx, V.forma, s).forEach(x => out.push(esc(x)));
+    /* sortarea (lecția 10): pe foaia activă, ca pe vechi (o singură foaie în lecție) */
+    if (V.sortat) { const m = problemaSortare(ctx, V.sortat, R); if (m) out.push(m); }
+    if (V.antet || V.intregi || V.ordonat) { const m = problemaTestSortare(ctx, V, R); if (m) out.push(m); }
     /* gesturile cerute (lecția 8; tip-excel.js › probleme, la sfârșit): Σ (autosum) și mânerul de umplere (umple; în teste umple:true).
        Le citește render din evenimentele bibliotecii (ctx.gest). Un gest pe care adaptorul nu-l știe citi NU trece. */
     const gesturi = [].concat(V.gest || [], V.umple ? ['umple'] : []);
@@ -607,6 +669,7 @@
     const tp = Object.entries(V.tip || {}).map(([a, e]) => `în ${a} scrii <code>${esc('numar' in e ? numarRo(e.numar) : 'data' in e ? e.data : (cuApostrof(e.text) ? "'" : '') + e.text)}</code>`);
     if (tp.length) s.push(tp.join(', '));
     if (V.forma) { const sf = solutieForma(V.forma); if (sf) s.push(sf); }
+    if (V.sortat) s.push(`alegi o celulă din tabel și Date (Data) → Sortare după ${textOrdine(V.sortat.dupa)}`);
     return s.length ? s.join('; ') + '.' + (tp.length ? ' Dacă o celulă a rămas cu forma de dată (scrii un număr și apare o dată), o selectezi și alegi, pe fila Pornire (Home), butonul cu radieră Golire (Clear), al treilea din grupul Editare (Editing), apoi Golire totală (Clear All); apoi scrii din nou.' : '') : '';
   }
 
@@ -780,6 +843,63 @@
     return { el: null, tinta: null };
   }
   /* rezolvarea, executată în Excelul din bibliotecă */
+  /* sortarea cu gesturile elevului (lecția 10): clic pe o celulă din coloana primului criteriu, fila Data › Sort (butonul mare),
+     bifa „My data has headers” cum cere zona, „Sort by” / „Then by” alese din liste (coloana după numele ei, ordinea: primul rând
+     = crescător, al doilea = descrescător), Add Level / Delete Level până sunt atâtea niveluri câte criterii, OK.
+     Fereastra Sort e întotdeauna drumul: butonul A→Z ar sorta și titlul unei liste numai de texte (lecția o arată ca greșeală) */
+  const inFereastra = (ctx, sel) => ctx.root.querySelector('[data-lh-tip="Window"] ' + sel);
+  const butonFereastra = (ctx, et) => inFereastra(ctx, `[data-lh-tip="Button"][data-lh-eticheta="${et}"]`);
+  function alegeDinLista(ctx, cb, alege) {
+    if (!cb || !apasa(ctx, cb)) return false;
+    const it = [...ctx.root.querySelectorAll('[role="listbox"] [role="option"]')];
+    const x = typeof alege === 'number' ? it[alege] : it.find(e => e.getAttribute('data-lh-eticheta') === alege);
+    return x ? apasa(ctx, x) : (tasta(ctx, 'Escape'), false);
+  }
+  function sorteazaCuFereastra(ctx, VS) {
+    const z = zonaDe(VS.zona);
+    if (!z || !VS.dupa || !VS.dupa.length) return;
+    const antet = VS.antet !== false, r0 = antet ? z.r1 + 1 : z.r1;
+    /* rândurile desperecheate / titlul ajuns printre date nu se repară prin sortare: întâi Ctrl+Z până revin rândurile întregi
+       (ca în mesajul vechi: „Apasă Ctrl+Z…”); dacă nu ajunge, se scriu la loc valorile de la început, cum le-a pus lecția */
+    const intreg = () => { const s = stare(ctx), R = s ? celulePe(s, s.foaie_activa) : null; return !!R && !!ctx.start && cheieRand(R, z, z.r1) === cheieRand(ctx.start, z, z.r1) && randuriIntregi(ctx, R, z, r0); };
+    for (let g = 0; g < 30 && ctx.start && !intreg(); g++) tasta(ctx, 'z', { ctrlKey: true, code: 'KeyZ' });
+    if (ctx.start && !intreg()) {
+      const s = stare(ctx), R = celulePe(s, s.foaie_activa), C0 = ctx.Q.cells || {}, dif = [];
+      for (let r = z.r1; r <= z.r2; r++) for (let c = z.c1; c <= z.c2; c++) { const a = adrDe(c, r); if (cheieVal(brut(R[a])) !== cheieVal(brut(ctx.start[a]))) dif.push([a, C0[a] == null ? '' : numarRo(C0[a])]); }
+      dif.forEach(([a, t]) => { laCelula(ctx, a); if (t === '') tasta(ctx, 'Delete'); else { tasteaza(ctx, t); tasta(ctx, 'Enter'); } });
+    }
+    laCelula(ctx, adrDe(pos(VS.dupa[0].col + '1').c, r0));
+    apasaTinta(ctx, 'fila:Data');
+    apasaTinta(ctx, 'mso:SortDialog');
+    if (!inFereastra(ctx, '[data-lh-nivel]')) return;
+    const bifa = inFereastra(ctx, '[data-lh-tip="CheckBox"][data-lh-eticheta="My data has headers"]');
+    if (bifa && (bifa.getAttribute('aria-checked') === 'true') !== antet) apasa(ctx, bifa);
+    const nume = c => (antet && ctx.start ? afisat(ctx.start[adrDe(c, z.r1)]) : '') || 'Column ' + COL(c);
+    const niveluri = () => ctx.root.querySelectorAll('[data-lh-tip="Window"] [data-lh-nivel]').length;
+    VS.dupa.forEach((k, i) => {
+      if (i >= niveluri()) apasa(ctx, butonFereastra(ctx, 'Add Level'));
+      alegeDinLista(ctx, inFereastra(ctx, `[data-lh-nivel="${i}"] [data-lh-camp="coloana"]`), nume(pos(k.col + '1').c));
+      alegeDinLista(ctx, inFereastra(ctx, `[data-lh-nivel="${i}"] [data-lh-camp="ordine"]`), k.ord === 'desc' ? 1 : 0);
+    });
+    /* nivelurile rămase de la o sortare de dinainte (fereastra se deschide cu ea): alege nivelul de jos, Delete Level */
+    for (let g = 0; g < 64 && niveluri() > VS.dupa.length; g++) {
+      const n = niveluri() - 1, et = inFereastra(ctx, `[data-lh-nivel="${n}"] .lh-ap-x-nivel-et`) || inFereastra(ctx, `[data-lh-nivel="${n}"]`);
+      apasa(ctx, et); apasa(ctx, butonFereastra(ctx, 'Delete Level'));
+    }
+    apasa(ctx, butonFereastra(ctx, 'OK'));
+  }
+  /* greșeala tipică a sortării (ca ExcelS.gresit): doar coloana criteriului, cu Continue with the current selection în Sort Warning
+     (rândurile se desperechează); la o listă de o coloană, toată coloana cu titlul, butonul A→Z (titlul ajunge printre nume) */
+  function sorteazaGresit(ctx, VS) {
+    const z = zonaDe(VS.zona), k = (VS.dupa || [])[0];
+    if (!z || !k) return;
+    const c = pos(k.col + '1').c, mso = 'mso:' + (k.ord === 'desc' ? 'SortDescendingExcel' : 'SortAscendingExcel');
+    selecteaza(ctx, z.c1 === z.c2 ? adrDe(z.c1, z.r1) + ':' + adrDe(z.c1, z.r2) : adrDe(c, z.r1 + 1) + ':' + adrDe(c, z.r2));
+    apasaTinta(ctx, 'fila:Data');
+    apasaTinta(ctx, mso);
+    const cont = inFereastra(ctx, '[data-lh-tip="RadioButton"][data-lh-eticheta="Continue with the current selection"]');
+    if (cont) { apasa(ctx, cont); apasa(ctx, butonFereastra(ctx, 'Sort...')); }
+  }
   function executa(ctx) {
     const V = (ctx.Q.verifica || {});
     if (!ctx.inst || !ctx.root || !ctx.root.isConnected) return;
@@ -826,6 +946,7 @@
       if (V.tip) scrieTipuri(ctx, V);
       if (V.forma) executaForma(ctx, V.forma);
       if (V.zoom != null) laZoom(ctx, V.zoom);
+      if (V.sortat) sorteazaCuFereastra(ctx, V.sortat);
       const cel = V.activa || V.sel;
       s = stare(ctx);
       if (cel && s && activaPe(s, s.foaie_activa) !== cel) {
@@ -868,6 +989,7 @@
       }
       if (V.forma) gresesteForma(ctx, V.forma);
       if (V.zoom != null) laZoom(ctx, V.zoom === 100 ? 90 : 100);
+      if (V.sortat) sorteazaGresit(ctx, V.sortat);
       const cel = V.activa || V.sel || (V.zona ? String(V.zona).split(':')[0] : null);
       if (cel) laCelula(ctx, cel === 'A1' ? 'B2' : 'A1');
       if (V.unde) { apasaTinta(ctx, potriveste('celula:A1', V.unde) ? 'camp:Name Box' : 'celula:A1'); }
@@ -900,6 +1022,15 @@
       c.celule = Q.cells || {};
       if (Q.zoom) c.zoom = Q.zoom;
       if (Q.latimi && typeof Q.latimi === 'object' && !Array.isArray(Q.latimi)) c.latimi_caractere = Q.latimi;
+      /* lecția 10: tabelul de sortat e un tabel terminat, cu datele calendaristice citibile (pe vechi se vedeau întregi). Biblioteca,
+         ca Excel, NU lățește coloanele conținutului de pornire, deci o dată în coloana de 64 px ar apărea „########” (doar la
+         tastare coloana se lățește singură). Aici coloana cu date primește lățimea pe care i-ar fi dat-o Excel dacă profesorul ar
+         fi tastat datele (11 caractere pentru zz.ll.aaaa); doar la exercițiile de sortare și doar unde lecția nu dă lățimi */
+      else if (Q.verifica && Q.verifica.sortat) {
+        const lat = {};
+        Object.entries(Q.cells || {}).forEach(([a, v]) => { const m = /^([A-Z]+)\d+$/.exec(a); if (m && typeof v === 'string' && /^\d{1,2}\.\d{1,2}\.\d{4}$/.test(v.trim())) lat[m[1]] = 11; });
+        if (Object.keys(lat).length) c.latimi_caractere = lat;
+      }
       if (Q.inaltimi && typeof Q.inaltimi === 'object') c.inaltimi = Q.inaltimi;
       const fm = formaPornire(Q);
       if (fm) c.format = fm;
@@ -1133,6 +1264,17 @@
       W.addEventListener('lh-aplicatie', scris);
     }
 
+    /* sortarea (lecția 10): s-a făcut o sortare (acțiunile sortare / sortare_crescatoare / sortare_descrescatoare ale bibliotecii,
+       din butoane, din Sort Warning sau din fereastra Sort) — testele antet / intregi se bifează abia după ea, ca pe vechi (S.gest) */
+    if ((V && V.sortat) || (Q.teste || []).some(T => T && (T.antet || T.intregi || T.ordonat))) {
+      const sort = ev => {
+        if (!host.isConnected) { W.removeEventListener('lh-aplicatie', sort); return; }
+        const d = ev.detail || {};
+        if (d.aplicatie === 'excel' && /^sortare/.test(d.actiune || '')) ctx.sortari = true;
+      };
+      W.addEventListener('lh-aplicatie', sort);
+    }
+
     /* testele numite, bifate pe loc */
     let semn = '';
     function bifeaza() {
@@ -1187,6 +1329,9 @@
           try { Q.inainte.forEach(([a, t]) => { laCelula(ctx, a); if (t === 'DEL') tasta(ctx, 'Delete'); else { tasteaza(ctx, t); tasta(ctx, 'Enter'); } }); } finally { ctx.robot = false; }
           ctx.loc = null;
         }
+        /* foaia de la deschidere (lecția 10: rândurile întregi se compară cu ea); o singură dată, nu și la redeschiderea de după
+           „Exersează pe variante” (foaia revine atunci cum a rămas) */
+        if (!ctx.start) { const s0 = stare(ctx); ctx.start = s0 ? JSON.parse(JSON.stringify(celulePe(s0, s0.foaie_activa))) : null; }
         if (Q.start) {
           /* foaia are tastatura de la început (elevul scrie fără clic); motorul mai mută focusul după ce așază exercițiul */
           const laStart = () => { const a = document.activeElement; if (!host.isConnected || (a && ctx.root.contains(a))) return; if (a && a.closest && a.closest('input,textarea,select')) return; try { inst.focus(); } catch (e) { /* */ } };
@@ -1195,7 +1340,7 @@
         if (ajutorForma) {
           const sus = ctx.root.querySelector('.lh-ap-sus');
           if (peDeget()) ajutorForma.innerHTML = '<b>Formatarea pe telefon:</b> lățimea unei coloane: atingi litera ei, apoi tragi de cercul verde ⇔ de pe marginea ei; două atingeri pe cerc o potrivesc singură. Înălțimea unui rând: atingi numărul lui, apoi tragi de cercul ⇕. Panglica și foaia le derulezi în lateral cu degetul. Săgeata ▾ a unui buton deschide lista lui.';
-          else if (sus && sus.scrollWidth > sus.clientWidth + 1) ajutorForma.innerHTML = 'Panglica nu încape toată: grupurile Număr (Number), Stiluri (Styles), Celule (Cells) și Editare (Editing) sunt mai la dreapta. Trage spre dreapta de bara subțire de sub panglică sau rotește rotița mouse-ului ținând apăsat Shift. În Excel-ul de pe calculator o vezi întreagă.';
+          else if (sus && sus.scrollWidth > sus.clientWidth + 1) ajutorForma.innerHTML = 'Panglica nu încape toată: grupurile Număr (Number), Stiluri (Styles), Celule (Cells) și Editare (Editing) sunt mai la dreapta. Ține mouse-ul pe panglică și rotește rotița (pe telefon, trage panglica cu degetul spre stânga). În Excel-ul de pe calculator o vezi întreagă.';
         }
         bifeaza();
       })

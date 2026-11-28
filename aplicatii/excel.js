@@ -1501,7 +1501,10 @@
     function aseazaBanda() {
       const W = paneReg.clientWidth || 1366;
       /* la 1366 px: filele 805, despărțitorul 32, bara până la 20 px de margine; mai îngust: aceeași proporție, filele cel puțin 260 px */
-      const tw = Math.max(Math.min(805, Math.round((W - 53) * 805 / 1313)), Math.min(260, W - 93));
+      /* noaptea 27.11 (telefon, chenarul lecției: W ≈ 236 px): filele primeau 159 px și numele primei file („Sheet1”, 112-198 px)
+         ieșea tăiat; sub ~295 px filele iau cel puțin 200 px (prima filă întreagă), iar bara orizontală de lângă ele se strânge
+         (foaia se derulează cu degetul). Peste ~295 px nimic nu se schimbă. */
+      const tw = Math.max(Math.min(805, Math.round((W - 53) * 805 / 1313)), Math.min(260, W - 93), Math.min(200, W - 33));
       tabFoi.style.width = tw + 'px';
       desp.style.left = (tw + 1) + 'px';
       barH.pane.style.left = (tw + 33) + 'px';
@@ -1626,6 +1629,20 @@
       } catch (e) { /* */ }
     }
     if (typeof ResizeObserver === 'function') { try { new ResizeObserver(() => ancoreazaStare()).observe(jos); } catch (e) { /* */ } }
+    /* noaptea 27.11 (telefon, chenarul lecției ~250 px): numele „Book1 - Excel” stă în bara de titlu după bara de acces rapid și
+       ieșea tăiat la marginea ferestrei. Ca în Excel, numele se ascunde cât nu încape întreg în ce se vede din banda de sus (banda se
+       derulează lateral: derulată până la el, reapare). La 1366 px încape, deci se vede ca înainte. Proba: excel_noapte_d_checks › d3 */
+    function potrivesteTitlul() {
+      try {
+        const t = elTitlu && elTitlu.querySelector('.lh-ap-x-titlu');
+        if (!t) return;
+        t.style.visibility = '';
+        const b = t.getBoundingClientRect(), R = sus.getBoundingClientRect();
+        if (b.width && R.width && (b.right > R.right + 0.5 || b.left < R.left - 0.5)) t.style.visibility = 'hidden';
+      } catch (e) { /* */ }
+    }
+    sus.addEventListener('scroll', potrivesteTitlul, { passive: true });
+    if (typeof ResizeObserver === 'function') { try { new ResizeObserver(() => potrivesteTitlul()).observe(sus); } catch (e) { /* */ } }
     /* A2 (runda 10): rezumatul selecției în bara de stare. Referința uia_excel.json › bara_stare#selectie_numere (B2:C4 = 9, 7 /
        8, 10 / 6, 5): „Average 7,5” [859,2; 74,4], „Count 6” [933,6; 55,2], „Sum 45” [988,8; 53,6], lipite, Sum se termină la
        1042,4, sus 746,4, înalte 20,8; Display Settings nu apare. Lățimea unui buton = textul + marginea lui din referință;
@@ -1983,6 +2000,23 @@
       aseazaCursoare();
     }
     corp.addEventListener('scroll', () => { sincronDerulare(); margineFereastra(); }, { passive: true });
+    /* noaptea 27.11 (telefon): banda literelor / a numerelor (overflow:hidden) se poate derula SINGURĂ, fără celule — browserul aduce
+       în vedere o literă atinsă care e pe jumătate în afara benzii (măsurat la 360 px: atingerea lui F mută banda cu 441 px, a lui C
+       cu 13 px) și rândul de litere rămânea decalat față de coloane, și după derularea foii. Benzile le mută doar transform-ul din
+       sincronDerulare: derularea lor proprie trece pe foaie (litera rămâne unde a adus-o browserul, celulele vin sub ea), iar banda
+       revine la 0. Proba: _verificare/excel_noapte_d_checks.mjs › d2 */
+    function benziLaZero() {
+      const dx = antC.scrollLeft, dy = antR.scrollTop;
+      if (antC.scrollTop) antC.scrollTop = 0;
+      if (antR.scrollLeft) antR.scrollLeft = 0;
+      if (!dx && !dy) return;
+      antC.scrollLeft = 0; antR.scrollTop = 0;
+      if (dx) corp.scrollLeft += dx;
+      if (dy) corp.scrollTop += dy;
+      sincronDerulare();
+    }
+    antC.addEventListener('scroll', benziLaZero, { passive: true });
+    antR.addEventListener('scroll', benziLaZero, { passive: true });
     /* runda 25 (R21-2, MINOR 1-3 ale criticului 21): fereastra de la marginea foii se mută cu DERULAREA. Când vederea ajunge
        aproape de marginea ferestrei desenate (rotița, cursorul barei, „Line up / down”, degetul), fereastra se redesenează cu
        vederea la mijloc, iar scrollTop trece pe noua origine (deseneazaGrila), deci rândurile de pe ecran nu se mișcă. Grila
@@ -2185,7 +2219,7 @@
       rezumatSelectie();
       ancoreazaStare();
       baraAvertisment();
-      if (elTitlu) { const t = elTitlu.querySelector('.lh-ap-x-titlu'); if (t) t.textContent = titlu(); elTitlu.setAttribute('data-lh-eticheta', titlu()); }
+      if (elTitlu) { const t = elTitlu.querySelector('.lh-ap-x-titlu'); if (t) t.textContent = titlu(); elTitlu.setAttribute('data-lh-eticheta', titlu()); potrivesteTitlul(); }
       const gri = (sel, on) => root.querySelectorAll(sel).forEach(x => { x.classList.toggle('lh-ap-gri', !on); if (on) x.removeAttribute('aria-disabled'); else x.setAttribute('aria-disabled', 'true'); });
       gri('[data-lh-suprafata="acces_rapid"] [data-lh-id-mso="Undo"], [data-lh-suprafata="acces_rapid"] [data-lh-id-mso="Undo"] *', H.poateAnula());
       gri('[data-lh-suprafata="acces_rapid"] [data-lh-id-mso="Redo"], [data-lh-suprafata="acces_rapid"] [data-lh-id-mso="Redo"] *', H.poateReface());
@@ -4338,6 +4372,14 @@
       const l = Math.max(0, Math.min(x - R.left + 1, R.width - w - 2)), t = Math.max(0, Math.min(y - R.top + 1, R.height - h - 2));
       m.style.left = l + 'px'; m.style.top = t + 'px';
       m.classList.add('lh-ap-x-meniu');
+      /* noaptea 27.11: Paste Options › primul buton (în referință „Keep Text Only”, fără idMso) avea pătrățelul gol — panglica.js
+         caută pictograma după nume doar pe panglică. Pictograma lui = planșeta, aceeași cu Paste din panglică (lecția m1-l04: „prima
+         pictogramă, planșeta”); clicul lipește ca înainte (I.la.clic › lipeste) */
+      const icoPaste = date.icoane && date.icoane.Paste;
+      if (icoPaste) m.querySelectorAll('[data-lh-eticheta="Paste Options"] [data-lh-tip="ListItem"] > .lh-ap-gol').forEach(g => {
+        g.insertAdjacentHTML('afterend', pang.svg(icoPaste.map(d => '<path d="' + esc(d) + '"/>').join(''), 16));
+        g.remove();
+      });
       /* runda 4c (F170): Unhide... e gri cât nu e nicio foaie ascunsă (vechiul registru-foi.js:401) */
       if (cheie === 'meniu_contextual.fila_foii') { const u = m.querySelector('[data-lh-tinta="meniu:Unhide..."]'); if (u) { const g = !M.foi.some(x => x.ascunsa); u.toggleAttribute('aria-disabled', g); if (g) u.setAttribute('aria-disabled', 'true'); u.classList.toggle('lh-ap-gri', g); } }
       root.appendChild(m);
@@ -4531,9 +4573,13 @@
       const s = desen(k);
       s.setAttribute('data-lh-suprafata', dialog.baza);
       const r = SUP[k].r, R = root.getBoundingClientRect();
+      /* noaptea 28.11 (T3): locul din interiorul rădăcinii (clientWidth / clientHeight), nu dreptunghiul ei cu tot cu chenarul de
+         1 px: lipită de margine, fereastra ieșea cu 2 px din strat (overflow:auto), care primea bare de derulare native peste
+         bara de stare și peste marginea ferestrei (chenarul lecției m1-l03: Save this file, Move or Copy; m1-l06: Column Width) */
+      const Wi = root.clientWidth || R.width, Hi = root.clientHeight || R.height;
       s.style.position = 'absolute';
-      s.style.left = Math.max(0, Math.min(r[0], R.width - r[2])) + 'px';
-      s.style.top = Math.max(0, Math.min(r[1], R.height - r[3])) + 'px';
+      s.style.left = Math.max(0, Math.min(r[0], Wi - r[2])) + 'px';
+      s.style.top = Math.max(0, Math.min(r[1], Hi - r[3])) + 'px';
       dialog.strat.appendChild(s);
       dialog.el = s;
       s.querySelectorAll('[data-lh-tip="TabItem"]').forEach((t, i) => { const on = fila ? t.getAttribute('data-lh-eticheta') === fila : i === 0; t.setAttribute('aria-selected', on ? 'true' : 'false'); t.classList.toggle('activ', on); });
@@ -4588,6 +4634,7 @@
         /* runda 4c (F183, F186): locul ales stă în dialog.folder (Save îl folosește deja); mesajul semnelor dispare când le scoți */
         if (dialog.folder == null) dialog.folder = M.dosar || 'Documente';
         arataLocSalvare();
+        aspectSalvare(s);
         nf.addEventListener('input', () => { if (!SEMNE_FISIER.test(nf.value)) mesajNumeFisier(false); });
       }
       else { s.setAttribute('tabindex', '-1'); if (!focusInitial(s)) setTimeout(() => { if (dialog && dialog.el === s) focusStrat(); }, 0); }
@@ -4612,6 +4659,35 @@
       if (ts[0]) { const sp = ts[0].querySelector('.lh-ap-text') || ts[0]; sp.textContent = dialog.folder; ts[0].setAttribute('data-lh-eticheta', dialog.folder); ts[0].style.width = 'auto'; ts[0].style.whiteSpace = 'nowrap'; }
       if (ts[1]) ts[1].style.visibility = 'hidden';
       cb.setAttribute('aria-label', 'Choose a Location: ' + dialog.folder);
+    }
+    /* noaptea 28.11 (T2): „Save this file” / „Save your changes to this file?” ca în capturile din lecție (viii/m1-l03 › img/
+       salveaza-acest-fisier.webp, salvezi-modificarile.webp; textul lecției, :60, :97, :112, :174, îl trimite pe elev „la File
+       name”, „la Choose a Location”). Referința UIA n-are noduri Text pentru cele două etichete (Windows le citește din casete),
+       deci se desenează aici, fără nod în arbore (aria-hidden, fără data-lh-*): în captură, la 125 %, „File name” stă la 27 px
+       deasupra casetei numelui, „Choose a Location” la 22 px deasupra casetei locului, amândouă la marginea din stânga a casetei
+       locului. Titlul e mare și verde, în fereastră (bara de titlu are doar ✕). Caseta mică Save as type (32,8 px) arăta
+       începutul lui „Excel Workbook (*.xlsx)”, tăiat la „E”, ca discul E:; în Excel acolo scrie „.xlsx”. Clicul și tastarea în
+       casete rămân ca înainte. Proba: noapte28_checks.mjs › T2 */
+    function aspectSalvare(s) {
+      const cf = s.querySelector('[data-lh-tinta="camp:nume_fisier"]'), cl = s.querySelector('[data-lh-tinta="camp:Choose a Location"]');
+      const px = (e, k) => parseFloat(e.style[k]) || (k === 'left' ? e.offsetLeft : e.offsetTop);
+      const stanga = cl ? px(cl, 'left') : cf ? px(cf, 'left') - 4.8 : 0;
+      [[cf, 'File name', 27.2], [cl, 'Choose a Location', 22.4]].forEach(([ref, text, dy]) => {
+        if (!ref || !ref.parentNode) return;
+        const e = el('div', 'lh-ap-x-eticheta-salvare', { 'aria-hidden': 'true' });
+        e.textContent = text;
+        Object.assign(e.style, { position: 'absolute', left: stanga + 'px', top: (px(ref, 'top') - dy) + 'px', height: '16px', lineHeight: '16px', fontSize: '12px', color: '#242424', whiteSpace: 'nowrap', pointerEvents: 'none' });
+        ref.parentNode.appendChild(e);
+      });
+      const tt = s.querySelector('.lh-ap-t-TitleBar .lh-ap-titlu-dialog');
+      if (tt) Object.assign(tt.style, { left: Math.max(0, stanga) + 'px', top: '30px', fontSize: '16px', lineHeight: '22px', fontWeight: '600', color: '#107c41' });
+      const tf = s.querySelector('[data-lh-tinta="camp:tip_fisier"]'), ti = tf && tf.querySelector('input');
+      if (ti) {
+        ti.value = '.xlsx';
+        Object.assign(ti.style, { textAlign: 'right', padding: '0 2px' });
+        tf.querySelectorAll('.lh-ap-sag').forEach(x => { x.style.display = 'none'; });
+        tf.setAttribute('title', 'Excel Workbook (*.xlsx)');
+      }
     }
     function listaLocSalvare(deschide) {
       const vechi = dialog && dialog.el.querySelector('.lh-ap-x-lista-loc');
@@ -5733,7 +5809,12 @@
       if (dialog || backstage || !inGrila(tg) || tg === maner || tg.closest('.lh-ap-x-maner') || tg.closest('.lh-ap-x-avert')) {
         if (tg === maner) { ancora = { umplere: true }; return 'umplere'; }
         ancora = null;
-        if (!dialog && !backstage && !tg.closest('input,textarea,select')) setTimeout(() => { if (!dialog && !backstage && document.activeElement !== inNume && !redenumire) I.focus(); }, 0);
+        /* telefon (26.11): degetul pus pe panglică / bara de stare NU cheamă tastatura — focusul dat aici o deschidea în mijlocul
+           tragerii, fereastra se micșora și derularea laterală a panglicii se oprea (butoanele din dreapta rămâneau de neatins).
+           Focusul se mută doar dacă tastatura e deja deschisă pe alt câmp al aplicației (Name Box). Mouse-ul rămâne ca înainte. */
+        const fa0 = document.activeElement;
+        const faraTastatura = e.pointerType === 'touch' && !(fa0 && fa0 !== intrare && root.contains(fa0) && fa0.closest('input,textarea,select'));
+        if (!faraTastatura && !dialog && !backstage && !tg.closest('input,textarea,select')) setTimeout(() => { if (!dialog && !backstage && document.activeElement !== inNume && !redenumire) I.focus(); }, 0);
         return null;
       }
       const p = celulaDin(tinta);
@@ -5815,12 +5896,22 @@
       if (ancora.fila != null) {
         /* runda 4c (F178): degetul care se mișcă nu mai e apăsare lungă */
         if (lungFila && ancora.x0 != null && Math.hypot(e.clientX - ancora.x0, e.clientY - ancora.y0) > 8) { clearTimeout(lungFila); lungFila = null; }
-        /* runda 4c (F176): fila trasă lângă marginea șirului derulează filele (o filă la ~100 ms) */
+        /* runda 4c (F176): fila trasă lângă marginea șirului derulează filele (o filă la ~100 ms).
+           noaptea 28.11 (T1, viii/m1-l03 pasul 6): derularea pornea și cu mouse-ul ÎN prima / ultima filă văzută (12 px de la
+           margine), deci muta locul arătat de triunghiul negru: Octombrie lăsată pe marginea stângă a lui Noiembrie (prima filă
+           văzută, după ›) ajungea înaintea lui Septembrie. Acum șirul se derulează spre stânga doar cu mouse-ul ieșit din file
+           (peste săgețile ‹ ›), iar spre dreapta dincolo de ultima filă văzută; pe marginea ultimei file numai ținut acolo cel
+           puțin 0,6 s („ținută lângă marginea din dreapta”, excel_paritate_d › F176). O tragere obișnuită lasă fila unde arată
+           triunghiul. Proba: noapte28_checks.mjs › T1 */
         const ts = [...tabFoi.querySelectorAll('[data-lh-tinta="fila_foii"]')], acum = Date.now();
-        if (ts.length && acum - (ancora.tDer || 0) > 100) {
+        if (ts.length) {
           const bu = ts[ts.length - 1].getBoundingClientRect(), bp = ts[0].getBoundingClientRect();
-          if (tabFoi.__dreapta && e.clientX > bu.right - 12) { ancora.tDer = acum; derulaFile(1); }
-          else if ((tabFoi.__dx || 0) > 0 && e.clientX < bp.left + 12) { ancora.tDer = acum; derulaFile(-1); }
+          const peMargine = !!tabFoi.__dreapta && e.clientX > bu.right - 12 && e.clientX <= bu.right;
+          if (!peMargine) ancora.tMargine = null; else if (ancora.tMargine == null) ancora.tMargine = acum;
+          if (acum - (ancora.tDer || 0) > 100) {
+            if (tabFoi.__dreapta && (e.clientX > bu.right || (peMargine && acum - ancora.tMargine >= 600))) { ancora.tDer = acum; derulaFile(1); }
+            else if ((tabFoi.__dx || 0) > 0 && e.clientX < bp.left) { ancora.tDer = acum; derulaFile(-1); }
+          }
         }
         marcajFila(e.clientX); return;
       }
@@ -5883,7 +5974,10 @@
         const i = M.foi.findIndex(x => x.nume === an.fila);
         /* runda 4c: locul e printre filele VĂZUTE; cu foi ascunse, indicele din M.foi = al filei de pe ecran */
         const L0 = locFila(e.clientX), ts = [...tabFoi.querySelectorAll('[data-lh-tinta="fila_foii"]')];
-        const k = L0.k < ts.length ? M.foi.findIndex(x => x.nume === ts[L0.k].getAttribute('data-lh-id')) : M.foi.length;
+        /* noaptea 28.11 (T1): după ultima filă VĂZUTĂ, cu file nevăzute în dreapta, triunghiul arată locul de după ea — fila
+           ajunge acolo, nu la capătul registrului */
+        const u = L0.k >= ts.length && ts.length && tabFoi.__dreapta ? M.foi.findIndex(x => x.nume === ts[ts.length - 1].getAttribute('data-lh-id')) : -1;
+        const k = L0.k < ts.length ? M.foi.findIndex(x => x.nume === ts[L0.k].getAttribute('data-lh-id')) : u >= 0 ? u + 1 : M.foi.length;
         return i < 0 || k < 0 ? 'fara_efect' : mutaFoaia(i, k, !!(e.ctrlKey || e.metaKey));
       }
       if (g === 'umplere_tragere' && an && an.umplere) { const p = celulaLa(e.clientX, e.clientY); return umple(p.r, p.c); }

@@ -1739,6 +1739,29 @@
     legaGlisor(stare.querySelector('[data-lh-tip="Slider"]'));   // word-F096
     josIn.appendChild(stare);
     jos.appendChild(josIn);
+    /* noaptea 28.11 (T4): bara de stare e desenată la lățimea referinței (1366 px), dar rădăcina are chenar de 1 px (loc
+       interior 1364): textul depășea cu 2 px, iar bara de derulare orizontală (10 px) acoperea jumătatea de jos a textului
+       („Page 1 of 1”, „0 words”, „Accessibility”, zoom) chiar în laborator, la 1366×768. Ca în Excel (excel.js ›
+       ancoreazaStare), partea din DREAPTA a barei (Display Settings, Focus, vederile, zoom-ul) se lipește de marginea din
+       dreapta a ferestrei: se mută spre stânga cu cât lipsește din lățime, cel mult până lângă partea din stânga. Nimic nu se
+       ascunde; unde nici așa nu încape (telefonul), bara se derulează lateral ca înainte. Proba: noapte28_checks.mjs › T4 */
+    const LAT_STARE = SUP.bara_stare.r[2] + 2 * SUP.bara_stare.r[0] || 1366;
+    let latJos = LAT_STARE;
+    function ancoreazaStare() {
+      try {
+        const copii = [...stare.children], st = c => parseFloat(c.style.left) || 0, PRAG = LAT_STARE * 0.45;
+        const dreapta = copii.filter(c => st(c) >= PRAG), stanga = copii.filter(c => st(c) < PRAG);
+        if (!dreapta.length || !jos.clientWidth) return;
+        const k = (josIn.getBoundingClientRect().width / latJos) || 1;   // zoom-ul CSS al barei pe ecranele mici
+        const cap = Math.max(0, ...stanga.map(c => st(c) + (parseFloat(c.style.width) || 0))) + 8;
+        const d = Math.max(0, Math.min(Math.ceil(LAT_STARE - jos.clientWidth / k), Math.round(Math.min(...dreapta.map(st)) - cap)));
+        dreapta.forEach(c => { c.style.transform = d ? 'translateX(' + (-d) + 'px)' : ''; });
+        latJos = LAT_STARE - d;
+        josIn.style.width = d ? latJos + 'px' : '';
+        stare.style.width = (SUP.bara_stare.r[2] - d) + 'px';
+      } catch (e) { /* */ }
+    }
+    if (typeof ResizeObserver === 'function') { try { new ResizeObserver(() => ancoreazaStare()).observe(jos); } catch (e) { /* */ } }
     root.append(sus, zonaSup, jos);
     /* ---- noaptea Word 23.11, banda A (word-F024, F025, F009, F016, F074, F076; hotarari_dirijor.md pct. 1): bara de taste
        pentru deget, SUB fereastra Word, în rădăcina aplicației (`data-lh-ajutor="taste"`). Nu e în Word-ul real: elevul de la
@@ -2380,9 +2403,11 @@
         s.querySelectorAll('[data-lh-tip="Spinner"] input, [data-lh-tip="ComboBox"] input').forEach(x => { x.readOnly = false; x.removeAttribute('tabindex'); });
       }
       const r = SUP[k].r, R = root.getBoundingClientRect();
+      /* noaptea 28.11 (T3, ca în excel.js › arataFilaDialog): locul din interiorul rădăcinii, fără chenarul de 1 px — lipită de
+         margine, fereastra ieșea cu 2 px din strat, care primea bare de derulare native */
       s.style.position = 'absolute';
-      s.style.left = Math.max(0, Math.min(r[0], R.width - r[2])) + 'px';
-      s.style.top = Math.max(0, Math.min(r[1], R.height - r[3])) + 'px';
+      s.style.left = Math.max(0, Math.min(r[0], (root.clientWidth || R.width) - r[2])) + 'px';
+      s.style.top = Math.max(0, Math.min(r[1], (root.clientHeight || R.height) - r[3])) + 'px';
       /* fereastra mică (laptopul la 125% în browser = 1093x526 css) e mai joasă decât fereastra din referință (Save As: 566 px):
          Save / Cancel cădeau sub marginea de jos (critic 16 și 20, MINOR „Fereastra mică”). Pe laptopul real fereastra încape
          (768 px la 125% = 614 css; bara browserului e cea care fură înălțimea), deci aici o micșorăm cât să încapă, cel mult
@@ -3336,8 +3361,9 @@
       const meniuR = (SUP[k].c && SUP[k].c[0] && SUP[k].c[0].r) || r;
       const dy = meniuR[1] - r[1];
       s.style.position = 'absolute';
-      s.style.left = Math.max(0, Math.min(x - R.left, R.width - r[2])) + 'px';
-      s.style.top = Math.max(0, Math.min(y - R.top - dy, R.height - r[3])) + 'px';
+      /* noaptea 28.11 (T3): marginea = interiorul rădăcinii (clientWidth / clientHeight), ca la ferestre */
+      s.style.left = Math.max(0, Math.min(x - R.left, (root.clientWidth || R.width) - r[2])) + 'px';
+      s.style.top = Math.max(0, Math.min(y - R.top - dy, (root.clientHeight || R.height) - r[3])) + 'px';
       s.contextual = true;
       /* Noaptea Word 23.11, banda A (word-F020): cu textul copiat din Word, Paste Options are în față „Keep Source Formatting”
          (lipește cu formatarea copiată, ca Ctrl+V) și „Merge Formatting”, apoi „Keep Text Only”. Referința UIA a fost luată cu
@@ -3537,8 +3563,13 @@
       if (strat && strat.contextual && !strat.contains(tg)) inchideMeniuContextual();
       if (!eInDocument(tg) || dialog || backstage || !M.deschis) {
         ultimJos = null;
-        /* un clic pe panglică / bara de stare lasă tastatura în document, ca în Word */
-        if (!dialog && !backstage && !tg.closest('input,textarea,select') && document.activeElement !== intrare) I.focus();
+        /* un clic pe panglică / bara de stare lasă tastatura în document, ca în Word.
+           telefon (27.11, ca în excel.js 520da0e7): degetul pus pe panglică / bara de stare NU cheamă tastatura — focusul dat aici
+           o deschidea în mijlocul tragerii, fereastra se micșora și derularea laterală a panglicii se oprea. Focusul se mută doar
+           dacă tastatura e deja deschisă pe alt câmp al aplicației (Font, Font Size). Mouse-ul rămâne ca înainte. */
+        const fa0 = document.activeElement;
+        const faraTastatura = e.pointerType === 'touch' && !(fa0 && fa0 !== intrare && root.contains(fa0) && fa0.closest('input,textarea,select'));
+        if (!faraTastatura && !dialog && !backstage && !tg.closest('input,textarea,select') && document.activeElement !== intrare) I.focus();
         return null;
       }
       const acum = Date.now();
