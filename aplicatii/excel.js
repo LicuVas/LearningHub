@@ -4573,9 +4573,13 @@
       const s = desen(k);
       s.setAttribute('data-lh-suprafata', dialog.baza);
       const r = SUP[k].r, R = root.getBoundingClientRect();
+      /* noaptea 28.11 (T3): locul din interiorul rădăcinii (clientWidth / clientHeight), nu dreptunghiul ei cu tot cu chenarul de
+         1 px: lipită de margine, fereastra ieșea cu 2 px din strat (overflow:auto), care primea bare de derulare native peste
+         bara de stare și peste marginea ferestrei (chenarul lecției m1-l03: Save this file, Move or Copy; m1-l06: Column Width) */
+      const Wi = root.clientWidth || R.width, Hi = root.clientHeight || R.height;
       s.style.position = 'absolute';
-      s.style.left = Math.max(0, Math.min(r[0], R.width - r[2])) + 'px';
-      s.style.top = Math.max(0, Math.min(r[1], R.height - r[3])) + 'px';
+      s.style.left = Math.max(0, Math.min(r[0], Wi - r[2])) + 'px';
+      s.style.top = Math.max(0, Math.min(r[1], Hi - r[3])) + 'px';
       dialog.strat.appendChild(s);
       dialog.el = s;
       s.querySelectorAll('[data-lh-tip="TabItem"]').forEach((t, i) => { const on = fila ? t.getAttribute('data-lh-eticheta') === fila : i === 0; t.setAttribute('aria-selected', on ? 'true' : 'false'); t.classList.toggle('activ', on); });
@@ -4630,6 +4634,7 @@
         /* runda 4c (F183, F186): locul ales stă în dialog.folder (Save îl folosește deja); mesajul semnelor dispare când le scoți */
         if (dialog.folder == null) dialog.folder = M.dosar || 'Documente';
         arataLocSalvare();
+        aspectSalvare(s);
         nf.addEventListener('input', () => { if (!SEMNE_FISIER.test(nf.value)) mesajNumeFisier(false); });
       }
       else { s.setAttribute('tabindex', '-1'); if (!focusInitial(s)) setTimeout(() => { if (dialog && dialog.el === s) focusStrat(); }, 0); }
@@ -4654,6 +4659,35 @@
       if (ts[0]) { const sp = ts[0].querySelector('.lh-ap-text') || ts[0]; sp.textContent = dialog.folder; ts[0].setAttribute('data-lh-eticheta', dialog.folder); ts[0].style.width = 'auto'; ts[0].style.whiteSpace = 'nowrap'; }
       if (ts[1]) ts[1].style.visibility = 'hidden';
       cb.setAttribute('aria-label', 'Choose a Location: ' + dialog.folder);
+    }
+    /* noaptea 28.11 (T2): „Save this file” / „Save your changes to this file?” ca în capturile din lecție (viii/m1-l03 › img/
+       salveaza-acest-fisier.webp, salvezi-modificarile.webp; textul lecției, :60, :97, :112, :174, îl trimite pe elev „la File
+       name”, „la Choose a Location”). Referința UIA n-are noduri Text pentru cele două etichete (Windows le citește din casete),
+       deci se desenează aici, fără nod în arbore (aria-hidden, fără data-lh-*): în captură, la 125 %, „File name” stă la 27 px
+       deasupra casetei numelui, „Choose a Location” la 22 px deasupra casetei locului, amândouă la marginea din stânga a casetei
+       locului. Titlul e mare și verde, în fereastră (bara de titlu are doar ✕). Caseta mică Save as type (32,8 px) arăta
+       începutul lui „Excel Workbook (*.xlsx)”, tăiat la „E”, ca discul E:; în Excel acolo scrie „.xlsx”. Clicul și tastarea în
+       casete rămân ca înainte. Proba: noapte28_checks.mjs › T2 */
+    function aspectSalvare(s) {
+      const cf = s.querySelector('[data-lh-tinta="camp:nume_fisier"]'), cl = s.querySelector('[data-lh-tinta="camp:Choose a Location"]');
+      const px = (e, k) => parseFloat(e.style[k]) || (k === 'left' ? e.offsetLeft : e.offsetTop);
+      const stanga = cl ? px(cl, 'left') : cf ? px(cf, 'left') - 4.8 : 0;
+      [[cf, 'File name', 27.2], [cl, 'Choose a Location', 22.4]].forEach(([ref, text, dy]) => {
+        if (!ref || !ref.parentNode) return;
+        const e = el('div', 'lh-ap-x-eticheta-salvare', { 'aria-hidden': 'true' });
+        e.textContent = text;
+        Object.assign(e.style, { position: 'absolute', left: stanga + 'px', top: (px(ref, 'top') - dy) + 'px', height: '16px', lineHeight: '16px', fontSize: '12px', color: '#242424', whiteSpace: 'nowrap', pointerEvents: 'none' });
+        ref.parentNode.appendChild(e);
+      });
+      const tt = s.querySelector('.lh-ap-t-TitleBar .lh-ap-titlu-dialog');
+      if (tt) Object.assign(tt.style, { left: Math.max(0, stanga) + 'px', top: '30px', fontSize: '16px', lineHeight: '22px', fontWeight: '600', color: '#107c41' });
+      const tf = s.querySelector('[data-lh-tinta="camp:tip_fisier"]'), ti = tf && tf.querySelector('input');
+      if (ti) {
+        ti.value = '.xlsx';
+        Object.assign(ti.style, { textAlign: 'right', padding: '0 2px' });
+        tf.querySelectorAll('.lh-ap-sag').forEach(x => { x.style.display = 'none'; });
+        tf.setAttribute('title', 'Excel Workbook (*.xlsx)');
+      }
     }
     function listaLocSalvare(deschide) {
       const vechi = dialog && dialog.el.querySelector('.lh-ap-x-lista-loc');
@@ -5862,12 +5896,22 @@
       if (ancora.fila != null) {
         /* runda 4c (F178): degetul care se mișcă nu mai e apăsare lungă */
         if (lungFila && ancora.x0 != null && Math.hypot(e.clientX - ancora.x0, e.clientY - ancora.y0) > 8) { clearTimeout(lungFila); lungFila = null; }
-        /* runda 4c (F176): fila trasă lângă marginea șirului derulează filele (o filă la ~100 ms) */
+        /* runda 4c (F176): fila trasă lângă marginea șirului derulează filele (o filă la ~100 ms).
+           noaptea 28.11 (T1, viii/m1-l03 pasul 6): derularea pornea și cu mouse-ul ÎN prima / ultima filă văzută (12 px de la
+           margine), deci muta locul arătat de triunghiul negru: Octombrie lăsată pe marginea stângă a lui Noiembrie (prima filă
+           văzută, după ›) ajungea înaintea lui Septembrie. Acum șirul se derulează spre stânga doar cu mouse-ul ieșit din file
+           (peste săgețile ‹ ›), iar spre dreapta dincolo de ultima filă văzută; pe marginea ultimei file numai ținut acolo cel
+           puțin 0,6 s („ținută lângă marginea din dreapta”, excel_paritate_d › F176). O tragere obișnuită lasă fila unde arată
+           triunghiul. Proba: noapte28_checks.mjs › T1 */
         const ts = [...tabFoi.querySelectorAll('[data-lh-tinta="fila_foii"]')], acum = Date.now();
-        if (ts.length && acum - (ancora.tDer || 0) > 100) {
+        if (ts.length) {
           const bu = ts[ts.length - 1].getBoundingClientRect(), bp = ts[0].getBoundingClientRect();
-          if (tabFoi.__dreapta && e.clientX > bu.right - 12) { ancora.tDer = acum; derulaFile(1); }
-          else if ((tabFoi.__dx || 0) > 0 && e.clientX < bp.left + 12) { ancora.tDer = acum; derulaFile(-1); }
+          const peMargine = !!tabFoi.__dreapta && e.clientX > bu.right - 12 && e.clientX <= bu.right;
+          if (!peMargine) ancora.tMargine = null; else if (ancora.tMargine == null) ancora.tMargine = acum;
+          if (acum - (ancora.tDer || 0) > 100) {
+            if (tabFoi.__dreapta && (e.clientX > bu.right || (peMargine && acum - ancora.tMargine >= 600))) { ancora.tDer = acum; derulaFile(1); }
+            else if ((tabFoi.__dx || 0) > 0 && e.clientX < bp.left) { ancora.tDer = acum; derulaFile(-1); }
+          }
         }
         marcajFila(e.clientX); return;
       }
@@ -5930,7 +5974,10 @@
         const i = M.foi.findIndex(x => x.nume === an.fila);
         /* runda 4c: locul e printre filele VĂZUTE; cu foi ascunse, indicele din M.foi = al filei de pe ecran */
         const L0 = locFila(e.clientX), ts = [...tabFoi.querySelectorAll('[data-lh-tinta="fila_foii"]')];
-        const k = L0.k < ts.length ? M.foi.findIndex(x => x.nume === ts[L0.k].getAttribute('data-lh-id')) : M.foi.length;
+        /* noaptea 28.11 (T1): după ultima filă VĂZUTĂ, cu file nevăzute în dreapta, triunghiul arată locul de după ea — fila
+           ajunge acolo, nu la capătul registrului */
+        const u = L0.k >= ts.length && ts.length && tabFoi.__dreapta ? M.foi.findIndex(x => x.nume === ts[ts.length - 1].getAttribute('data-lh-id')) : -1;
+        const k = L0.k < ts.length ? M.foi.findIndex(x => x.nume === ts[L0.k].getAttribute('data-lh-id')) : u >= 0 ? u + 1 : M.foi.length;
         return i < 0 || k < 0 ? 'fara_efect' : mutaFoaia(i, k, !!(e.ctrlKey || e.metaKey));
       }
       if (g === 'umplere_tragere' && an && an.umplere) { const p = celulaLa(e.clientX, e.clientY); return umple(p.r, p.c); }

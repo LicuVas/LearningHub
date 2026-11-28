@@ -451,6 +451,31 @@
     pozitie(stareEl, [SUP.bara_stare.r[0], 0]);
     josIn.appendChild(stareEl);
     jos.appendChild(josIn);
+    /* noaptea 28.11 (T4): bara de stare e desenată la lățimea referinței (1366 px), dar rădăcina are chenar de 1 px (loc
+       interior 1364): textul depășea cu 2 px, iar bara de derulare orizontală (10 px) acoperea jumătatea de jos a textului
+       („Slide 1 of 3”, „Accessibility”, Notes, Comments, zoom) chiar în laborator, la 1366×768. Ca în Excel (excel.js ›
+       ancoreazaStare), partea din DREAPTA a barei (Notes, Display Settings, Comments, vederile, zoom-ul) se lipește de marginea
+       din dreapta a ferestrei: se mută spre stânga cu cât lipsește din lățime, cel mult până lângă partea din stânga. Nimic nu
+       se ascunde; unde nici așa nu încape (telefonul), bara se derulează lateral ca înainte. Bara vederii Slide Sorter (alt
+       desen, baraStare) se ancorează la fel. Proba: noapte28_checks.mjs › T4 */
+    let latJos = 0;
+    function ancoreazaStare() {
+      try {
+        const r = (SUP[stareEl.__cheie] || SUP.bara_stare).r, LAT = r[2] + 2 * r[0] || 1366;
+        if (!latJos) latJos = LAT;
+        const copii = [...stareEl.children], st = c => parseFloat(c.style.left) || 0, PRAG = LAT * 0.45;
+        const dreapta = copii.filter(c => st(c) >= PRAG), stanga = copii.filter(c => st(c) < PRAG);
+        if (!dreapta.length || !jos.clientWidth) return;
+        const k = (josIn.getBoundingClientRect().width / latJos) || 1;   // zoom-ul CSS al barei pe ecranele mici
+        const cap = Math.max(0, ...stanga.map(c => st(c) + (parseFloat(c.style.width) || 0))) + 8;
+        const d = Math.max(0, Math.min(Math.ceil(LAT - jos.clientWidth / k), Math.round(Math.min(...dreapta.map(st)) - cap)));
+        dreapta.forEach(c => { c.style.transform = d ? 'translateX(' + (-d) + 'px)' : ''; });
+        latJos = d ? LAT - d : 1366;
+        josIn.style.width = d ? latJos + 'px' : '';
+        stareEl.style.width = (r[2] - d) + 'px';
+      } catch (e) { /* */ }
+    }
+    if (typeof ResizeObserver === 'function') { try { new ResizeObserver(() => ancoreazaStare()).observe(jos); } catch (e) { /* */ } }
     root.append(sus, zonaSup, jos);
     /* F077 (hotarari_dirijor.md pct. 1): bara de taste pentru deget, SUB fereastra PowerPoint, în rădăcina aplicației
        (`data-lh-ajutor="taste"`; nu e în PowerPointul real — elevul de pe telefon / de la tabla cu atingere n-are tastatură, iar
@@ -654,6 +679,7 @@
         nou.__cheie = k;
         stareEl.replaceWith(nou);
         stareEl = nou;
+        ancoreazaStare();   // noaptea 28.11 (T4): desenul nou al barei, lipit și el de marginea din dreapta
       }
       const bn = stareEl.querySelector('[data-lh-buton-note]');
       if (bn) { bn.classList.toggle('lh-ap-apasat', !!M.note); bn.setAttribute('aria-pressed', M.note ? 'true' : 'false'); }
